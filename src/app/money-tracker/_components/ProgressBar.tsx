@@ -16,14 +16,12 @@ export default function ProgressBar({
   const remainingLabel = remaining < 0 ? 'Over Budget' : 'Remaining';
 
   return (
-    <div className="space-y-1">
-      <div className="flex justify-between text-sm">
-        <span className="text-muted-foreground">Spent</span>
-        <span className="font-medium">
-          ₱{totalSpent.toLocaleString('en-PH', { minimumFractionDigits: 2 })} /
-          ₱{budget.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
-        </span>
+    <div className="space-y-1 text-right">
+      <div className="text-sm font-medium">
+        ₱{totalSpent.toLocaleString('en-PH', { minimumFractionDigits: 2 })} / ₱
+        {budget.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
       </div>
+
       <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
         <div
           className={`h-full ${
@@ -34,20 +32,21 @@ export default function ProgressBar({
           }}
         />
       </div>
-      <div className="flex justify-between">
-        <span className={`text-xs ${remainingClass}`}>
+
+      <div className="text-xs">
+        <div className={`${remainingClass}`}>
           {remainingLabel}: ₱
           {Math.abs(remaining).toLocaleString('en-PH', {
             minimumFractionDigits: 2,
           })}
-        </span>
+        </div>
         {percentageUsed > 100 && (
-          <span className="text-xs text-red-500">
+          <div className="text-red-500">
             Exceeded by ₱
             {Math.abs(remaining).toLocaleString('en-PH', {
               minimumFractionDigits: 2,
             })}
-          </span>
+          </div>
         )}
       </div>
     </div>

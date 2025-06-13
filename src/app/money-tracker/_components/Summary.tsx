@@ -248,22 +248,7 @@ export default function Summary({ entries, budget, setBudget }: Props) {
   return (
     <div className="px-4 py-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm space-y-4">
       {/* Budget Section */}
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h3 className="text-lg font-semibold">Budget Overview</h3>
-          {!isEditingBudget && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsEditingBudget(true)}
-              className="text-muted-foreground hover:text-primary"
-            >
-              <Pencil className="w-4 h-4 mr-2" />
-              Edit Budget
-            </Button>
-          )}
-        </div>
-
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4">
         {isEditingBudget ? (
           <BudgetEditor
             tempBudget={tempBudget}
@@ -272,9 +257,17 @@ export default function Summary({ entries, budget, setBudget }: Props) {
             handleBudgetCancel={handleBudgetCancel}
           />
         ) : (
-          <div className="flex items-baseline gap-4">
-            <p className="text-2xl font-bold">{formatCurrency(budget)}</p>
-            <p className="text-sm text-muted-foreground">
+          <div className="flex items-center gap-2 min-w-fit md:flex-shrink-0">
+            <button
+              onClick={() => setIsEditingBudget(true)}
+              className="flex items-center text-left rounded-lg p-1 transition hover:bg-gray-200 dark:hover:bg-gray-700"
+            >
+              <div className="flex items-center gap-1">
+                <p className="text-2xl font-bold">{formatCurrency(budget)}</p>
+                <Pencil className="w-4 h-4 text-muted-foreground" />
+              </div>
+            </button>
+            <p className="text-xs text-muted-foreground mt-[1px]">
               {entries.length > 0 ? (
                 <>{Math.round(percentageUsed)}% utilized</>
               ) : (
@@ -284,12 +277,14 @@ export default function Summary({ entries, budget, setBudget }: Props) {
           </div>
         )}
 
-        <ProgressBar
-          totalSpent={totalSpent}
-          budget={budget}
-          percentageUsed={percentageUsed}
-          remaining={remaining}
-        />
+        <div className="flex-1 w-full">
+          <ProgressBar
+            totalSpent={totalSpent}
+            budget={budget}
+            percentageUsed={percentageUsed}
+            remaining={remaining}
+          />
+        </div>
       </div>
 
       <PeriodRangeSelector
