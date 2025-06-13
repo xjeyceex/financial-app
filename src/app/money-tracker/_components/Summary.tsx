@@ -2,9 +2,24 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Entry } from '../page';
-import { Pencil, Check, X, TrendingUp, TrendingDown, Zap } from 'lucide-react';
+import {
+  Pencil,
+  Check,
+  X,
+  TrendingUp,
+  TrendingDown,
+  Zap,
+  BarChart,
+} from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   TooltipProvider,
   Tooltip as UITooltip,
@@ -31,8 +46,8 @@ type BiweeklyRange = {
 };
 
 const biweeklyPresets: BiweeklyRange[] = [
-  { startDay1: 1, startDay2: 16, label: '01-15' },
-  { startDay1: 5, startDay2: 21, label: '05-20' },
+  { startDay1: 1, startDay2: 16, label: '01-15 / 16-30' },
+  { startDay1: 5, startDay2: 21, label: '05-20 / 21-04' },
 ];
 
 const BIWEEKLY_STORAGE_KEY = 'moneytracker_biweekly_range';
@@ -270,7 +285,13 @@ export default function Summary({ entries, budget, setBudget }: Props) {
           </div>
 
           {isEditingBudget ? (
-            <div className="flex items-center gap-2">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleBudgetSave();
+              }}
+              className="flex items-center gap-2"
+            >
               <div className="relative flex-1">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                   ₱
@@ -285,11 +306,12 @@ export default function Summary({ entries, budget, setBudget }: Props) {
                   step="100"
                 />
               </div>
-              <Button size="sm" onClick={handleBudgetSave} className="h-9">
+              <Button type="submit" size="sm" className="h-9">
                 <Check className="w-4 h-4 mr-1" />
                 Save
               </Button>
               <Button
+                type="button"
                 variant="outline"
                 size="sm"
                 onClick={handleBudgetCancel}
@@ -298,7 +320,7 @@ export default function Summary({ entries, budget, setBudget }: Props) {
                 <X className="w-4 h-4 mr-1" />
                 Cancel
               </Button>
-            </div>
+            </form>
           ) : (
             <div className="flex items-baseline gap-4">
               <p className="text-2xl font-bold">{formatCurrency(budget)}</p>
@@ -350,22 +372,44 @@ export default function Summary({ entries, budget, setBudget }: Props) {
         </div>
 
         {/* Biweekly Range Toggle */}
-        <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
-          <span className="mr-2 font-medium">Biweekly Range:</span>
-          {biweeklyPresets.map((range) => (
-            <Button
-              key={range.label}
-              variant={
-                biweeklyRange.label === range.label ? 'default' : 'outline'
-              }
-              size="sm"
-              onClick={() => setBiweeklyRange(range)}
-            >
-              {range.label}
-            </Button>
-          ))}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2 gap-2 text-sm text-muted-foreground">
+          <span className="font-medium">Biweekly Range:</span>
+          <div className="flex flex-wrap gap-2">
+            {biweeklyPresets.map((range) => (
+              <Button
+                key={range.label}
+                variant={
+                  biweeklyRange.label === range.label ? 'default' : 'outline'
+                }
+                size="sm"
+                onClick={() => setBiweeklyRange(range)}
+              >
+                {range.label}
+              </Button>
+            ))}
+          </div>
         </div>
 
+        {/* Chart */}
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="w-full justify-start gap-2">
+              <BarChart className="w-4 h-4" />
+              View Biweekly Spending Chart
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-3xl w-full">
+            <DialogHeader>
+              <DialogTitle>Biweekly Spending Chart</DialogTitle>
+            </DialogHeader>
+            <div className="max-h-[70vh] overflow-y-auto">
+              <BiweeklySpendingChart
+                periods={periods}
+                formatBiweeklyLabel={formatBiweeklyLabel}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
         {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
@@ -451,12 +495,6 @@ export default function Summary({ entries, budget, setBudget }: Props) {
               ))}
           </div>
         )}
-
-        {/* Chart */}
-        <BiweeklySpendingChart
-          periods={periods}
-          formatBiweeklyLabel={formatBiweeklyLabel}
-        />
       </div>
     </TooltipProvider>
   );
