@@ -2,14 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Entry } from '../page';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
 import { Pencil, Check, X, TrendingUp, TrendingDown, Zap } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -19,6 +11,7 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip';
+import BiweeklySpendingChart from './BiweeklySpendingChart';
 
 type Props = {
   entries: Entry[];
@@ -29,12 +22,6 @@ type Props = {
 type BiweeklyData = {
   total: number;
   items: Record<string, number>;
-};
-
-type ChartData = {
-  period: string;
-  label: string;
-  total: number;
 };
 
 type BiweeklyRange = {
@@ -262,12 +249,6 @@ export default function Summary({ entries, budget, setBudget }: Props) {
     ['', { total: 0, items: {} }]
   );
 
-  const chartData: ChartData[] = periods.map(([period, data]) => ({
-    period,
-    label: formatBiweeklyLabel(period),
-    total: data.total,
-  }));
-
   return (
     <TooltipProvider>
       <div className="px-4 py-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm space-y-4">
@@ -472,52 +453,10 @@ export default function Summary({ entries, budget, setBudget }: Props) {
         )}
 
         {/* Chart */}
-        {chartData.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-muted-foreground">
-              Biweekly Spending
-            </h4>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={chartData}
-                  margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
-                >
-                  <XAxis
-                    dataKey="label"
-                    tick={{ fontSize: 10 }}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tick={{ fontSize: 10 }}
-                    tickLine={false}
-                    tickFormatter={(value) =>
-                      `₱${(value as number).toLocaleString()}`
-                    }
-                  />
-                  <Tooltip
-                    formatter={(value) => [
-                      formatCurrency(Number(value)),
-                      'Total Spent',
-                    ]}
-                    labelFormatter={(label) => `Period: ${label}`}
-                    contentStyle={{
-                      background: 'hsl(var(--background))',
-                      borderColor: 'hsl(var(--border))',
-                      borderRadius: 'var(--radius)',
-                      fontSize: '12px',
-                    }}
-                  />
-                  <Bar
-                    dataKey="total"
-                    fill="hsl(var(--primary))"
-                    radius={[4, 4, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        )}
+        <BiweeklySpendingChart
+          periods={periods}
+          formatBiweeklyLabel={formatBiweeklyLabel}
+        />
       </div>
     </TooltipProvider>
   );
