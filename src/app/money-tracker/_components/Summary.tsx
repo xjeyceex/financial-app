@@ -399,26 +399,32 @@ export default function Summary({ entries, budget, setBudget }: Props) {
           </div>
         </div>
 
-        {/* Chart */}
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="outline" className="w-full justify-start gap-2">
-              <BarChart className="w-4 h-4" />
-              View Biweekly Spending Chart
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-3xl w-full">
-            <DialogHeader>
-              <DialogTitle>Biweekly Spending Chart</DialogTitle>
-            </DialogHeader>
-            <div className="max-h-[70vh] overflow-y-auto">
-              <BiweeklySpendingChart
-                periods={periods}
-                formatBiweeklyLabel={formatBiweeklyLabel}
-              />
-            </div>
-          </DialogContent>
-        </Dialog>
+        {periods.length > 0 ? (
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="w-full justify-start gap-2">
+                <BarChart className="w-4 h-4" />
+                View Biweekly Spending Chart
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl w-full">
+              <DialogHeader>
+                <DialogTitle>Biweekly Spending Chart</DialogTitle>
+              </DialogHeader>
+              <div className="max-h-[70vh] overflow-y-auto">
+                <BiweeklySpendingChart
+                  periods={periods}
+                  formatBiweeklyLabel={formatBiweeklyLabel}
+                />
+              </div>
+            </DialogContent>
+          </Dialog>
+        ) : (
+          <p className="text-sm text-muted-foreground italic">
+            Add entries to view your biweekly spending chart.
+          </p>
+        )}
+
         {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
