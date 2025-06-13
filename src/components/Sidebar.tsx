@@ -11,8 +11,6 @@ import {
   HiCalculator,
   HiMoon,
   HiSun,
-  HiChevronDown,
-  HiChevronUp,
 } from 'react-icons/hi';
 import clsx from 'clsx';
 import { useTheme } from 'next-themes';
@@ -23,7 +21,6 @@ type NavItem = {
   href: string;
   icon: IconType;
   disabled?: boolean;
-  children?: NavItem[];
 };
 
 const navItems: NavItem[] = [
@@ -36,14 +33,6 @@ const navItems: NavItem[] = [
     name: 'Money Tracker',
     href: '/money-tracker',
     icon: HiCurrencyDollar,
-    children: [
-      {
-        name: 'Expenses',
-        href: '/money-tracker/expenses',
-        icon: HiCurrencyDollar,
-        disabled: true,
-      },
-    ],
   },
   {
     name: 'Worth It Calculator',
@@ -58,9 +47,6 @@ export default function Sidebar() {
   const [isMobile, setIsMobile] = useState(false);
   const { setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>(
-    {}
-  );
 
   useEffect(() => {
     setMounted(true);
@@ -79,33 +65,9 @@ export default function Sidebar() {
     setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
   }, [resolvedTheme, setTheme]);
 
-  const toggleItemExpand = useCallback((href: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setExpandedItems((prev) => ({ ...prev, [href]: !prev[href] }));
-  }, []);
-
-  // Auto-expand parent items when child is active
-  useEffect(() => {
-    const newExpandedItems: Record<string, boolean> = {};
-    navItems.forEach((item) => {
-      if (item.children) {
-        const hasActiveChild = item.children.some(
-          (child) =>
-            pathname === child.href || pathname.startsWith(child.href + '/')
-        );
-        if (hasActiveChild) {
-          newExpandedItems[item.href] = true;
-        }
-      }
-    });
-    setExpandedItems((prev) => ({ ...prev, ...newExpandedItems }));
-  }, [pathname]);
-
   if (!mounted) {
     return (
       <div className="fixed top-0 left-0 h-screen w-72 bg-white dark:bg-zinc-900 p-6 border-r border-gray-100 dark:border-zinc-700 hidden md:block">
-        {/* Skeleton loader */}
         <div className="animate-pulse space-y-4">
           <div className="h-10 bg-gray-200 dark:bg-zinc-700 rounded-lg mb-8"></div>
           {[...Array(4)].map((_, i) => (
@@ -119,12 +81,10 @@ export default function Sidebar() {
     );
   }
 
-  const renderLink = (item: NavItem, isChild = false) => {
+  const renderLink = (item: NavItem) => {
     const Icon = item.icon;
     const isActive =
       pathname === item.href || pathname.startsWith(item.href + '/');
-    const hasChildren = item.children && item.children.length > 0;
-    const isExpanded = expandedItems[item.href];
 
     const className = clsx(
       'flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-medium',
@@ -132,23 +92,15 @@ export default function Sidebar() {
       isActive
         ? 'bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300'
         : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white',
-      isChild && 'ml-6 text-sm',
-      item.disabled && 'opacity-50 cursor-not-allowed pointer-events-none',
-      !isChild && 'border-l-4',
-      !isChild && isActive
-        ? 'border-blue-500 dark:border-blue-400'
-        : 'border-transparent'
+      'border-l-4',
+      isActive ? 'border-blue-500 dark:border-blue-400' : 'border-transparent',
+      item.disabled && 'opacity-50 cursor-not-allowed pointer-events-none'
     );
 
     if (item.disabled) {
       return (
         <div className={className}>
-          <Icon
-            className={clsx(
-              'w-5 h-5 flex-shrink-0',
-              isActive ? 'text-blue-500 dark:text-blue-300' : 'text-gray-400'
-            )}
-          />
+          <Icon className="w-5 h-5 flex-shrink-0 text-gray-400" />
           <span className="truncate">{item.name}</span>
         </div>
       );
@@ -166,34 +118,19 @@ export default function Sidebar() {
             isActive ? 'text-blue-500 dark:text-blue-300' : 'text-gray-400'
           )}
         />
-        <span className="truncate flex-1">{item.name}</span>
-        {hasChildren && (
-          <button
-            onClick={(e) => toggleItemExpand(item.href, e)}
-            className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors"
-            aria-label={isExpanded ? 'Collapse menu' : 'Expand menu'}
-          >
-            {isExpanded ? (
-              <HiChevronUp className="w-4 h-4 text-gray-500 dark:text-gray-300" />
-            ) : (
-              <HiChevronDown className="w-4 h-4 text-gray-500 dark:text-gray-300" />
-            )}
-          </button>
-        )}
+        <span className="truncate">{item.name}</span>
       </Link>
     );
   };
 
   return (
     <>
-      {/* Mobile toggle button */}
       {isMobile && (
         <button
           onClick={() => setOpen(!open)}
           className={clsx(
             'fixed top-4 left-4 z-50 p-2 rounded-full shadow-md transition-colors',
             'bg-white dark:bg-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-700',
-            'transition-transform duration-300 ease-in-out',
             open ? 'transform translate-x-52' : ''
           )}
           aria-label={open ? 'Close menu' : 'Open menu'}
@@ -206,7 +143,6 @@ export default function Sidebar() {
         </button>
       )}
 
-      {/* Sidebar */}
       <aside
         className={clsx(
           'fixed top-0 left-0 h-screen w-72 bg-white dark:bg-zinc-900 shadow-xl p-6 border-r border-gray-100 dark:border-zinc-700 z-40',
@@ -216,7 +152,6 @@ export default function Sidebar() {
         )}
         aria-hidden={!open && isMobile}
       >
-        {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <Link
             href="/"
@@ -227,30 +162,12 @@ export default function Sidebar() {
           </Link>
         </div>
 
-        {/* Navigation */}
         <nav className="flex-1 space-y-1 overflow-y-auto max-h-[calc(100vh-180px)]">
-          {navItems.map((item) => {
-            const hasChildren = item.children && item.children.length > 0;
-            const isExpanded = expandedItems[item.href];
-
-            return (
-              <div key={item.href}>
-                {renderLink(item)}
-
-                {/* Render nested children */}
-                {hasChildren && isExpanded && (
-                  <div className="mt-1 space-y-1">
-                    {item.children?.map((child) => (
-                      <div key={child.href}>{renderLink(child, true)}</div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+          {navItems.map((item) => (
+            <div key={item.href}>{renderLink(item)}</div>
+          ))}
         </nav>
 
-        {/* Footer */}
         <div className="pt-4 mt-4 border-t border-gray-100 dark:border-zinc-700 flex items-center justify-between">
           <div className="text-sm text-gray-500 dark:text-gray-400">
             © {new Date().getFullYear()} Finance App
@@ -269,7 +186,6 @@ export default function Sidebar() {
         </div>
       </aside>
 
-      {/* Overlay */}
       {open && isMobile && (
         <div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 cursor-pointer"
