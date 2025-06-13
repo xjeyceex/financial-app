@@ -21,7 +21,7 @@ export default function Home() {
     <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background to-muted p-6 text-center">
       <div className="space-y-6 max-w-md w-full">
         <h1 className="text-5xl font-bold text-foreground">
-          📊 Personal Finance Tools
+          Personal Finance Tools
         </h1>
         <p className="text-muted-foreground">
           Simple tools to help you manage money better, made for the PH context.

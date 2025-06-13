@@ -48,7 +48,7 @@ export default function MoneyTrackerPage() {
   };
 
   return (
-    <main className="max-w-7xl mx-auto p-6 space-y-8">
+    <main className="max-w-7xl px-1 md:px-6 lg:px-12 py-4 space-y-8">
       {/* Title */}
       <h1 className="text-4xl font-bold text-center text-foreground">
         Money Tracker
@@ -58,7 +58,7 @@ export default function MoneyTrackerPage() {
       <section className="flex flex-col lg:flex-row gap-6">
         {/* Wider Summary (2/3 width) */}
         <div className="lg:w-2/3 space-y-3">
-          <h2 className="text-xl font-semibold mb-2">📊 Summary</h2>
+          <h2 className="text-xl font-semibold mb-2">Summary</h2>
           <div className="rounded-2xl  bg-muted/40 dark:bg-muted/10 shadow-sm">
             <Summary entries={entries} budget={budget} setBudget={setBudget} />
           </div>
@@ -66,7 +66,7 @@ export default function MoneyTrackerPage() {
 
         {/* Narrower Expenses (1/3 width) */}
         <div className="lg:w-1/3 space-y-3">
-          <h2 className="text-xl font-semibold mb-2">📋 Your Expenses</h2>
+          <h2 className="text-xl font-semibold mb-2">Your Expenses</h2>
           <div className="rounded-2xl bg-muted/40 dark:bg-muted/10 shadow-sm">
             <EntryList
               entries={entries}
