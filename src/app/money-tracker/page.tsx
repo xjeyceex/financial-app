@@ -67,7 +67,7 @@ export default function MoneyTrackerPage() {
         {/* Narrower Expenses (1/3 width) */}
         <div className="lg:w-1/3 space-y-3">
           <h2 className="text-xl font-semibold mb-2">Your Expenses</h2>
-          <div className="rounded-2xl bg-muted/40 dark:bg-muted/10 shadow-sm">
+          <div>
             <EntryList
               entries={entries}
               onDelete={deleteEntry}
