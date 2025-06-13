@@ -49,11 +49,6 @@ export default function MoneyTrackerPage() {
 
   return (
     <main className="max-w-7xl px-1 md:px-6 lg:px-12 py-4 space-y-8">
-      {/* Title */}
-      <h1 className="text-4xl font-bold text-center text-foreground">
-        Money Tracker
-      </h1>
-
       {/* Dashboard */}
       <section className="flex flex-col lg:flex-row gap-6">
         {/* Wider Summary (2/3 width) */}
