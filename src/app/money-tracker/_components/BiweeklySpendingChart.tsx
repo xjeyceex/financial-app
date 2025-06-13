@@ -8,7 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { useEffect, useState } from 'react';
+import { useTheme } from 'next-themes';
 
 type ChartData = {
   period: string;
@@ -28,24 +28,7 @@ export default function BiweeklySpendingChart({
   periods,
   formatBiweeklyLabel,
 }: Props) {
-  const [colors, setColors] = useState({
-    foreground: '#000000',
-    border: '#e5e7eb',
-    primary: '#3b82f6',
-    popover: '#ffffff',
-  });
-
-  useEffect(() => {
-    const root = getComputedStyle(document.documentElement);
-    const resolvedColors = {
-      foreground: root.getPropertyValue('--foreground').trim(),
-      border: root.getPropertyValue('--border').trim(),
-      primary: root.getPropertyValue('--primary').trim(),
-      popover: root.getPropertyValue('--popover').trim(),
-    };
-
-    setColors(resolvedColors);
-  }, []);
+  const { theme } = useTheme();
 
   const chartData: ChartData[] = periods.map(([period, data]) => ({
     period,
@@ -55,12 +38,17 @@ export default function BiweeklySpendingChart({
 
   if (chartData.length === 0) return null;
 
+  // Light/dark themed colors from Tailwind palette
+  const isDark = theme === 'dark';
+  const colors = {
+    foreground: isDark ? '#f4f4f5' : '#0c0c0d', // zinc-100 / zinc-900
+    border: isDark ? '#3f3f46' : '#e4e4e7', // zinc-700 / zinc-200
+    primary: '#3b82f6', // blue-500
+    popover: isDark ? '#18181b' : '#ffffff', // zinc-900 / white
+  };
+
   return (
     <div className="space-y-2">
-      <h4 className="text-sm font-semibold text-foreground">
-        Biweekly Spending
-      </h4>
-
       <div className="h-[300px] rounded-2xl bg-card shadow-md overflow-x-auto border">
         <div className="min-w-[480px] sm:min-w-full h-full px-2 py-3">
           <ResponsiveContainer width="100%" height="100%">
@@ -95,7 +83,7 @@ export default function BiweeklySpendingChart({
                 contentStyle={{
                   background: colors.popover,
                   borderColor: colors.border,
-                  borderRadius: 'var(--radius)',
+                  borderRadius: '0.5rem',
                   fontSize: '12px',
                   color: colors.foreground,
                 }}
