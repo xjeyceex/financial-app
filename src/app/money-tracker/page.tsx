@@ -86,7 +86,7 @@ export default function MoneyTrackerPage() {
               <FiPlus size={28} strokeWidth={3} />
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md translate-y-[-85%]">
             <DialogHeader>
               <DialogTitle>
                 {editingEntry ? 'Edit Expense' : 'Add Expense'}
