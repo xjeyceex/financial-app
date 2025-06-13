@@ -40,7 +40,7 @@ export default function EntryList({ entries, onEdit, onDelete }: Props) {
               <p className="text-sm text-gray-400">{formatDate(entry.date)}</p>
             </div>
             <div className="text-right">
-              <div className="font-bold text-red-600">
+              <div className="font-bold text-red-500">
                 -₱{entry.amount.toFixed(2)}
               </div>
               <div className="flex gap-2 justify-end">
@@ -53,7 +53,7 @@ export default function EntryList({ entries, onEdit, onDelete }: Props) {
                 </button>
                 <button
                   onClick={() => onDelete(entry.id)}
-                  className="text-red-600 hover:text-red-800 p-1"
+                  className="text-red-500 hover:text-red-800 p-1"
                   title="Delete"
                 >
                   <FiTrash className="w-4 h-4" />
