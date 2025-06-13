@@ -306,19 +306,28 @@ export default function Summary({ entries, budget, setBudget }: Props) {
                   step="100"
                 />
               </div>
-              <Button type="submit" size="sm" className="h-9">
-                <Check className="w-4 h-4 mr-1" />
-                Save
+
+              {/* Icon-only Save Button */}
+              <Button
+                type="submit"
+                size="icon"
+                className="h-9 w-9"
+                variant="default"
+              >
+                <Check className="w-4 h-4" />
+                <span className="sr-only">Save</span>
               </Button>
+
+              {/* Icon-only Cancel Button */}
               <Button
                 type="button"
+                size="icon"
                 variant="outline"
-                size="sm"
                 onClick={handleBudgetCancel}
-                className="h-9"
+                className="h-9 w-9"
               >
-                <X className="w-4 h-4 mr-1" />
-                Cancel
+                <X className="w-4 h-4" />
+                <span className="sr-only">Cancel</span>
               </Button>
             </form>
           ) : (
