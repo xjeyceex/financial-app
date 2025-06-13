@@ -44,8 +44,6 @@ export default function BiweeklySpendingChart({
       popover: root.getPropertyValue('--popover').trim(),
     };
 
-    console.log('Resolved theme colors:', resolvedColors); // ← see if primary is white
-
     setColors(resolvedColors);
   }, []);
 
