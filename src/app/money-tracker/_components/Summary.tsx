@@ -18,6 +18,7 @@ import PeriodRangeSelector from './PeriodRangeSelector';
 import ProgressBar from './ProgressBar';
 import TopExpenses from './TopExpenses';
 import PeakSpending from './PeakSpending';
+import { DialogDescription } from '@radix-ui/react-dialog';
 
 type Props = {
   entries: Entry[];
@@ -149,6 +150,7 @@ export default function Summary({ entries, budget, setBudget }: Props) {
     }
 
     const savedBudget = localStorage.getItem(BUDGET_STORAGE_KEY);
+
     if (savedBudget) {
       try {
         const parsed = JSON.parse(savedBudget);
@@ -303,10 +305,17 @@ export default function Summary({ entries, budget, setBudget }: Props) {
           </DialogTrigger>
           <DialogContent className="max-w-3xl w-full">
             <DialogHeader>
-              <DialogTitle>Biweekly Spending Chart</DialogTitle>
+              <DialogTitle className="text-base font-semibold">
+                Biweekly Spending Chart
+              </DialogTitle>
+              <DialogDescription className="text-sm text-muted-foreground">
+                A visual breakdown of your spending and savings across biweekly
+                periods.
+              </DialogDescription>
             </DialogHeader>
             <div className="max-h-[70vh] overflow-y-auto">
               <BiweeklySpendingChart
+                budget={budget}
                 periods={periods}
                 formatBiweeklyLabel={formatBiweeklyLabel}
               />

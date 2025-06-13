@@ -8,6 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   TooltipProps,
+  ReferenceLine,
 } from 'recharts';
 import { useTheme } from 'next-themes';
 
@@ -15,15 +16,18 @@ type ChartData = {
   period: string;
   label: string;
   total: number;
+  savings: number;
+  budget: number;
 };
 
 type Props = {
   periods: [string, { total: number }][];
+  budget: number;
   formatBiweeklyLabel: (period: string) => string;
 };
-
 export default function BiweeklySpendingChart({
   periods,
+  budget,
   formatBiweeklyLabel,
 }: Props) {
   const { theme } = useTheme();
@@ -32,6 +36,8 @@ export default function BiweeklySpendingChart({
     period,
     label: formatBiweeklyLabel(period),
     total: data.total,
+    budget: budget,
+    savings: budget - data.total,
   }));
 
   if (chartData.length === 0) return null;
@@ -42,6 +48,8 @@ export default function BiweeklySpendingChart({
     foreground: isDark ? '#f4f4f5' : '#0c0c0d', // zinc-100 / zinc-900
     border: isDark ? '#3f3f46' : '#e4e4e7', // zinc-700 / zinc-200
     primary: '#3b82f6', // blue-500
+    secondary: '#10b981', // emerald-500 (for savings)
+    danger: '#ef4444', // red-500 (for overspending)
     popover: isDark ? '#18181b' : '#ffffff', // zinc-900 / white
   };
 
@@ -73,13 +81,33 @@ export default function BiweeklySpendingChart({
                 }
               />
               <Tooltip content={<CustomTooltip />} />
+              <ReferenceLine
+                y={budget}
+                stroke={colors.foreground}
+                strokeDasharray="3 3"
+                label={{
+                  position: 'top',
+                  value: 'Budget',
+                  fill: colors.foreground,
+                  fontSize: 11,
+                }}
+              />
 
               <Bar
                 dataKey="total"
+                name="Spent"
                 radius={[4, 4, 0, 0]}
                 fill={colors.primary}
                 fillOpacity={1}
                 activeBar={{ fill: colors.primary, fillOpacity: 0.9 }}
+              />
+              <Bar
+                dataKey="savings"
+                name="Savings"
+                radius={[4, 4, 0, 0]}
+                fill={colors.secondary}
+                fillOpacity={1}
+                activeBar={{ fill: colors.secondary, fillOpacity: 0.9 }}
               />
             </BarChart>
           </ResponsiveContainer>
@@ -88,7 +116,6 @@ export default function BiweeklySpendingChart({
     </div>
   );
 }
-
 const CustomTooltip = ({
   active,
   payload,
@@ -96,15 +123,34 @@ const CustomTooltip = ({
 }: TooltipProps<number, string>) => {
   if (!active || !payload?.length) return null;
 
-  const value = payload[0].value as number;
+  const spent = payload.find((item) => item.name === 'Spent')?.value as number;
+  const savings = payload.find((item) => item.name === 'Savings')
+    ?.value as number;
+  const budget = payload[0].payload?.budget;
 
   return (
     <div className="rounded-lg border border-border bg-popover px-3 py-2 text-xs shadow-md text-foreground space-y-1.5">
       <div className="text-muted-foreground">Period: {label}</div>
-      <div className="text-base font-semibold">
-        ₱{value.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+      <div className="grid grid-cols-3 gap-2">
+        <div>
+          <div className="text-sm font-semibold text-blue-500">
+            ₱{budget.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+          </div>
+          <div className="font-medium text-muted-foreground">Budget</div>
+        </div>
+        <div>
+          <div className="text-sm font-semibold text-red-500">
+            ₱{spent.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+          </div>
+          <div className="font-medium text-muted-foreground">Spent</div>
+        </div>
+        <div>
+          <div className="text-sm font-semibold text-emerald-600">
+            ₱{savings.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+          </div>
+          <div className="font-medium text-muted-foreground">Saved</div>
+        </div>
       </div>
-      <div className="font-medium text-muted-foreground">Total Spent</div>
     </div>
   );
 };
