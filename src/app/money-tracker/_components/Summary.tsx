@@ -2,16 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Entry } from '../page';
-import {
-  Pencil,
-  Check,
-  X,
-  TrendingUp,
-  TrendingDown,
-  Zap,
-  BarChart,
-} from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { Pencil, TrendingUp, TrendingDown, BarChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -20,13 +11,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  TooltipProvider,
-  Tooltip as UITooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from '@/components/ui/tooltip';
 import BiweeklySpendingChart from './BiweeklySpendingChart';
+import BudgetEditor from './BudgetEditor';
+import StatsCard from './StatsCard';
+import PeriodRangeSelector from './PeriodRangeSelector';
+import ProgressBar from './ProgressBar';
+import TopExpenses from './TopExpenses';
+import PeakSpending from './PeakSpending';
 
 type Props = {
   entries: Entry[];
@@ -34,12 +25,12 @@ type Props = {
   setBudget: (value: number) => void;
 };
 
-type BiweeklyData = {
+export type BiweeklyData = {
   total: number;
   items: Record<string, number>;
 };
 
-type BiweeklyRange = {
+export type BiweeklyRange = {
   startDay1: number;
   startDay2: number;
   label: string;
@@ -136,10 +127,8 @@ export default function Summary({ entries, budget, setBudget }: Props) {
           lastResetDate: currentResetKey,
         })
       );
-
       return true;
     }
-
     return false;
   }, [biweeklyRange, lastResetDate, budget]);
 
@@ -184,15 +173,10 @@ export default function Summary({ entries, budget, setBudget }: Props) {
     checkAndResetBudget();
   };
 
-  const totalSpent = currentPeriodEntries.reduce((sum, e) => sum + e.amount, 0);
-  const remaining = budget - totalSpent;
-  const percentageUsed = (totalSpent / budget) * 100;
-
   const handleBudgetSave = () => {
     const newBudget = parseFloat(tempBudget) || 0;
     setBudget(newBudget);
     setIsEditingBudget(false);
-
     localStorage.setItem(
       BUDGET_STORAGE_KEY,
       JSON.stringify({
@@ -207,13 +191,11 @@ export default function Summary({ entries, budget, setBudget }: Props) {
     setIsEditingBudget(false);
   };
 
-  const remainingClass =
-    remaining < 0
-      ? 'text-red-600 dark:text-red-400'
-      : 'text-green-600 dark:text-green-400';
-  const remainingLabel = remaining < 0 ? 'Over Budget' : 'Remaining';
+  // Calculate stats
+  const totalSpent = currentPeriodEntries.reduce((sum, e) => sum + e.amount, 0);
+  const remaining = budget - totalSpent;
+  const percentageUsed = (totalSpent / budget) * 100;
 
-  // You can keep historical stats based on all entries (not filtered)
   const biweeklyData: Record<string, BiweeklyData> = {};
   entries.forEach((entry) => {
     const date = new Date(entry.date);
@@ -222,7 +204,6 @@ export default function Summary({ entries, budget, setBudget }: Props) {
     const day = date.getDate();
 
     let key: string;
-
     if (day < biweeklyRange.startDay2) {
       key = `${year}-${String(month + 1).padStart(2, '0')}-${String(biweeklyRange.startDay1).padStart(2, '0')}`;
     } else {
@@ -265,252 +246,121 @@ export default function Summary({ entries, budget, setBudget }: Props) {
   );
 
   return (
-    <TooltipProvider>
-      <div className="px-4 py-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm space-y-4">
-        {/* Budget Section */}
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Budget Overview</h3>
-            {!isEditingBudget && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsEditingBudget(true)}
-                className="text-muted-foreground hover:text-primary"
-              >
-                <Pencil className="w-4 h-4 mr-2" />
-                Edit Budget
-              </Button>
-            )}
-          </div>
-
-          {isEditingBudget ? (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleBudgetSave();
-              }}
-              className="flex items-center gap-2"
+    <div className="px-4 py-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm space-y-4">
+      {/* Budget Section */}
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-semibold">Budget Overview</h3>
+          {!isEditingBudget && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsEditingBudget(true)}
+              className="text-muted-foreground hover:text-primary"
             >
-              <div className="relative flex-1">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                  ₱
-                </span>
-                <Input
-                  value={tempBudget}
-                  onChange={(e) => setTempBudget(e.target.value)}
-                  className="pl-8 text-lg"
-                  autoFocus
-                  type="number"
-                  min="0"
-                  step="100"
-                />
-              </div>
-
-              {/* Icon-only Save Button */}
-              <Button
-                type="submit"
-                size="icon"
-                className="h-9 w-9"
-                variant="default"
-              >
-                <Check className="w-4 h-4" />
-                <span className="sr-only">Save</span>
-              </Button>
-
-              {/* Icon-only Cancel Button */}
-              <Button
-                type="button"
-                size="icon"
-                variant="outline"
-                onClick={handleBudgetCancel}
-                className="h-9 w-9"
-              >
-                <X className="w-4 h-4" />
-                <span className="sr-only">Cancel</span>
-              </Button>
-            </form>
-          ) : (
-            <div className="flex items-baseline gap-4">
-              <p className="text-2xl font-bold">{formatCurrency(budget)}</p>
-              <p className="text-sm text-muted-foreground">
-                {entries.length > 0 ? (
-                  <>{Math.round(percentageUsed)}% utilized</>
-                ) : (
-                  'No expenses yet'
-                )}
-              </p>
-            </div>
+              <Pencil className="w-4 h-4 mr-2" />
+              Edit Budget
+            </Button>
           )}
-
-          {lastResetDate && (
-            <p className="text-xs text-muted-foreground">
-              Budget period started on{' '}
-              {new Date(lastResetDate).toLocaleDateString()}
-            </p>
-          )}
-
-          <div className="space-y-1">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Spent</span>
-              <span className="font-medium">
-                {formatCurrency(totalSpent)} / {formatCurrency(budget)}
-              </span>
-            </div>
-            <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-              <div
-                className={`h-full ${
-                  percentageUsed > 100 ? 'bg-red-500' : 'bg-blue-500'
-                } transition-all duration-500`}
-                style={{
-                  width: `${Math.min(100, percentageUsed)}%`,
-                }}
-              />
-            </div>
-            <div className="flex justify-between">
-              <span className={`text-xs ${remainingClass}`}>
-                {remainingLabel}: {formatCurrency(Math.abs(remaining))}
-              </span>
-              {percentageUsed > 100 && (
-                <span className="text-xs text-red-500">
-                  Exceeded by {formatCurrency(Math.abs(remaining))}
-                </span>
-              )}
-            </div>
-          </div>
         </div>
 
-        {/* Biweekly Range Toggle */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2 gap-2 text-sm text-muted-foreground">
-          <span className="font-medium">Biweekly Range:</span>
-          <div className="flex flex-wrap gap-2">
-            {biweeklyPresets.map((range) => (
-              <Button
-                key={range.label}
-                variant={
-                  biweeklyRange.label === range.label ? 'default' : 'outline'
-                }
-                size="sm"
-                onClick={() => setBiweeklyRange(range)}
-              >
-                {range.label}
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        {periods.length > 0 ? (
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="w-full justify-start gap-2">
-                <BarChart className="w-4 h-4" />
-                View Biweekly Spending Chart
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-3xl w-full">
-              <DialogHeader>
-                <DialogTitle>Biweekly Spending Chart</DialogTitle>
-              </DialogHeader>
-              <div className="max-h-[70vh] overflow-y-auto">
-                <BiweeklySpendingChart
-                  periods={periods}
-                  formatBiweeklyLabel={formatBiweeklyLabel}
-                />
-              </div>
-            </DialogContent>
-          </Dialog>
+        {isEditingBudget ? (
+          <BudgetEditor
+            tempBudget={tempBudget}
+            setTempBudget={setTempBudget}
+            handleBudgetSave={handleBudgetSave}
+            handleBudgetCancel={handleBudgetCancel}
+          />
         ) : (
-          <p className="text-sm text-muted-foreground italic">
-            Add entries to view your biweekly spending chart.
+          <div className="flex items-baseline gap-4">
+            <p className="text-2xl font-bold">{formatCurrency(budget)}</p>
+            <p className="text-sm text-muted-foreground">
+              {entries.length > 0 ? (
+                <>{Math.round(percentageUsed)}% utilized</>
+              ) : (
+                'No expenses yet'
+              )}
+            </p>
+          </div>
+        )}
+
+        {lastResetDate && (
+          <p className="text-xs text-muted-foreground">
+            Budget period started on{' '}
+            {new Date(lastResetDate).toLocaleDateString()}
           </p>
         )}
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
-            <div className="flex items-center gap-2 text-muted-foreground mb-1">
-              <TrendingUp className="w-4 h-4" />
-              <span className="text-xs">Avg Biweekly Spend</span>
-            </div>
-            <p className="text-lg font-semibold">
-              {formatCurrency(averageBiweeklyExpenses)}
-            </p>
-          </div>
-          <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
-            <div className="flex items-center gap-2 text-muted-foreground mb-1">
-              <TrendingDown className="w-4 h-4" />
-              <span className="text-xs">Avg Biweekly Savings</span>
-            </div>
-            <p
-              className={`text-lg font-semibold ${
-                averageBiweeklySavings >= 0
-                  ? 'text-green-600 dark:text-green-400'
-                  : 'text-red-600 dark:text-red-400'
-              }`}
-            >
-              {formatCurrency(averageBiweeklySavings)}
-            </p>
-          </div>
-        </div>
-
-        {/* Peak Spending Period */}
-        {peakPeriodKey && (
-          <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
-            <div className="flex items-center gap-2 text-muted-foreground mb-1">
-              <Zap className="w-4 h-4 text-yellow-500" />
-              <span className="text-xs">Peak Spending Period</span>
-            </div>
-            <div className="flex justify-between items-end">
-              <div>
-                <p className="font-semibold">
-                  {formatBiweeklyLabel(peakPeriodKey)}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {formatCurrency(peakPeriodData.total)}
-                </p>
-              </div>
-              <UITooltip>
-                <TooltipTrigger asChild>
-                  <span className="text-xs bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-300 px-2 py-1 rounded-full">
-                    {Math.round((peakPeriodData.total / budget) * 100)}% of
-                    budget
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {formatCurrency(peakPeriodData.total)} spent this period
-                </TooltipContent>
-              </UITooltip>
-            </div>
-          </div>
-        )}
-
-        {/* Top Expenses */}
-        {mostExpensivePerPeriod.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-muted-foreground">
-              Recent Top Expenses
-            </h4>
-            {mostExpensivePerPeriod
-              .slice(0, 2)
-              .map(({ period, item, amount }) => (
-                <div
-                  key={period}
-                  className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg"
-                >
-                  <div>
-                    <p className="text-sm font-medium">
-                      {item || 'Unspecified'}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatBiweeklyLabel(period)}
-                    </p>
-                  </div>
-                  <p className="font-semibold">{formatCurrency(amount)}</p>
-                </div>
-              ))}
-          </div>
-        )}
+        <ProgressBar
+          totalSpent={totalSpent}
+          budget={budget}
+          percentageUsed={percentageUsed}
+          remaining={remaining}
+        />
       </div>
-    </TooltipProvider>
+
+      <PeriodRangeSelector
+        biweeklyRange={biweeklyRange}
+        biweeklyPresets={biweeklyPresets}
+        setBiweeklyRange={setBiweeklyRange}
+      />
+
+      {periods.length > 0 ? (
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="w-full justify-start gap-2">
+              <BarChart className="w-4 h-4" />
+              View Biweekly Spending Chart
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-3xl w-full">
+            <DialogHeader>
+              <DialogTitle>Biweekly Spending Chart</DialogTitle>
+            </DialogHeader>
+            <div className="max-h-[70vh] overflow-y-auto">
+              <BiweeklySpendingChart
+                periods={periods}
+                formatBiweeklyLabel={formatBiweeklyLabel}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      ) : (
+        <p className="text-sm text-muted-foreground italic">
+          Add entries to view your biweekly spending chart.
+        </p>
+      )}
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 gap-4">
+        <StatsCard
+          icon={<TrendingUp className="w-4 h-4" />}
+          label="Avg Biweekly Spend"
+          value={formatCurrency(averageBiweeklyExpenses)}
+        />
+        <StatsCard
+          icon={<TrendingDown className="w-4 h-4" />}
+          label="Avg Biweekly Savings"
+          value={formatCurrency(averageBiweeklySavings)}
+          isPositive={averageBiweeklySavings >= 0}
+        />
+      </div>
+
+      {peakPeriodKey && (
+        <PeakSpending
+          peakPeriodKey={peakPeriodKey}
+          peakPeriodData={peakPeriodData}
+          budget={budget}
+          formatBiweeklyLabel={formatBiweeklyLabel}
+        />
+      )}
+
+      {mostExpensivePerPeriod.length > 0 && (
+        <TopExpenses
+          expenses={mostExpensivePerPeriod.slice(0, 2)}
+          formatBiweeklyLabel={formatBiweeklyLabel}
+        />
+      )}
+    </div>
   );
 }
