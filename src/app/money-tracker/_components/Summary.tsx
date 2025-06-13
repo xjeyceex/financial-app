@@ -284,13 +284,6 @@ export default function Summary({ entries, budget, setBudget }: Props) {
           </div>
         )}
 
-        {lastResetDate && (
-          <p className="text-xs text-muted-foreground">
-            Budget period started on{' '}
-            {new Date(lastResetDate).toLocaleDateString()}
-          </p>
-        )}
-
         <ProgressBar
           totalSpent={totalSpent}
           budget={budget}
