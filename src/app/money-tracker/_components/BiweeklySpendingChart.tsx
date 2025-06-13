@@ -7,6 +7,7 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
+  TooltipProps,
 } from 'recharts';
 import { useTheme } from 'next-themes';
 
@@ -20,9 +21,6 @@ type Props = {
   periods: [string, { total: number }][];
   formatBiweeklyLabel: (period: string) => string;
 };
-
-const formatCurrency = (amount: number) =>
-  `₱${amount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
 
 export default function BiweeklySpendingChart({
   periods,
@@ -74,20 +72,8 @@ export default function BiweeklySpendingChart({
                   `₱${(value as number).toLocaleString()}`
                 }
               />
-              <Tooltip
-                formatter={(value) => [
-                  formatCurrency(Number(value)),
-                  'Total Spent',
-                ]}
-                labelFormatter={(label) => `Period: ${label}`}
-                contentStyle={{
-                  background: colors.popover,
-                  borderColor: colors.border,
-                  borderRadius: '0.5rem',
-                  fontSize: '12px',
-                  color: colors.foreground,
-                }}
-              />
+              <Tooltip content={<CustomTooltip />} />
+
               <Bar
                 dataKey="total"
                 radius={[4, 4, 0, 0]}
@@ -102,3 +88,23 @@ export default function BiweeklySpendingChart({
     </div>
   );
 }
+
+const CustomTooltip = ({
+  active,
+  payload,
+  label,
+}: TooltipProps<number, string>) => {
+  if (!active || !payload?.length) return null;
+
+  const value = payload[0].value as number;
+
+  return (
+    <div className="rounded-lg border border-border bg-popover px-3 py-2 text-xs shadow-md text-foreground space-y-1.5">
+      <div className="text-muted-foreground">Period: {label}</div>
+      <div className="text-base font-semibold">
+        ₱{value.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+      </div>
+      <div className="font-medium text-muted-foreground">Total Spent</div>
+    </div>
+  );
+};
