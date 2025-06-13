@@ -1,44 +1,37 @@
 'use client';
 
+import { useState } from 'react';
+import { useLocalStorage } from '../../../lib/hooks/useLocalStorage';
 import EntryForm from './_components/EntryForm';
 import EntryList from './_components/EntryList';
 import Summary from './_components/Summary';
-import { useState, useEffect } from 'react';
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { FiPlus } from 'react-icons/fi';
 
 export type Entry = {
   id: string;
   amount: number;
-  item: string;
+  item?: string;
   date: string;
   description?: string;
 };
 
 export default function MoneyTrackerPage() {
-  const [entries, setEntries] = useState<Entry[]>([]);
-  const [budget, setBudget] = useState<number>(5000);
+  const [entries, setEntries] = useLocalStorage<Entry[]>('entries', []);
+  const [budget, setBudget] = useLocalStorage<number>('budget', 5000);
   const [editingEntry, setEditingEntry] = useState<Entry | null>(null);
-
-  // Load from localStorage on mount
-  useEffect(() => {
-    const storedEntries = localStorage.getItem('entries');
-    const storedBudget = localStorage.getItem('budget');
-
-    if (storedEntries) setEntries(JSON.parse(storedEntries));
-    if (storedBudget) setBudget(parseFloat(storedBudget));
-  }, []);
-
-  // Save entries to localStorage on change
-  useEffect(() => {
-    localStorage.setItem('entries', JSON.stringify(entries));
-  }, [entries]);
-
-  // Save budget to localStorage on change
-  useEffect(() => {
-    localStorage.setItem('budget', budget.toString());
-  }, [budget]);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const addEntry = (entry: Entry) => {
     setEntries((prev) => [entry, ...prev]);
+    setModalOpen(false);
   };
 
   const updateEntry = (updated: Entry) => {
@@ -55,56 +48,66 @@ export default function MoneyTrackerPage() {
   };
 
   return (
-    <main className="max-w-7xl mx-auto p-4 space-y-6">
-      <h1 className="text-3xl font-bold text-center">💸 Money Tracker</h1>
+    <main className="max-w-7xl mx-auto p-6 space-y-8">
+      {/* Title */}
+      <h1 className="text-4xl font-bold text-center text-foreground">
+        💰 Money Tracker
+      </h1>
 
-      {/* Budget Input */}
-      <section className="space-y-2">
-        <label htmlFor="budget" className="block font-medium text-lg">
-          Monthly Budget
-        </label>
-        <input
-          id="budget"
-          type="number"
-          value={budget}
-          onChange={(e) => setBudget(parseFloat(e.target.value))}
-          className="w-full px-3 py-2 border rounded"
-        />
-        <p className="text-sm text-gray-500">
-          Current budget:{' '}
-          <span className="font-semibold text-gray-700">
-            ₱{budget.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
-          </span>
-        </p>
-      </section>
-
-      {/* Dashboard on top */}
-      <section>
-        <Summary entries={entries} budget={budget} />
-      </section>
-
-      {/* Two-column layout: Add + List */}
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* Add Expense (left) */}
-        <div className="lg:w-1/2 space-y-4">
-          <h2 className="text-xl font-semibold">Add Expense</h2>
-          <EntryForm
-            onAdd={addEntry}
-            onUpdate={updateEntry}
-            editingEntry={editingEntry}
-            cancelEdit={cancelEdit}
-          />
+      {/* Dashboard */}
+      <section className="flex flex-col lg:flex-row gap-6">
+        {/* Wider Summary (2/3 width) */}
+        <div className="lg:w-2/3 space-y-3">
+          <h2 className="text-xl font-semibold mb-2">📊 Summary</h2>
+          <div className="rounded-2xl  bg-muted/40 dark:bg-muted/10 shadow-sm">
+            <Summary entries={entries} budget={budget} setBudget={setBudget} />
+          </div>
         </div>
 
-        {/* Expense List (right) */}
-        <div className="lg:w-1/2 space-y-4">
-          <h2 className="text-xl font-semibold">Your Expenses</h2>
-          <EntryList
-            entries={entries}
-            onDelete={deleteEntry}
-            onEdit={(entry) => setEditingEntry(entry)}
-          />
+        {/* Narrower Expenses (1/3 width) */}
+        <div className="lg:w-1/3 space-y-3">
+          <h2 className="text-xl font-semibold mb-2">📋 Your Expenses</h2>
+          <div className="rounded-2xl bg-muted/40 dark:bg-muted/10 shadow-sm">
+            <EntryList
+              entries={entries}
+              onDelete={deleteEntry}
+              onEdit={(entry) => {
+                setEditingEntry(entry);
+                setModalOpen(true);
+              }}
+            />
+          </div>
         </div>
+      </section>
+
+      {/* Add Entry Button + Modal */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+          <DialogTrigger asChild>
+            <Button
+              className="h-12 w-12 p-0 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-xl flex items-center justify-center"
+              aria-label="Add Expense"
+            >
+              <FiPlus size={28} strokeWidth={3} />
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>
+                {editingEntry ? 'Edit Expense' : 'Add Expense'}
+              </DialogTitle>
+            </DialogHeader>
+            <EntryForm
+              onAdd={addEntry}
+              onUpdate={updateEntry}
+              editingEntry={editingEntry}
+              cancelEdit={() => {
+                cancelEdit();
+                setModalOpen(false);
+              }}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
     </main>
   );

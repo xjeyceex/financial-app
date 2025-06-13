@@ -12,17 +12,32 @@ export default function EntryList({ entries, onEdit, onDelete }: Props) {
     return <p className="text-gray-500">No entries yet.</p>;
   }
 
+  const formatDate = (isoDate: string) => {
+    const date = new Date(isoDate);
+    return date.toLocaleString('en-PH', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      weekday: 'long',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  };
+
   return (
     <ul className="space-y-2">
       {entries.map((entry) => (
-        <li key={entry.id} className="border p-3 rounded shadow-sm">
+        <li key={entry.id} className="border p-3 rounded-2xl shadow-sm">
           <div className="flex justify-between items-start">
             <div>
-              <p className="font-semibold">{entry.item}</p>
+              <p className="font-semibold">
+                {entry.item?.trim() || 'Unspecified'}
+              </p>
               {entry.description && (
                 <p className="text-sm text-gray-500">{entry.description}</p>
               )}
-              <p className="text-sm text-gray-400">{entry.date}</p>
+              <p className="text-sm text-gray-400">{formatDate(entry.date)}</p>
             </div>
             <div className="text-right">
               <div className="font-bold text-red-600">

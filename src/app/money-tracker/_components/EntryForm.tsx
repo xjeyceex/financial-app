@@ -25,7 +25,7 @@ export default function EntryForm({
   useEffect(() => {
     if (editingEntry) {
       setAmount(editingEntry.amount.toString());
-      setItem(editingEntry.item);
+      setItem(editingEntry.item || '');
       setDate(editingEntry.date);
       setDescription(editingEntry.description || '');
     }
@@ -44,7 +44,7 @@ export default function EntryForm({
     const entry: Entry = {
       id: editingEntry ? editingEntry.id : uuidv4(),
       amount: parseFloat(amount),
-      item,
+      item: item.trim() || undefined,
       date,
       description: description.trim() || undefined,
     };
@@ -72,10 +72,9 @@ export default function EntryForm({
       />
       <input
         type="text"
-        placeholder="Item"
+        placeholder="Item (optional)"
         value={item}
         onChange={(e) => setItem(e.target.value)}
-        required
         className="w-full px-3 py-2 border rounded"
       />
       <input

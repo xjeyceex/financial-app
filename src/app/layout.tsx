@@ -34,9 +34,12 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <div className="flex min-h-screen">
-            <Sidebar />
-            <main className="flex-1 p-4">{children}</main>
+          {/* Sidebar is fixed, separate from layout flow */}
+          <Sidebar />
+
+          {/* Content wrapper pushed right by width of Sidebar (w-72 = 18rem) */}
+          <div className="md:ml-72 min-h-screen">
+            <main className="p-4">{children}</main>
           </div>
         </ThemeProvider>
       </body>
