@@ -5,7 +5,7 @@ import { Card, CardContent, CardTitle } from '@/components/ui/card';
 
 const modules = [
   {
-    label: '💸 Money Tracker',
+    label: 'Money Tracker',
     description: 'Track expenses with smart tagging.',
     href: '/money-tracker',
   },

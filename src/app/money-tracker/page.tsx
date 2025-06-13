@@ -51,7 +51,7 @@ export default function MoneyTrackerPage() {
     <main className="max-w-7xl mx-auto p-6 space-y-8">
       {/* Title */}
       <h1 className="text-4xl font-bold text-center text-foreground">
-        💰 Money Tracker
+        Money Tracker
       </h1>
 
       {/* Dashboard */}

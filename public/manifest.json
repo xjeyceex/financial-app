@@ -1,6 +1,6 @@
 {
-  "name": "Worth It",
-  "short_name": "Worth It",
+  "name": "Financial App",
+  "short_name": "Financial App",
   "description": "Decide if a purchase is worth your time.",
   "start_url": "/",
   "display": "standalone",
