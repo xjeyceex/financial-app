@@ -1,6 +1,6 @@
 {
-  "name": "Financial App",
-  "short_name": "Financial App",
+  "name": "PesoWise",
+  "short_name": "PesoWise",
   "description": "Decide if a purchase is worth your time.",
   "start_url": "/",
   "display": "standalone",
