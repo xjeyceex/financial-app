@@ -7,10 +7,15 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  TooltipProps,
   ReferenceLine,
 } from 'recharts';
 import { useTheme } from 'next-themes';
+import { useState } from 'react';
+import { CustomTooltip } from './CustomToolTip';
+import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { DialogTitle } from '@radix-ui/react-dialog';
 
 type ChartData = {
   period: string;
@@ -24,18 +29,21 @@ type Props = {
   periods: [string, { total: number }][];
   periodBudgets: Record<string, number>;
   formatBiweeklyLabel: (period: string) => string;
+  onBudgetChange: (period: string, newBudget: number) => void;
 };
 
 export default function BiweeklySpendingChart({
   periods,
   periodBudgets,
   formatBiweeklyLabel,
+  onBudgetChange,
 }: Props) {
   const { theme } = useTheme();
 
-  // Create chart data with period-specific budgets
+  const [editingPeriod, setEditingPeriod] = useState<string | null>(null);
+  const [tempBudget, setTempBudget] = useState<number>(0);
+
   const chartData: ChartData[] = periods.map(([period, data]) => {
-    // Get the budget for this specific period, fallback to 0 if not found
     const periodBudget = periodBudgets[period] || 0;
     return {
       period,
@@ -48,7 +56,6 @@ export default function BiweeklySpendingChart({
 
   if (chartData.length === 0) return null;
 
-  // Light/dark themed colors from Tailwind palette
   const isDark = theme === 'dark';
   const colors = {
     foreground: isDark ? '#f4f4f5' : '#0c0c0d',
@@ -60,26 +67,26 @@ export default function BiweeklySpendingChart({
   };
 
   return (
-    <div className="space-y-2">
-      <div className="h-[300px] rounded-2xl bg-card shadow-md overflow-x-auto border">
-        <div className="min-w-[480px] sm:min-w-full h-full px-2 py-3">
+    <div className="space-y-8">
+      <div className="h-[400px] sm:h-[480px] lg:h-[520px] rounded-2xl bg-card shadow-md overflow-x-auto border">
+        <div className="min-w-[480px] sm:min-w-full h-full px-4 pt-3 pb-0 ">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={chartData}
-              margin={{ top: 10, right: 10, left: 0, bottom: 10 }}
+              margin={{ top: 30, right: 30, left: 0, bottom: 0 }}
             >
               <XAxis
                 dataKey="label"
-                tick={{ fontSize: 11, fill: colors.foreground }}
+                tick={{ fontSize: 13, fill: colors.foreground }}
                 interval={0}
                 angle={-15}
                 textAnchor="end"
-                height={40}
+                height={60}
                 tickLine={false}
                 axisLine={{ stroke: colors.border }}
               />
               <YAxis
-                tick={{ fontSize: 11, fill: colors.foreground }}
+                tick={{ fontSize: 13, fill: colors.foreground }}
                 tickLine={false}
                 axisLine={{ stroke: colors.border }}
                 tickFormatter={(value) =>
@@ -87,8 +94,6 @@ export default function BiweeklySpendingChart({
                 }
               />
               <Tooltip content={<CustomTooltip />} />
-
-              {/* Add reference lines for each period's budget */}
               {chartData.map((data, index) => (
                 <ReferenceLine
                   key={index}
@@ -99,15 +104,14 @@ export default function BiweeklySpendingChart({
                     position: 'top',
                     value: 'Budget',
                     fill: colors.foreground,
-                    fontSize: 11,
+                    fontSize: 13,
                   }}
                 />
               ))}
-
               <Bar
                 dataKey="total"
                 name="Spent"
-                radius={[4, 4, 0, 0]}
+                radius={[6, 6, 0, 0]}
                 fill={colors.primary}
                 fillOpacity={1}
                 activeBar={{ fill: colors.primary, fillOpacity: 0.9 }}
@@ -115,7 +119,7 @@ export default function BiweeklySpendingChart({
               <Bar
                 dataKey="savings"
                 name="Savings"
-                radius={[4, 4, 0, 0]}
+                radius={[6, 6, 0, 0]}
                 fill={colors.secondary}
                 fillOpacity={1}
                 activeBar={{ fill: colors.secondary, fillOpacity: 0.9 }}
@@ -124,54 +128,57 @@ export default function BiweeklySpendingChart({
           </ResponsiveContainer>
         </div>
       </div>
-    </div>
-  );
-}
 
-const CustomTooltip = ({
-  active,
-  payload,
-  label,
-}: TooltipProps<number, string>) => {
-  if (!active || !payload?.length) return null;
-
-  const spent = payload.find((item) => item.name === 'Spent')?.value as number;
-  const savings = payload.find((item) => item.name === 'Savings')
-    ?.value as number;
-  const budget = payload[0].payload?.budget;
-
-  return (
-    <div className="rounded-lg border border-border bg-popover px-3 py-2 text-xs shadow-md text-foreground space-y-1.5">
-      <div className="text-muted-foreground">Period: {label}</div>
-      <div className="grid grid-cols-3 gap-2">
-        <div>
-          <div className="text-sm font-semibold text-blue-500">
-            ₱{budget.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
-          </div>
-          <div className="font-medium text-muted-foreground">Budget</div>
-        </div>
-        <div>
-          <div className="text-sm font-semibold text-red-500">
-            ₱{spent.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
-          </div>
-          <div className="font-medium text-muted-foreground">Spent</div>
-        </div>
-        <div>
+      {/* Edit Budget Controls */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+        {chartData.map((data) => (
           <div
-            className={`text-sm font-semibold ${
-              savings >= 0 ? 'text-emerald-600' : 'text-red-500'
-            }`}
+            key={data.period}
+            className="flex items-center justify-between text-base gap-3 bg-muted px-4 py-3 rounded-xl"
           >
-            ₱
-            {Math.abs(savings).toLocaleString('en-PH', {
-              minimumFractionDigits: 2,
-            })}
+            <span className="truncate font-medium text-sm sm:text-base">
+              {data.label}
+            </span>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-xs sm:text-sm"
+                  onClick={() => {
+                    setEditingPeriod(data.period);
+                    setTempBudget(data.budget);
+                  }}
+                >
+                  Edit
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="space-y-5 w-[92vw] max-w-sm rounded-2xl">
+                <DialogTitle className="text-lg font-semibold">
+                  Edit Budget for {data.label}
+                </DialogTitle>
+                <Input
+                  type="number"
+                  value={tempBudget}
+                  onChange={(e) => setTempBudget(Number(e.target.value))}
+                  className="text-lg py-3"
+                />
+                <Button
+                  size="lg"
+                  className="w-full"
+                  onClick={() => {
+                    if (editingPeriod) {
+                      onBudgetChange(editingPeriod, tempBudget);
+                    }
+                  }}
+                >
+                  Save
+                </Button>
+              </DialogContent>
+            </Dialog>
           </div>
-          <div className="font-medium text-muted-foreground">
-            {savings >= 0 ? 'Saved' : 'Overspent'}
-          </div>
-        </div>
+        ))}
       </div>
     </div>
   );
-};
+}

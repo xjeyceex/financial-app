@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Entry } from '../page';
 import {
   Pencil,
   TrendingUp,
@@ -25,24 +24,12 @@ import ProgressBar from './ProgressBar';
 import TopExpenses from './TopExpenses';
 import PeakSpending from './PeakSpending';
 import { DialogDescription } from '@radix-ui/react-dialog';
+import { BiweeklyData, BiweeklyRange, Entry } from '../../../../lib/types';
 
 type Props = {
   entries: Entry[];
   budget: number;
   setBudget: (value: number) => void;
-};
-
-export type BiweeklyData = {
-  total: number;
-  budget: number;
-  savings: number;
-  items: Record<string, number>;
-};
-
-export type BiweeklyRange = {
-  startDay1: number;
-  startDay2: number;
-  label: string;
 };
 
 interface BudgetStorage {
@@ -85,6 +72,13 @@ export default function Summary({ entries, budget, setBudget }: Props) {
         : biweeklyRange.startDay2;
     return new Date(now.getFullYear(), now.getMonth(), startDay);
   };
+
+  function handleBudgetChange(period: string, newBudget: number) {
+    setPeriodBudgets((prev) => ({
+      ...prev,
+      [period]: newBudget,
+    }));
+  }
 
   const getCurrentPeriodEndDate = (): Date => {
     const now = new Date();
@@ -399,22 +393,31 @@ export default function Summary({ entries, budget, setBudget }: Props) {
               View Biweekly Spending Chart
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-3xl w-full">
-            <DialogHeader>
-              <DialogTitle className="text-base font-semibold">
-                Biweekly Spending Chart
-              </DialogTitle>
-              <DialogDescription className="text-sm text-muted-foreground">
-                A visual breakdown of your spending and savings across biweekly
-                periods.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="max-h-[70vh] overflow-y-auto">
-              <BiweeklySpendingChart
-                periodBudgets={periodBudgets}
-                periods={periods}
-                formatBiweeklyLabel={formatBiweeklyLabel}
-              />
+          <DialogContent
+            className="w-[96vw] max-w-3xl max-h-[80vh] p-4 sm:p-5 lg:p-6 rounded-2xl overflow-hidden"
+            style={{ maxWidth: '50rem' }}
+          >
+            <div className="flex flex-col h-full space-y-6">
+              {/* Header */}
+              <DialogHeader>
+                <DialogTitle className="text-lg sm:text-xl font-semibold">
+                  Biweekly Spending Chart
+                </DialogTitle>
+                <DialogDescription className="text-sm sm:text-base text-muted-foreground">
+                  A visual breakdown of your spending and savings across
+                  biweekly periods.
+                </DialogDescription>
+              </DialogHeader>
+
+              {/* Chart Area */}
+              <div className="flex-1 overflow-y-auto rounded-xl ">
+                <BiweeklySpendingChart
+                  periods={periods}
+                  periodBudgets={periodBudgets}
+                  formatBiweeklyLabel={formatBiweeklyLabel}
+                  onBudgetChange={handleBudgetChange}
+                />
+              </div>
             </div>
           </DialogContent>
         </Dialog>

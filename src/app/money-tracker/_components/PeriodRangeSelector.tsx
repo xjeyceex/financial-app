@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { BiweeklyRange } from './Summary';
+import { BiweeklyRange } from '../../../../lib/types';
 
 export default function PeriodRangeSelector({
   biweeklyRange,

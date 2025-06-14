@@ -4,7 +4,7 @@ import {
   TooltipContent,
 } from '@/components/ui/tooltip';
 import { Zap } from 'lucide-react';
-import { BiweeklyData } from './Summary';
+import { BiweeklyData } from '../../../../lib/types';
 
 export default function PeakSpending({
   peakPeriodKey,

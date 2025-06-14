@@ -1,9 +1,9 @@
 'use client';
 
 import { FiEdit, FiTrash } from 'react-icons/fi';
-import { Entry } from '../page';
 import { format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
+import { Entry } from '../../../../lib/types';
 
 type Props = {
   entries: Entry[];

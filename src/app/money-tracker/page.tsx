@@ -14,14 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { FiPlus } from 'react-icons/fi';
-
-export type Entry = {
-  id: string;
-  amount: number;
-  item?: string;
-  date: string;
-  description?: string;
-};
+import { Entry } from '../../../lib/types';
 
 export default function MoneyTrackerPage() {
   const [entries, setEntries] = useLocalStorage<Entry[]>('entries', []);

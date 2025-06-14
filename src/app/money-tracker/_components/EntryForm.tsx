@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Entry } from '../page';
 import { v4 as uuidv4 } from 'uuid';
+import { Entry } from '../../../../lib/types';
 
 type Props = {
   onAdd: (entry: Entry) => void;
