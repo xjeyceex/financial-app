@@ -1,3 +1,4 @@
+// app/page.tsx
 'use client';
 
 import Link from 'next/link';
@@ -18,9 +19,9 @@ const modules = [
 
 export default function Home() {
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background to-muted p-6 text-center">
-      <div className="space-y-6 max-w-md w-full">
-        <h1 className="text-5xl font-bold text-foreground">
+    <div className="h-screen overflow-hidden flex items-center justify-center bg-gradient-to-br from-background to-muted text-center">
+      <div className="space-y-6 max-w-md w-full px-6">
+        <h1 className="text-4xl font-bold text-foreground">
           Personal Finance Tools
         </h1>
         <p className="text-muted-foreground">
@@ -42,6 +43,6 @@ export default function Home() {
           ))}
         </div>
       </div>
-    </main>
+    </div>
   );
 }

@@ -65,21 +65,7 @@ export default function Sidebar() {
     setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
   }, [resolvedTheme, setTheme]);
 
-  if (!mounted) {
-    return (
-      <div className="fixed top-0 left-0 h-screen w-72 bg-white dark:bg-zinc-900 p-6 border-r border-gray-100 dark:border-zinc-700 hidden md:block">
-        <div className="animate-pulse space-y-4">
-          <div className="h-10 bg-gray-200 dark:bg-zinc-700 rounded-lg mb-8"></div>
-          {[...Array(4)].map((_, i) => (
-            <div
-              key={i}
-              className="h-8 bg-gray-200 dark:bg-zinc-700 rounded-lg"
-            ></div>
-          ))}
-        </div>
-      </div>
-    );
-  }
+  if (!mounted) return null;
 
   const renderLink = (item: NavItem) => {
     const Icon = item.icon;
@@ -112,12 +98,7 @@ export default function Sidebar() {
         onClick={() => isMobile && setOpen(false)}
         className={className}
       >
-        <Icon
-          className={clsx(
-            'w-5 h-5 flex-shrink-0',
-            isActive ? 'text-blue-500 dark:text-blue-300' : 'text-gray-400'
-          )}
-        />
+        <Icon className="w-5 h-5 flex-shrink-0" />
         <span className="truncate">{item.name}</span>
       </Link>
     );
@@ -125,72 +106,71 @@ export default function Sidebar() {
 
   return (
     <>
-      {isMobile && (
+      {/* Top Navbar */}
+      <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white dark:bg-zinc-900 shadow-sm border-b border-gray-200 dark:border-zinc-700 px-4 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setOpen(!open)}
+            className="md:hidden p-2 rounded-md hover:bg-gray-100 dark:hover:bg-zinc-800"
+          >
+            {open ? (
+              <HiX className="w-6 h-6 text-gray-600 dark:text-gray-300" />
+            ) : (
+              <HiMenu className="w-6 h-6 text-gray-600 dark:text-gray-300" />
+            )}
+          </button>
+
+          {/* Make PesoWise always visible */}
+          <Link
+            href="/"
+            className="text-xl font-semibold text-gray-800 dark:text-white pl-2 md:pl-4"
+          >
+            PesoWise
+          </Link>
+        </div>
+
         <button
-          onClick={() => setOpen(!open)}
-          className={clsx(
-            'fixed top-4 left-4 z-50 p-2 rounded-full shadow-md transition-colors',
-            'bg-white dark:bg-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-700',
-            open ? 'transform translate-x-52' : ''
-          )}
-          aria-label={open ? 'Close menu' : 'Open menu'}
+          onClick={toggleTheme}
+          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
         >
-          {open ? (
-            <HiX className="w-6 h-6 text-gray-600 dark:text-gray-300" />
+          {resolvedTheme === 'dark' ? (
+            <HiSun className="w-5 h-5 text-yellow-400" />
           ) : (
-            <HiMenu className="w-6 h-6 text-gray-600 dark:text-gray-300" />
+            <HiMoon className="w-5 h-5 text-gray-600" />
           )}
         </button>
-      )}
+      </header>
 
+      {/* Sidebar */}
       <aside
         className={clsx(
-          'fixed top-0 left-0 h-screen w-72 bg-white dark:bg-zinc-900 shadow-xl p-6 border-r border-gray-100 dark:border-zinc-700 z-40',
+          'fixed top-16 md:top-0 left-0 h-[calc(100vh-4rem)] md:h-screen w-72 bg-white dark:bg-zinc-900 shadow-lg p-6 border-r border-gray-100 dark:border-zinc-700 z-40',
           'transition-transform duration-300 ease-in-out',
           open ? 'translate-x-0' : '-translate-x-full',
           'md:translate-x-0'
         )}
         aria-hidden={!open && isMobile}
       >
-        <div className="flex justify-between items-center mb-8">
-          <Link
-            href="/"
-            className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2 hover:opacity-80 transition-opacity"
-            onClick={() => isMobile && setOpen(false)}
-          >
-            <span>Finance App</span>
-          </Link>
+        <div className="mb-4 hidden md:block text-2xl font-bold text-gray-800 dark:text-white">
+          PesoWise
         </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto max-h-[calc(100vh-180px)]">
+        <nav className="space-y-1 overflow-y-auto max-h-[calc(100vh-180px)]">
           {navItems.map((item) => (
             <div key={item.href}>{renderLink(item)}</div>
           ))}
         </nav>
 
-        <div className="pt-4 mt-4 border-t border-gray-100 dark:border-zinc-700 flex items-center justify-between">
-          <div className="text-sm text-gray-500 dark:text-gray-400">
-            © {new Date().getFullYear()} Finance App
-          </div>
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
-            aria-label={`Switch to ${resolvedTheme === 'dark' ? 'light' : 'dark'} mode`}
-          >
-            {resolvedTheme === 'dark' ? (
-              <HiSun className="w-5 h-5 text-yellow-400" />
-            ) : (
-              <HiMoon className="w-5 h-5 text-gray-600" />
-            )}
-          </button>
+        <div className="pt-4 mt-4 border-t border-gray-100 dark:border-zinc-700 text-sm text-gray-500 dark:text-gray-400">
+          © {new Date().getFullYear()} PesoWise
         </div>
       </aside>
 
+      {/* Overlay */}
       {open && isMobile && (
         <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 cursor-pointer"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30"
           onClick={() => setOpen(false)}
-          aria-hidden="true"
         />
       )}
     </>

@@ -41,12 +41,11 @@ export default function MoneyTrackerPage() {
   };
 
   return (
-    <main className="max-w-7xl px-1 md:px-6 lg:px-12 py-4 space-y-8">
+    <main className="w-full max-w-7xl mx-auto px-1 md:px-6 lg:px-12 py-4 space-y-8">
       {/* Dashboard */}
       <section className="flex flex-col lg:flex-row gap-6">
         {/* Wider Summary (2/3 width) */}
         <div className="lg:w-2/3 space-y-3">
-          <h2 className="text-xl font-semibold mb-2">Summary</h2>
           <div className="rounded-2xl  bg-muted/40 dark:bg-muted/10 shadow-sm">
             <Summary entries={entries} budget={budget} setBudget={setBudget} />
           </div>
