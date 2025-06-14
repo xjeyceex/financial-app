@@ -22,35 +22,41 @@ type ChartData = {
 
 type Props = {
   periods: [string, { total: number }][];
-  budget: number;
+  periodBudgets: Record<string, number>;
   formatBiweeklyLabel: (period: string) => string;
 };
+
 export default function BiweeklySpendingChart({
   periods,
-  budget,
+  periodBudgets,
   formatBiweeklyLabel,
 }: Props) {
   const { theme } = useTheme();
 
-  const chartData: ChartData[] = periods.map(([period, data]) => ({
-    period,
-    label: formatBiweeklyLabel(period),
-    total: data.total,
-    budget: budget,
-    savings: budget - data.total,
-  }));
+  // Create chart data with period-specific budgets
+  const chartData: ChartData[] = periods.map(([period, data]) => {
+    // Get the budget for this specific period, fallback to 0 if not found
+    const periodBudget = periodBudgets[period] || 0;
+    return {
+      period,
+      label: formatBiweeklyLabel(period),
+      total: data.total,
+      budget: periodBudget,
+      savings: periodBudget - data.total,
+    };
+  });
 
   if (chartData.length === 0) return null;
 
   // Light/dark themed colors from Tailwind palette
   const isDark = theme === 'dark';
   const colors = {
-    foreground: isDark ? '#f4f4f5' : '#0c0c0d', // zinc-100 / zinc-900
-    border: isDark ? '#3f3f46' : '#e4e4e7', // zinc-700 / zinc-200
-    primary: '#3b82f6', // blue-500
-    secondary: '#10b981', // emerald-500 (for savings)
-    danger: '#ef4444', // red-500 (for overspending)
-    popover: isDark ? '#18181b' : '#ffffff', // zinc-900 / white
+    foreground: isDark ? '#f4f4f5' : '#0c0c0d',
+    border: isDark ? '#3f3f46' : '#e4e4e7',
+    primary: '#3b82f6',
+    secondary: '#10b981',
+    danger: '#ef4444',
+    popover: isDark ? '#18181b' : '#ffffff',
   };
 
   return (
@@ -81,17 +87,22 @@ export default function BiweeklySpendingChart({
                 }
               />
               <Tooltip content={<CustomTooltip />} />
-              <ReferenceLine
-                y={budget}
-                stroke={colors.foreground}
-                strokeDasharray="3 3"
-                label={{
-                  position: 'top',
-                  value: 'Budget',
-                  fill: colors.foreground,
-                  fontSize: 11,
-                }}
-              />
+
+              {/* Add reference lines for each period's budget */}
+              {chartData.map((data, index) => (
+                <ReferenceLine
+                  key={index}
+                  y={data.budget}
+                  stroke={colors.foreground}
+                  strokeDasharray="3 3"
+                  label={{
+                    position: 'top',
+                    value: 'Budget',
+                    fill: colors.foreground,
+                    fontSize: 11,
+                  }}
+                />
+              ))}
 
               <Bar
                 dataKey="total"
@@ -116,6 +127,7 @@ export default function BiweeklySpendingChart({
     </div>
   );
 }
+
 const CustomTooltip = ({
   active,
   payload,
@@ -145,10 +157,19 @@ const CustomTooltip = ({
           <div className="font-medium text-muted-foreground">Spent</div>
         </div>
         <div>
-          <div className="text-sm font-semibold text-emerald-600">
-            ₱{savings.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+          <div
+            className={`text-sm font-semibold ${
+              savings >= 0 ? 'text-emerald-600' : 'text-red-500'
+            }`}
+          >
+            ₱
+            {Math.abs(savings).toLocaleString('en-PH', {
+              minimumFractionDigits: 2,
+            })}
           </div>
-          <div className="font-medium text-muted-foreground">Saved</div>
+          <div className="font-medium text-muted-foreground">
+            {savings >= 0 ? 'Saved' : 'Overspent'}
+          </div>
         </div>
       </div>
     </div>
