@@ -68,25 +68,25 @@ export default function BiweeklySpendingChart({
 
   return (
     <div className="space-y-8">
-      <div className="h-[400px] sm:h-[480px] lg:h-[520px] rounded-2xl bg-card shadow-md overflow-x-auto border">
-        <div className="min-w-[480px] sm:min-w-full h-full px-4 pt-3 pb-0 ">
+      <div className="h-[260px] sm:h-[480px] lg:h-[520px] rounded-2xl bg-card shadow-md overflow-x-auto border">
+        <div className="w-full h-full px-2 sm:px-4 pt-2 pb-0">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={chartData}
-              margin={{ top: 30, right: 30, left: 0, bottom: 0 }}
+              margin={{ top: 20, right: 20, left: 0, bottom: 0 }}
             >
               <XAxis
                 dataKey="label"
-                tick={{ fontSize: 13, fill: colors.foreground }}
+                tick={{ fontSize: 11, fill: colors.foreground }}
                 interval={0}
                 angle={-15}
                 textAnchor="end"
-                height={60}
+                height={50}
                 tickLine={false}
                 axisLine={{ stroke: colors.border }}
               />
               <YAxis
-                tick={{ fontSize: 13, fill: colors.foreground }}
+                tick={{ fontSize: 11, fill: colors.foreground }}
                 tickLine={false}
                 axisLine={{ stroke: colors.border }}
                 tickFormatter={(value) =>
@@ -104,14 +104,14 @@ export default function BiweeklySpendingChart({
                     position: 'top',
                     value: 'Budget',
                     fill: colors.foreground,
-                    fontSize: 13,
+                    fontSize: 11,
                   }}
                 />
               ))}
               <Bar
                 dataKey="total"
                 name="Spent"
-                radius={[6, 6, 0, 0]}
+                radius={[4, 4, 0, 0]}
                 fill={colors.primary}
                 fillOpacity={1}
                 activeBar={{ fill: colors.primary, fillOpacity: 0.9 }}
@@ -119,7 +119,7 @@ export default function BiweeklySpendingChart({
               <Bar
                 dataKey="savings"
                 name="Savings"
-                radius={[6, 6, 0, 0]}
+                radius={[4, 4, 0, 0]}
                 fill={colors.secondary}
                 fillOpacity={1}
                 activeBar={{ fill: colors.secondary, fillOpacity: 0.9 }}
@@ -134,7 +134,7 @@ export default function BiweeklySpendingChart({
         {chartData.map((data) => (
           <div
             key={data.period}
-            className="flex items-center justify-between text-base gap-3 bg-muted px-4 py-3 rounded-xl"
+            className="flex items-center justify-between min-w-0 text-base gap-3 bg-muted px-4 py-3 rounded-xl"
           >
             <span className="truncate font-medium text-sm sm:text-base">
               {data.label}
@@ -153,7 +153,7 @@ export default function BiweeklySpendingChart({
                   Edit
                 </Button>
               </DialogTrigger>
-              <DialogContent className="space-y-5 w-[92vw] max-w-sm rounded-2xl">
+              <DialogContent className="space-y-5 w-[92vw] max-w-sm max-h-[90vh] overflow-y-auto rounded-2xl">
                 <DialogTitle className="text-lg font-semibold">
                   Edit Budget for {data.label}
                 </DialogTitle>
