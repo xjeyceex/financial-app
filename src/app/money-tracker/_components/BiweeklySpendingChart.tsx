@@ -15,7 +15,7 @@ import { CustomTooltip } from './CustomToolTip';
 import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { DialogTitle } from '@radix-ui/react-dialog';
+import { DialogDescription, DialogTitle } from '@radix-ui/react-dialog';
 
 type ChartData = {
   period: string;
@@ -153,19 +153,26 @@ export default function BiweeklySpendingChart({
                   Edit
                 </Button>
               </DialogTrigger>
-              <DialogContent className="space-y-5 w-[92vw] max-w-sm max-h-[90vh] overflow-y-auto rounded-2xl">
-                <DialogTitle className="text-lg font-semibold">
-                  Edit Budget for {data.label}
-                </DialogTitle>
+              <DialogContent className="w-[92vw] max-w-sm max-h-[90vh] overflow-y-auto rounded-2xl px-5 py-4">
+                <div className="space-y-1.5">
+                  <DialogTitle className="text-base font-semibold">
+                    Edit Budget for {data.label}
+                  </DialogTitle>
+                  <DialogDescription className="text-sm text-muted-foreground">
+                    Set a custom amount for this period.
+                  </DialogDescription>
+                </div>
+
                 <Input
                   type="number"
                   value={tempBudget}
                   onChange={(e) => setTempBudget(Number(e.target.value))}
-                  className="text-lg py-3"
+                  className="text-base py-2"
                 />
+
                 <Button
-                  size="lg"
-                  className="w-full"
+                  size="sm"
+                  className="w-full mt-3"
                   onClick={() => {
                     if (editingPeriod) {
                       onBudgetChange(editingPeriod, tempBudget);
