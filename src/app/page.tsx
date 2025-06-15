@@ -19,8 +19,8 @@ const modules = [
 
 export default function Home() {
   return (
-    <div className="h-screen overflow-hidden flex items-center justify-center bg-gradient-to-br from-background to-muted text-center">
-      <div className="space-y-6 max-w-md w-full px-6">
+    <div className="min-h-[100dvh] overflow-hidden flex items-center justify-center bg-gradient-to-br from-background to-muted text-center">
+      <div className="space-y-6 max-w-md w-full px-6 py-4">
         <h1 className="text-4xl font-bold text-foreground">
           Personal Finance Tools
         </h1>
