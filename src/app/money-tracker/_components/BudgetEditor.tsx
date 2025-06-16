@@ -32,7 +32,6 @@ export default function BudgetEditor({
           autoFocus
           type="number"
           min="0"
-          step="100"
         />
       </div>
       <Button type="submit" size="icon" className="h-9 w-9" variant="default">
