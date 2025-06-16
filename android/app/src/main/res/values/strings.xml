@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">PesoWise</string>
-    <string name="title_activity_main">PesoWise</string>
-    <string name="package_name">com.jcmiguel.pesowise</string>
-    <string name="custom_url_scheme">com.jcmiguel.pesowise</string>
-</resources>
