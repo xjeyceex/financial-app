@@ -38,12 +38,24 @@ export default function EntryForm({
     setDescription('');
   };
 
+  const parseAmount = (input: string): number => {
+    try {
+      const sanitized = input.replace(/[^-()\d/*+.]/g, '');
+      const result = Function(`"use strict"; return (${sanitized})`)();
+      return typeof result === 'number' && !isNaN(result) ? result : 0;
+    } catch {
+      return 0;
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    const evaluatedAmount = parseAmount(amount);
+
     const entry: Entry = {
       id: editingEntry ? editingEntry.id : uuidv4(),
-      amount: parseFloat(amount),
+      amount: evaluatedAmount,
       item: item.trim() || undefined,
       date,
       description: description.trim() || undefined,
@@ -62,14 +74,19 @@ export default function EntryForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <input
-        type="number"
-        step="0.01"
-        placeholder="Amount"
+        type="text"
+        inputMode="decimal"
+        pattern="[0-9+\-*/(). ]*"
+        placeholder="Amount (e.g. 10+5+3.25)"
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
         required
         className="w-full px-3 py-2 border rounded"
       />
+
+      <div className="text-sm text-muted-foreground">
+        Parsed amount: <strong>₱{parseAmount(amount).toFixed(2)}</strong>
+      </div>
       <input
         type="text"
         placeholder="Item (optional)"
