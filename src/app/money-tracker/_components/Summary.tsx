@@ -27,9 +27,13 @@ import { DialogDescription } from '@radix-ui/react-dialog';
 import { BiweeklyData, BiweeklyRange, Entry } from '../../../../lib/types';
 
 type Props = {
+  budgetId: string;
   entries: Entry[];
   budget: number;
-  setBudget: (value: number) => void;
+  setBudget: (newBudget: number) => void;
+  budgetName?: string;
+  isEditingBudget: boolean;
+  setIsEditingBudget: (isEditing: boolean) => void;
 };
 
 interface BudgetStorage {
@@ -43,14 +47,21 @@ const biweeklyPresets: BiweeklyRange[] = [
   { startDay1: 5, startDay2: 21, label: '05-20 / 21-04' },
 ];
 
-const BIWEEKLY_STORAGE_KEY = 'moneytracker_biweekly_range';
-const BUDGET_STORAGE_KEY = 'moneytracker_budget';
-
 const formatCurrency = (amount: number) =>
   `₱${amount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
 
-export default function Summary({ entries, budget, setBudget }: Props) {
-  const [isEditingBudget, setIsEditingBudget] = useState(false);
+export default function Summary({
+  budgetId,
+  entries,
+  budget,
+  setBudget,
+  budgetName,
+  isEditingBudget,
+  setIsEditingBudget,
+}: Props) {
+  const BUDGET_STORAGE_KEY = `budget-${budgetId}`;
+  const BIWEEKLY_STORAGE_KEY = `biweekly-range-${budgetId}`;
+
   const [tempBudget, setTempBudget] = useState(budget.toString());
   const [biweeklyRangeState, setBiweeklyRangeState] = useState<BiweeklyRange>(
     biweeklyPresets[0]
@@ -60,6 +71,11 @@ export default function Summary({ entries, budget, setBudget }: Props) {
   const [periodBudgets, setPeriodBudgets] = useState<Record<string, number>>(
     {}
   );
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   const biweeklyRange = biweeklyRangeState;
 
@@ -96,22 +112,24 @@ export default function Summary({ entries, budget, setBudget }: Props) {
 
   const currentPeriodStart = getCurrentPeriodStartDate();
   const currentPeriodEnd = getCurrentPeriodEndDate();
+  const currentBudgetEntries = entries.filter((e) => e.budgetId === budgetId);
 
-  const currentPeriodEntries = entries.filter((entry) => {
+  const currentPeriodEntries = currentBudgetEntries.filter((entry) => {
     const date = new Date(entry.date);
     return date >= currentPeriodStart && date <= currentPeriodEnd;
   });
-
   const formatBiweeklyLabel = (periodKey: string) => {
     const [year, month, day] = periodKey.split('-').map(Number);
-    const startDate = new Date(year, month - 1, day);
-    const startDay = startDate.getDate();
-    const monthName = startDate.toLocaleString('default', { month: 'short' });
+    const startDay = day;
+    const monthName = new Date(year, month - 1).toLocaleString('default', {
+      month: 'short',
+    });
 
+    // Calculate endDay based on startDay
     const endDay =
       startDay === biweeklyRange.startDay1
         ? biweeklyRange.startDay2 - 1
-        : new Date(year, month, 0).getDate();
+        : new Date(year, month, 0).getDate(); // last day of month
 
     return `${monthName} ${startDay}-${endDay}`;
   };
@@ -121,6 +139,8 @@ export default function Summary({ entries, budget, setBudget }: Props) {
     const day = now.getDate();
     const month = now.getMonth() + 1;
     const year = now.getFullYear();
+
+    // Normalize to either startDay1 or startDay2
     const startDay =
       day < biweeklyRange.startDay2
         ? biweeklyRange.startDay1
@@ -173,7 +193,23 @@ export default function Summary({ entries, budget, setBudget }: Props) {
     }
 
     return false;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getCurrentPeriodKey, lastResetDate, budget, setBudget]);
+
+  const normalizePeriodKey = (periodKey: string) => {
+    const [year, month, day] = periodKey.split('-').map(Number);
+    // Normalize day to either startDay1 or startDay2
+    return day < biweeklyRange.startDay2
+      ? `${year}-${String(month).padStart(2, '0')}-${String(biweeklyRange.startDay1).padStart(2, '0')}`
+      : `${year}-${String(month).padStart(2, '0')}-${String(biweeklyRange.startDay2).padStart(2, '0')}`;
+  };
+
+  // Group budgets by normalized keys
+  const groupedBudgets: Record<string, number> = {};
+  Object.entries(periodBudgets).forEach(([period, budget]) => {
+    const normalized = normalizePeriodKey(period);
+    groupedBudgets[normalized] = budget; // Overwrite or pick the latest budget for that period
+  });
 
   useEffect(() => {
     const savedRange = localStorage.getItem(BIWEEKLY_STORAGE_KEY);
@@ -205,11 +241,18 @@ export default function Summary({ entries, budget, setBudget }: Props) {
     } else {
       setBudget(4000);
     }
-  }, [setBudget]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     checkAndResetBudget();
   }, [biweeklyRange, checkAndResetBudget]);
+
+  useEffect(() => {
+    if (!isEditingBudget) {
+      setTempBudget(budget.toString()); // Sync tempBudget only when not editing
+    }
+  }, [budget, isEditingBudget]);
 
   const setBiweeklyRange = (range: BiweeklyRange) => {
     setBiweeklyRangeState(range);
@@ -261,7 +304,7 @@ export default function Summary({ entries, budget, setBudget }: Props) {
   const percentageUsed = (totalSpent / budget) * 100;
 
   const biweeklyData: Record<string, BiweeklyData> = {};
-  entries.forEach((entry) => {
+  currentBudgetEntries.forEach((entry) => {
     const date = new Date(entry.date);
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -332,7 +375,19 @@ export default function Summary({ entries, budget, setBudget }: Props) {
 
   return (
     <div className="px-4 py-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm space-y-4">
-      {/* Budget Section */}
+      {/* Add dynamic title showing active period */}
+      <div className="flex justify-between items-center">
+        <h2 className="text-lg font-semibold">
+          Summary ({formatBiweeklyLabel(getCurrentPeriodKey())})
+        </h2>
+        {hasMounted && budgetId && (
+          <div className="text-xs text-muted-foreground">
+            Budget for: <code>{budgetName}</code>
+          </div>
+        )}
+      </div>
+
+      {/* Budget Section - with improved percentage display */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-4">
         {isEditingBudget ? (
           <BudgetEditor
@@ -359,7 +414,15 @@ export default function Summary({ entries, budget, setBudget }: Props) {
             >
               <History className="w-4 h-4" />
             </button>
-            <p className="text-xs text-muted-foreground mt-[1px]">
+            <p
+              className={`text-xs mt-[1px] ${
+                percentageUsed > 90
+                  ? 'text-red-500 font-semibold'
+                  : percentageUsed > 75
+                    ? 'text-yellow-500 font-medium'
+                    : 'text-muted-foreground'
+              }`}
+            >
               {entries.length > 0 ? (
                 <>{Math.round(percentageUsed)}% utilized</>
               ) : (
@@ -370,12 +433,19 @@ export default function Summary({ entries, budget, setBudget }: Props) {
         )}
 
         <div className="flex-1 w-full">
-          <ProgressBar
-            totalSpent={totalSpent}
-            budget={budget}
-            percentageUsed={percentageUsed}
-            remaining={remaining}
-          />
+          {hasMounted &&
+            (budget > 0 ? (
+              <ProgressBar
+                totalSpent={totalSpent}
+                budget={budget}
+                percentageUsed={percentageUsed}
+                remaining={remaining}
+              />
+            ) : (
+              <div className="text-xs text-muted-foreground italic">
+                Budget not set
+              </div>
+            ))}
         </div>
       </div>
 
@@ -458,7 +528,6 @@ export default function Summary({ entries, budget, setBudget }: Props) {
         />
       )}
 
-      {/* Budget History Dialog */}
       <Dialog open={showBudgetHistory} onOpenChange={setShowBudgetHistory}>
         <DialogContent>
           <DialogHeader>
@@ -468,22 +537,20 @@ export default function Summary({ entries, budget, setBudget }: Props) {
             </DialogDescription>
           </DialogHeader>
           <div className="max-h-[60vh] overflow-y-auto">
-            {Object.entries(periodBudgets).length > 0 ? (
-              <div className="space-y-2">
-                {Object.entries(periodBudgets)
-                  .sort(([a], [b]) => (a > b ? -1 : 1))
-                  .map(([period, budget]) => (
-                    <div
-                      key={period}
-                      className="flex justify-between items-center p-2 border rounded"
-                    >
-                      <span className="font-medium">
-                        {formatBiweeklyLabel(period)}
-                      </span>
-                      <span>{formatCurrency(budget)}</span>
-                    </div>
-                  ))}
-              </div>
+            {Object.entries(groupedBudgets).length > 0 ? (
+              Object.entries(groupedBudgets)
+                .sort(([a], [b]) => (a > b ? -1 : 1))
+                .map(([period, budget]) => (
+                  <div
+                    key={period}
+                    className="flex justify-between items-center p-2 border rounded"
+                  >
+                    <span className="font-medium">
+                      {formatBiweeklyLabel(period)}
+                    </span>
+                    <span>{formatCurrency(budget)}</span>
+                  </div>
+                ))
             ) : (
               <p className="text-muted-foreground text-center py-4">
                 No budget history available

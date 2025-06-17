@@ -9,6 +9,7 @@ type Props = {
   onUpdate: (entry: Entry) => void;
   editingEntry: Entry | null;
   cancelEdit: () => void;
+  budgetId: string;
 };
 
 export default function EntryForm({
@@ -16,6 +17,7 @@ export default function EntryForm({
   onUpdate,
   editingEntry,
   cancelEdit,
+  budgetId,
 }: Props) {
   const [amount, setAmount] = useState('');
   const [item, setItem] = useState('');
@@ -28,8 +30,11 @@ export default function EntryForm({
       setItem(editingEntry.item || '');
       setDate(editingEntry.date);
       setDescription(editingEntry.description || '');
+    } else {
+      resetForm();
     }
-  }, [editingEntry]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingEntry?.id]);
 
   const resetForm = () => {
     setAmount('');
@@ -41,7 +46,7 @@ export default function EntryForm({
   const parseAmount = (input: string): number => {
     try {
       const sanitized = input.replace(/[^-()\d/*+.]/g, '');
-      const result = Function(`"use strict"; return (${sanitized})`)();
+      const result = Function(`\"use strict\"; return (${sanitized})`)();
       return typeof result === 'number' && !isNaN(result) ? result : 0;
     } catch {
       return 0;
@@ -59,6 +64,7 @@ export default function EntryForm({
       item: item.trim() || undefined,
       date,
       description: description.trim() || undefined,
+      budgetId, // ✅ Include it
     };
 
     if (editingEntry) {
@@ -76,7 +82,7 @@ export default function EntryForm({
       <input
         type="text"
         inputMode="decimal"
-        pattern="[0-9+\-*/(). ]*"
+        pattern="[0-9+\\-*/(). ]*"
         placeholder="Amount (e.g. 10+5+3.25)"
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
@@ -87,6 +93,7 @@ export default function EntryForm({
       <div className="text-sm text-muted-foreground">
         Parsed amount: <strong>₱{parseAmount(amount).toFixed(2)}</strong>
       </div>
+
       <input
         type="text"
         placeholder="Item (optional)"
@@ -94,6 +101,7 @@ export default function EntryForm({
         onChange={(e) => setItem(e.target.value)}
         className="w-full px-3 py-2 border rounded"
       />
+
       <input
         type="datetime-local"
         value={date}
@@ -101,6 +109,7 @@ export default function EntryForm({
         required
         className="w-full px-3 py-2 border rounded"
       />
+
       <input
         type="text"
         placeholder="Description (optional)"
@@ -108,6 +117,7 @@ export default function EntryForm({
         onChange={(e) => setDescription(e.target.value)}
         className="w-full px-3 py-2 border rounded"
       />
+
       <div className="flex gap-2">
         <button
           type="submit"

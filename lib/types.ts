@@ -4,6 +4,7 @@ export type Entry = {
   item?: string;
   date: string;
   description?: string;
+  budgetId: string;
 };
 
 export type BiweeklyData = {

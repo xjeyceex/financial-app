@@ -1,33 +1,59 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 export function useLocalStorage<T>(key: string, initialValue: T) {
   const [value, setValue] = useState<T>(initialValue);
-  const [isHydrated, setIsHydrated] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-
+    setIsClient(true);
     try {
       const item = localStorage.getItem(key);
       if (item) setValue(JSON.parse(item));
     } catch (error) {
-      console.error(`Error loading localStorage key "${key}":`, error);
+      console.error(`Error reading localStorage key "${key}":`, error);
     }
-
-    setIsHydrated(true);
   }, [key]);
 
+  const setStoredValue = useCallback(
+    (newValue: T | ((prev: T) => T)) => {
+      setValue((prevValue) => {
+        const computedValue =
+          typeof newValue === 'function'
+            ? (newValue as (prev: T) => T)(prevValue)
+            : newValue;
+
+        try {
+          localStorage.setItem(key, JSON.stringify(computedValue));
+        } catch (error) {
+          console.error(`Error writing to localStorage key "${key}":`, error);
+        }
+
+        return computedValue;
+      });
+    },
+    [key]
+  );
+
   useEffect(() => {
-    if (!isHydrated) return;
+    const handleStorage = () => {
+      try {
+        const item = localStorage.getItem(key);
+        if (item) setValue(JSON.parse(item));
+      } catch (error) {
+        console.error(`Error syncing localStorage key "${key}":`, error);
+      }
+    };
 
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-    } catch (error) {
-      console.error(`Error saving to localStorage key "${key}":`, error);
-    }
-  }, [key, value, isHydrated]);
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, [key]);
 
-  return [value, setValue] as const;
+  // Prevent SSR mismatch by returning undefined before hydration
+  if (!isClient) {
+    return [initialValue, () => {}] as const;
+  }
+
+  return [value, setStoredValue] as const;
 }
