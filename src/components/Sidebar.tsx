@@ -73,7 +73,7 @@ export default function Sidebar() {
       isActive
         ? 'bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300'
         : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white',
-      'border-r-4',
+      'border-l-4',
       isActive ? 'border-blue-500 dark:border-blue-400' : 'border-transparent',
       item.disabled && 'opacity-50 cursor-not-allowed pointer-events-none'
     );
@@ -93,9 +93,26 @@ export default function Sidebar() {
   return (
     <>
       {/* Top Navbar */}
-      <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white dark:bg-zinc-900 shadow-sm border-b border-gray-200 dark:border-zinc-700 px-4 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          {/* Always visible hamburger menu */}
+      <header className="fixed top-0 left-0 right-0 z-50 h-16  bg-white dark:bg-zinc-900 shadow-sm border-b border-gray-200 dark:border-zinc-700 px-6 flex items-center justify-between">
+        <Link
+          href="/"
+          className="text-xl font-semibold text-gray-800 dark:text-white"
+        >
+          PesoWise
+        </Link>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
+          >
+            {resolvedTheme === 'dark' ? (
+              <HiSun className="w-5 h-5 text-yellow-400" />
+            ) : (
+              <HiMoon className="w-5 h-5 text-gray-600" />
+            )}
+          </button>
+
           <button
             onClick={toggleSidebar}
             className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-zinc-800"
@@ -107,39 +124,16 @@ export default function Sidebar() {
               <HiMenu className="w-6 h-6 text-gray-600 dark:text-gray-300" />
             )}
           </button>
-
-          {/* Logo */}
-          <Link
-            href="/"
-            className="text-xl font-semibold text-gray-800 dark:text-white"
-          >
-            PesoWise
-          </Link>
         </div>
-
-        <button
-          onClick={toggleTheme}
-          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
-        >
-          {resolvedTheme === 'dark' ? (
-            <HiSun className="w-5 h-5 text-yellow-400" />
-          ) : (
-            <HiMoon className="w-5 h-5 text-gray-600" />
-          )}
-        </button>
       </header>
 
       {/* Sidebar */}
       <aside
         className={clsx(
           'fixed top-16 h-[calc(100vh-4rem)] w-72 bg-white dark:bg-zinc-900 shadow-lg p-6 z-40',
-          'transition-transform duration-300 ease-in-out border-r border-gray-100 dark:border-zinc-700',
-          isMobile ? 'right-0' : 'left-0',
-          sidebarOpen
-            ? 'translate-x-0'
-            : isMobile
-              ? 'translate-x-full'
-              : '-translate-x-full'
+          'transition-transform duration-300 ease-in-out border-l border-gray-100 dark:border-zinc-700',
+          'right-0',
+          sidebarOpen ? 'translate-x-0' : 'translate-x-full'
         )}
         aria-hidden={!sidebarOpen}
       >
