@@ -189,7 +189,10 @@ export default function Summary({
         showBudgetHistory={showBudgetHistory}
         setShowBudgetHistory={setShowBudgetHistory}
         periodBudgets={periodBudgets}
+        updateBudget={updateBudget} // ✅ now passed in
         formatPeriodLabel={formatPeriodLabel}
+        currentPeriodKey={activePeriodKey}
+        currentBudget={budget}
       />
     </div>
   );
