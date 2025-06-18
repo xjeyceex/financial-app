@@ -61,29 +61,40 @@ export function useBiweeklyHistory({
 }) {
   return useMemo(() => {
     const data: Record<string, BiweeklyData> = {};
+
+    // ✅ Initialize all period budgets FIRST — even if there are no entries
+    Object.entries(periodBudgets).forEach(([key, budget]) => {
+      if (!data[key]) {
+        data[key] = {
+          total: 0,
+          budget,
+          savings: 0,
+          items: {},
+          debtPayments: 0,
+        };
+      }
+    });
+
     const currentBudgetEntries = entries.filter((e) => e.budgetId === budgetId);
 
-    // First pass: Calculate regular expenses and identify debt payments
+    // ✅ Add regular (non-debt) entries
     currentBudgetEntries.forEach((entry) => {
       const date = new Date(entry.date);
       const key = getBiweeklyKey(date, biweeklyRange);
 
       if (!data[key]) {
-        const periodBudget = periodBudgets?.[key] ?? 0; // ✅ Use passed-in periodBudgets
-
+        // Ensure any unexpected key is still initialized
         data[key] = {
           total: 0,
-          budget: periodBudget,
-          savings: periodBudget,
+          budget: periodBudgets[key] ?? 0,
+          savings: 0,
           items: {},
           debtPayments: 0,
         };
       }
 
-      // Skip debt payments in regular total calculation
       if (entry.item !== 'Debt Payment') {
         data[key].total += entry.amount;
-        data[key].savings = data[key].budget - data[key].total;
 
         const itemKey = entry.item || 'Unspecified';
         data[key].items[itemKey] =
@@ -91,24 +102,36 @@ export function useBiweeklyHistory({
       }
     });
 
-    // Second pass: Calculate debt payments separately
+    // ✅ Compute initial savings (before debt payments)
+    Object.values(data).forEach((d) => {
+      d.savings = d.budget - d.total;
+    });
+
+    // ✅ Add debt payments
     currentBudgetEntries.forEach((entry) => {
       if (entry.item === 'Debt Payment') {
         const date = new Date(entry.date);
         const key = getBiweeklyKey(date, biweeklyRange);
 
-        if (data[key]) {
-          data[key].debtPayments += entry.amount;
+        if (!data[key]) {
+          // Just in case a debt entry is on a period that wasn't initialized
+          data[key] = {
+            total: 0,
+            budget: periodBudgets[key] ?? 0,
+            savings: 0,
+            items: {},
+            debtPayments: 0,
+          };
         }
+
+        data[key].debtPayments += entry.amount;
       }
     });
 
     const periods = Object.entries(data).sort(([a], [b]) => (a < b ? -1 : 1));
 
-    const savingsPerPeriod = periods.map(([, d]) => {
-      // Savings after debt payments
-      return d.savings - d.debtPayments;
-    });
+    // 💡 Calculate *net* savings per period (after debt payments)
+    const savingsPerPeriod = periods.map(([, d]) => d.savings - d.debtPayments);
 
     const averageBiweeklyExpenses =
       periods.reduce((sum, [, d]) => sum + d.total, 0) / (periods.length || 1);
@@ -117,10 +140,12 @@ export function useBiweeklyHistory({
       savingsPerPeriod.reduce((sum, s) => sum + s, 0) /
       (savingsPerPeriod.length || 1);
 
+    // ✅ totalSavings only includes positive net savings
     const totalSavings = savingsPerPeriod
       .filter((s) => s >= 0)
       .reduce((sum, s) => sum + s, 0);
 
+    // ✅ totalDebt = absolute value of negative net savings (minus paid debt)
     const totalDebt = Math.max(
       0,
       savingsPerPeriod
@@ -128,6 +153,8 @@ export function useBiweeklyHistory({
         .reduce((sum, s) => sum + Math.abs(s), 0) -
         periods.reduce((sum, [, d]) => sum + d.debtPayments, 0)
     );
+
+    console.log('📊 Period keys in history:', Object.keys(data));
 
     return {
       biweeklyData: data,

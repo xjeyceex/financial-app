@@ -21,11 +21,18 @@ import {
   SelectItem,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { FiPlus, FiRepeat } from 'react-icons/fi';
+import { FiPlus, FiRepeat, FiTrash } from 'react-icons/fi';
 import { Entry } from '../../../lib/types';
 import { Pencil } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import DeleteBudgetDialog from './_components/DeleteBudgetDialog';
 
 type BudgetData = {
   id: string;
@@ -56,6 +63,7 @@ export default function MoneyTrackerPage() {
   const [newBudgetModalOpen, setNewBudgetModalOpen] = useState(false);
   const [newBudgetName, setNewBudgetName] = useState('');
   const [newBudgetRecurring, setNewBudgetRecurring] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const [isEditingBudget, setIsEditingBudget] = useState(false);
 
@@ -226,21 +234,6 @@ export default function MoneyTrackerPage() {
                   >
                     Save Changes
                   </Button>
-                  <Button
-                    variant="destructive"
-                    disabled={activeBudgetIndex === 0}
-                    onClick={() => {
-                      if (activeBudgetIndex !== 0) {
-                        const updated = [...budgets];
-                        updated.splice(activeBudgetIndex, 1);
-                        setBudgets(updated);
-                        setActiveBudgetIndex(0);
-                        setEditBudgetModalOpen(false);
-                      }
-                    }}
-                  >
-                    Delete Budget
-                  </Button>
                 </div>
               </div>
             </DialogContent>
@@ -305,6 +298,34 @@ export default function MoneyTrackerPage() {
               </div>
             </DialogContent>
           </Dialog>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="destructive"
+                  disabled={activeBudgetIndex === 0}
+                  onClick={() => setDialogOpen(true)}
+                >
+                  <FiTrash className="w-5 h-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Delete Budget</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <DeleteBudgetDialog
+              open={dialogOpen}
+              onClose={() => setDialogOpen(false)}
+              onConfirm={() => {
+                const updated = [...budgets];
+                updated.splice(activeBudgetIndex, 1);
+                setBudgets(updated);
+                setActiveBudgetIndex(0);
+                setEditBudgetModalOpen(false);
+              }}
+            />
+          </TooltipProvider>
         </div>
       </div>
 

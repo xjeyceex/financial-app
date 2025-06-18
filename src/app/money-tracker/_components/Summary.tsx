@@ -9,7 +9,7 @@ import { useBudgetStorage } from '../../../../lib/hooks/useBudgetStorage';
 import BudgetHistoryDialog from './BudgetHistoryDialog';
 import BiweeklyChartDialog from './BiweeklyChartDialog';
 import BudgetSection from './BudgetSection';
-import { groupPeriodBudgets } from '../../../../lib/functions';
+import { getBiweeklyKey, groupPeriodBudgets } from '../../../../lib/functions';
 import StatsGrid from './StatsGrid';
 import {
   useBiweeklyHistory,
@@ -46,6 +46,11 @@ export default function Summary({
   const BIWEEKLY_STORAGE_KEY = `biweekly-range-${budgetId}`;
 
   const [tempBudget, setTempBudget] = useState(budget.toString());
+
+  useEffect(() => {
+    setTempBudget(budget.toString());
+  }, [budget]);
+
   const [biweeklyRange, setBiweeklyRangeState] = useState<BiweeklyRange>(
     biweeklyPresets[0]
   );
@@ -119,13 +124,19 @@ export default function Summary({
     biweeklyRange,
   });
 
+  const currentKey = getBiweeklyKey(new Date(), biweeklyRange);
+
+  const computedPeriodBudgets = {
+    ...periodBudgets,
+    [currentKey]: budget, // 👈 override the current period with updated budget
+  };
+
   const { periods, totalSavings, totalDebt } = useBiweeklyHistory({
     entries,
     budgetId,
     biweeklyRange,
-    periodBudgets,
+    periodBudgets: computedPeriodBudgets,
   });
-
   const [peakPeriodKey, peakPeriodData] = periods.reduce(
     (a, b) => (b[1].total > a[1].total ? b : a),
     [
@@ -221,7 +232,6 @@ export default function Summary({
             <PeakSpending
               peakPeriodKey={peakPeriodKey}
               peakPeriodData={peakPeriodData}
-              budget={peakPeriodData.budget}
               formatBiweeklyLabel={formatBiweeklyLabel}
             />
           )}
