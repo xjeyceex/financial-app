@@ -12,6 +12,7 @@ export type BiweeklyData = {
   budget: number;
   savings: number;
   items: Record<string, number>;
+  debtPayments: number; // Add this
 };
 
 export type BiweeklyRange = {

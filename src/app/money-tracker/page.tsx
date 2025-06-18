@@ -74,6 +74,24 @@ export default function MoneyTrackerPage() {
     });
   };
 
+  const handlePayDebt = (amount: number) => {
+    if (!currentBudget) return;
+
+    // Create a debt payment entry
+    const debtPaymentEntry: Entry = {
+      id: uuidv4(),
+      budgetId: currentBudget.id,
+      amount: amount,
+      date: new Date().toISOString(),
+      item: 'Debt Payment',
+    };
+
+    // Add the new entry
+    updateCurrentBudget({
+      entries: [debtPaymentEntry, ...currentBudget.entries],
+    });
+  };
+
   const addEntry = (entry: Entry) => {
     updateCurrentBudget({ entries: [entry, ...currentBudget.entries] });
     setModalOpen(false);
@@ -247,6 +265,7 @@ export default function MoneyTrackerPage() {
               setBudget={(value) => updateCurrentBudget({ budget: value })}
               isEditingBudget={isEditingBudget}
               setIsEditingBudget={setIsEditingBudget}
+              onPayDebt={handlePayDebt} // Add this line
             />
           </div>
         </div>

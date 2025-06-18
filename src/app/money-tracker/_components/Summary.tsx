@@ -29,6 +29,7 @@ type SummaryProps = {
   budgetName?: string;
   isEditingBudget: boolean;
   setIsEditingBudget: (isEditing: boolean) => void;
+  onPayDebt?: (amount: number) => void; // Add this line
 };
 
 export default function Summary({
@@ -36,6 +37,7 @@ export default function Summary({
   entries,
   budget,
   setBudget,
+  onPayDebt,
   isEditingBudget,
   setIsEditingBudget,
 }: SummaryProps) {
@@ -137,7 +139,16 @@ export default function Summary({
 
   const [peakPeriodKey, peakPeriodData] = periods.reduce(
     (a, b) => (b[1].total > a[1].total ? b : a),
-    ['', { total: 0, items: {}, budget: 0, savings: 0 }]
+    [
+      '',
+      {
+        total: 0,
+        items: {},
+        budget: 0,
+        savings: 0,
+        debtPayments: 0, // Add this to match the type
+      },
+    ]
   );
 
   const mostExpensivePerPeriod = periods.map(([period, data]) => {
@@ -207,8 +218,11 @@ export default function Summary({
         onBudgetChange={(period, newBudget) => updateBudget(newBudget, period)}
       />
 
-      <StatsGrid totalDebt={totalDebt} totalSavings={totalSavings} />
-
+      <StatsGrid
+        totalDebt={totalDebt}
+        totalSavings={totalSavings}
+        onPayDebt={onPayDebt}
+      />
       {peakPeriodKey && (
         <PeakSpending
           peakPeriodKey={peakPeriodKey}
