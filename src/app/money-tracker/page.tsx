@@ -21,18 +21,19 @@ import {
   SelectItem,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { FiPlus, FiRepeat, FiTrash } from 'react-icons/fi';
+import { FiEdit, FiPlus, FiRepeat, FiTrash } from 'react-icons/fi';
 import { Entry } from '../../../lib/types';
-import { Pencil } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import DeleteBudgetDialog from './_components/DeleteBudgetDialog';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import { HiOutlineDotsHorizontal } from 'react-icons/hi';
 
 type BudgetData = {
   id: string;
@@ -140,6 +141,7 @@ export default function MoneyTrackerPage() {
         <label className="text-sm font-medium">Budget for:</label>
 
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          {/* Budget Select */}
           <Select
             value={currentBudget.id}
             onValueChange={(value) => {
@@ -168,23 +170,12 @@ export default function MoneyTrackerPage() {
             </SelectContent>
           </Select>
 
+          {/* Edit Budget Dialog */}
           <Dialog
             open={editBudgetModalOpen}
             onOpenChange={setEditBudgetModalOpen}
           >
-            <DialogTrigger asChild>
-              <Button
-                size="sm"
-                variant="outline"
-                className="flex items-center gap-1"
-              >
-                <span className="block sm:hidden">
-                  <Pencil className="w-4 h-4" />
-                </span>
-                <span className="hidden sm:block">Edit</span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-sm top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+            <DialogContent className="max-w-sm">
               <DialogHeader>
                 <DialogTitle>Edit Budget</DialogTitle>
               </DialogHeader>
@@ -221,7 +212,7 @@ export default function MoneyTrackerPage() {
                   </label>
                 </div>
 
-                <div className="flex justify-between gap-2">
+                <div className="flex justify-end gap-2">
                   <Button
                     onClick={() => {
                       if (nameInput.trim() !== '') {
@@ -238,28 +229,60 @@ export default function MoneyTrackerPage() {
               </div>
             </DialogContent>
           </Dialog>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="outline">
+                <HiOutlineDotsHorizontal className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
 
+            <DropdownMenuContent align="end" className="w-44">
+              <DropdownMenuItem onClick={() => setEditBudgetModalOpen(true)}>
+                <FiEdit className="mr-2 w-4 h-4" />
+                Edit Budget
+              </DropdownMenuItem>
+
+              {activeBudgetIndex !== 0 && (
+                <DropdownMenuItem onClick={() => setDialogOpen(true)}>
+                  <FiTrash className="mr-2 w-4 h-4 text-red-500" />
+                  Delete Budget
+                </DropdownMenuItem>
+              )}
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem onClick={() => setNewBudgetModalOpen(true)}>
+                <FiPlus className="mr-2 w-4 h-4" />
+                New Budget
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          {/* Delete Budget Button with Tooltip and Confirm Dialog */}
+
+          <DeleteBudgetDialog
+            open={dialogOpen}
+            onClose={() => setDialogOpen(false)}
+            onConfirm={() => {
+              const updated = [...budgets];
+              updated.splice(activeBudgetIndex, 1);
+              setBudgets(updated);
+              setActiveBudgetIndex(0);
+              setEditBudgetModalOpen(false);
+            }}
+          />
+
+          {/* Create Budget Dialog */}
           <Dialog
             open={newBudgetModalOpen}
             onOpenChange={setNewBudgetModalOpen}
           >
-            <DialogTrigger asChild>
-              <Button
-                size="icon"
-                variant="outline"
-                className="w-8 h-8 p-0 flex items-center justify-center"
-              >
-                <FiPlus size={28} strokeWidth={3} />
-              </Button>
-            </DialogTrigger>
             <DialogContent className="max-w-sm">
               <DialogHeader>
                 <DialogTitle>Create New Budget</DialogTitle>
               </DialogHeader>
               <div className="space-y-3">
-                <input
+                <Input
                   type="text"
-                  className="w-full px-3 py-2 border rounded"
                   placeholder="Budget Name"
                   value={newBudgetName}
                   onChange={(e) => setNewBudgetName(e.target.value)}
@@ -298,34 +321,6 @@ export default function MoneyTrackerPage() {
               </div>
             </DialogContent>
           </Dialog>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="destructive"
-                  disabled={activeBudgetIndex === 0}
-                  onClick={() => setDialogOpen(true)}
-                >
-                  <FiTrash className="w-5 h-5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Delete Budget</p>
-              </TooltipContent>
-            </Tooltip>
-
-            <DeleteBudgetDialog
-              open={dialogOpen}
-              onClose={() => setDialogOpen(false)}
-              onConfirm={() => {
-                const updated = [...budgets];
-                updated.splice(activeBudgetIndex, 1);
-                setBudgets(updated);
-                setActiveBudgetIndex(0);
-                setEditBudgetModalOpen(false);
-              }}
-            />
-          </TooltipProvider>
         </div>
       </div>
 
