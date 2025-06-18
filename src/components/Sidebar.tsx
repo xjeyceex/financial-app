@@ -6,7 +6,6 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   HiMenu,
   HiX,
-  HiHome,
   HiCurrencyDollar,
   HiCalculator,
   HiMoon,
@@ -24,11 +23,6 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  {
-    name: 'Home',
-    href: '/',
-    icon: HiHome,
-  },
   {
     name: 'Money Tracker',
     href: '/money-tracker',
@@ -78,7 +72,7 @@ export default function Sidebar() {
       isActive
         ? 'bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300'
         : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white',
-      'border-l-4',
+      'border-r-4',
       isActive ? 'border-blue-500 dark:border-blue-400' : 'border-transparent',
       item.disabled && 'opacity-50 cursor-not-allowed pointer-events-none'
     );
@@ -108,7 +102,26 @@ export default function Sidebar() {
     <>
       {/* Top Navbar */}
       <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white dark:bg-zinc-900 shadow-sm border-b border-gray-200 dark:border-zinc-700 px-4 flex items-center justify-between">
+        {/* Logo moved to left */}
+        <Link
+          href="/"
+          className="text-xl font-semibold text-gray-800 dark:text-white pl-2 md:pl-4"
+        >
+          PesoWise
+        </Link>
+
         <div className="flex items-center gap-4">
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
+          >
+            {resolvedTheme === 'dark' ? (
+              <HiSun className="w-5 h-5 text-yellow-400" />
+            ) : (
+              <HiMoon className="w-5 h-5 text-gray-600" />
+            )}
+          </button>
+
           <button
             onClick={() => setOpen(!open)}
             className="md:hidden p-2 rounded-md hover:bg-gray-100 dark:hover:bg-zinc-800"
@@ -119,34 +132,15 @@ export default function Sidebar() {
               <HiMenu className="w-6 h-6 text-gray-600 dark:text-gray-300" />
             )}
           </button>
-
-          {/* Make PesoWise always visible */}
-          <Link
-            href="/"
-            className="text-xl font-semibold text-gray-800 dark:text-white pl-2 md:pl-4"
-          >
-            PesoWise
-          </Link>
         </div>
-
-        <button
-          onClick={toggleTheme}
-          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
-        >
-          {resolvedTheme === 'dark' ? (
-            <HiSun className="w-5 h-5 text-yellow-400" />
-          ) : (
-            <HiMoon className="w-5 h-5 text-gray-600" />
-          )}
-        </button>
       </header>
 
-      {/* Sidebar */}
+      {/* Sidebar - now on the right */}
       <aside
         className={clsx(
-          'fixed top-16 md:top-0 left-0 h-[calc(100vh-4rem)] md:h-screen w-72 bg-white dark:bg-zinc-900 shadow-lg p-6 border-r border-gray-100 dark:border-zinc-700 z-40',
+          'fixed top-16 md:top-0 right-0 h-[calc(100vh-4rem)] md:h-screen w-72 bg-white dark:bg-zinc-900 shadow-lg p-6 border-l border-gray-100 dark:border-zinc-700 z-40',
           'transition-transform duration-300 ease-in-out',
-          open ? 'translate-x-0' : '-translate-x-full',
+          open ? 'translate-x-0' : 'translate-x-full',
           'md:translate-x-0'
         )}
         aria-hidden={!open && isMobile}

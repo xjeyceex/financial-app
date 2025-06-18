@@ -3,7 +3,8 @@ import './globals.css';
 import { Geist, Geist_Mono } from 'next/font/google';
 import ThemeWrapper from '@/components/ThemeWrapper';
 import LayoutWrapper from '@/components/LayoutWrapper';
-import Navbar from '@/components/Navbar';
+import Footer from './money-tracker/_components/Footer';
+import Sidebar from '@/components/Sidebar';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -36,9 +37,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ThemeWrapper>
-          {/* <Sidebar /> */}
-          <Navbar />
+          <Sidebar />
           <LayoutWrapper>{children}</LayoutWrapper>
+          <Footer />
         </ThemeWrapper>
       </body>
     </html>

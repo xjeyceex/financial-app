@@ -30,27 +30,37 @@ type Props = {
   periodBudgets: Record<string, number>;
   formatBiweeklyLabel: (period: string) => string;
   onBudgetChange: (period: string, newBudget: number) => void;
+  disableEditFor?: (periodKey: string) => boolean; // <-- add this line
 };
+
+function isPastPeriod(periodKey: string): boolean {
+  const [year, month, day] = periodKey.split('-').map(Number);
+  const periodStart = new Date(year, month - 1, day);
+  const now = new Date();
+  return (
+    periodStart < new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  );
+}
 
 export default function BiweeklySpendingChart({
   periods,
   periodBudgets,
   formatBiweeklyLabel,
   onBudgetChange,
+  disableEditFor,
 }: Props) {
   const { theme } = useTheme();
-
   const [editingPeriod, setEditingPeriod] = useState<string | null>(null);
   const [tempBudget, setTempBudget] = useState<number>(0);
 
   const chartData: ChartData[] = periods.map(([period, data]) => {
-    const periodBudget = periodBudgets[period] || 0;
+    const budget = periodBudgets[period] || 0;
     return {
       period,
       label: formatBiweeklyLabel(period),
       total: data.total,
-      budget: periodBudget,
-      savings: periodBudget - data.total,
+      budget,
+      savings: Math.max(budget - data.total, 0),
     };
   });
 
@@ -74,6 +84,7 @@ export default function BiweeklySpendingChart({
             <BarChart
               data={chartData}
               margin={{ top: 20, right: 20, left: 0, bottom: 0 }}
+              barSize={12}
             >
               <XAxis
                 dataKey="label"
@@ -129,62 +140,74 @@ export default function BiweeklySpendingChart({
         </div>
       </div>
 
-      {/* Edit Budget Controls */}
+      {/* Budget Controls */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-        {chartData.map((data) => (
-          <div
-            key={data.period}
-            className="flex items-center justify-between min-w-0 text-base gap-3 bg-muted px-4 py-3 rounded-xl"
-          >
-            <span className="truncate font-medium text-sm sm:text-base">
-              {data.label}
-            </span>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-xs sm:text-sm"
-                  onClick={() => {
-                    setEditingPeriod(data.period);
-                    setTempBudget(data.budget);
-                  }}
-                >
-                  Edit
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="w-[92vw] max-w-sm max-h-[90vh] overflow-y-auto rounded-2xl px-5 py-4">
-                <div className="space-y-1.5">
-                  <DialogTitle className="text-base font-semibold">
-                    Edit Budget for {data.label}
-                  </DialogTitle>
-                  <DialogDescription className="text-sm text-muted-foreground">
-                    Set a custom amount for this period.
-                  </DialogDescription>
-                </div>
+        {chartData.map((data) => {
+          const isEditable = disableEditFor
+            ? disableEditFor(data.period)
+            : isPastPeriod(data.period);
+          return (
+            <div
+              key={data.period}
+              className="flex items-center justify-between min-w-0 text-base gap-3 bg-muted px-4 py-3 rounded-xl"
+            >
+              <span className="truncate font-medium text-sm sm:text-base">
+                {data.label}
+              </span>
 
-                <Input
-                  type="number"
-                  value={tempBudget}
-                  onChange={(e) => setTempBudget(Number(e.target.value))}
-                  className="text-base py-2"
-                />
+              {isEditable ? (
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs sm:text-sm"
+                      onClick={() => {
+                        setEditingPeriod(data.period);
+                        setTempBudget(data.budget);
+                      }}
+                    >
+                      Edit
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="w-[92vw] max-w-sm max-h-[90vh] overflow-y-auto rounded-2xl px-5 py-4">
+                    <div className="space-y-1.5">
+                      <DialogTitle className="text-base font-semibold">
+                        Edit Budget for {data.label}
+                      </DialogTitle>
+                      <DialogDescription className="text-sm text-muted-foreground">
+                        Set a custom amount for this period.
+                      </DialogDescription>
+                    </div>
 
-                <Button
-                  size="sm"
-                  className="w-full mt-3"
-                  onClick={() => {
-                    if (editingPeriod) {
-                      onBudgetChange(editingPeriod, tempBudget);
-                    }
-                  }}
-                >
-                  Save
-                </Button>
-              </DialogContent>
-            </Dialog>
-          </div>
-        ))}
+                    <Input
+                      type="number"
+                      value={tempBudget}
+                      onChange={(e) => setTempBudget(Number(e.target.value))}
+                      className="text-base py-2"
+                    />
+
+                    <Button
+                      size="sm"
+                      className="w-full mt-3"
+                      onClick={() => {
+                        if (editingPeriod) {
+                          onBudgetChange(editingPeriod, tempBudget);
+                        }
+                      }}
+                    >
+                      Save
+                    </Button>
+                  </DialogContent>
+                </Dialog>
+              ) : (
+                <span className="text-muted-foreground text-xs sm:text-sm">
+                  Ongoing
+                </span>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
