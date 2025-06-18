@@ -40,20 +40,13 @@ export default function StatsGrid({
               You can pay {formatCurrency(Math.min(totalDebt, totalSavings))} of
               your debt
             </div>
-            <div className="flex items-center justify-center gap-2">
+            <div className="flex items-center justify-center">
               <Button
                 size="sm"
                 variant="outline"
                 onClick={() => onPayDebt(Math.min(totalDebt, totalSavings))}
               >
                 Pay Full Amount
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => onPayDebt(100)}
-              >
-                Pay $100
               </Button>
             </div>
           </div>

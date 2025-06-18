@@ -1,9 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import { FiEdit, FiTrash } from 'react-icons/fi';
 import { format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import { Entry } from '../../../../lib/types';
+import ConfirmDialog from './DeleteBudgetDialog';
 
 type Props = {
   entries: Entry[];
@@ -12,7 +14,6 @@ type Props = {
   recurring: boolean;
 };
 
-// Get biweekly period with year (e.g., Jun 1–15, 2025)
 function getBiweeklyPeriod(dateStr: string) {
   const date = new Date(dateStr);
   const year = date.getFullYear();
@@ -29,7 +30,6 @@ function getBiweeklyPeriod(dateStr: string) {
   return `${format(start, 'MMM d', { locale: enUS })}–${format(end, 'd', { locale: enUS })}, ${year}`;
 }
 
-// Group entries by biweekly period string
 function groupEntriesBiweekly(entries: Entry[]) {
   return entries.reduce<Record<string, Entry[]>>((acc, entry) => {
     const period = getBiweeklyPeriod(entry.date);
@@ -45,11 +45,12 @@ export default function EntryList({
   onDelete,
   recurring,
 }: Props) {
+  const [entryToDelete, setEntryToDelete] = useState<Entry | null>(null);
+
   if (entries.length === 0) {
-    return <p className="text-gray-500">No entries yet.</p>;
+    return <p className="text-gray-500 dark:text-gray-400">No entries yet.</p>;
   }
 
-  // Sort entries descending by date (latest first)
   const sortedEntries = [...entries].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
@@ -58,9 +59,8 @@ export default function EntryList({
     const date = new Date(isoDate);
     return date.toLocaleString('en-PH', {
       year: 'numeric',
-      month: 'long',
+      month: 'short',
       day: 'numeric',
-      weekday: 'long',
       hour: 'numeric',
       minute: '2-digit',
       hour12: true,
@@ -72,58 +72,78 @@ export default function EntryList({
     : { All: sortedEntries };
 
   return (
-    <div className="space-y-6">
-      {Object.entries(grouped).map(([period, groupEntries]) => (
-        <div key={period}>
-          {recurring && (
-            <h3 className="text-lg font-semibold text-muted-foreground mb-2">
-              {period}
-            </h3>
-          )}
-          <ul className="space-y-2">
-            {groupEntries.map((entry) => (
-              <li key={entry.id} className="border p-3 rounded-2xl shadow-sm">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="font-semibold">
-                      {entry.item?.trim() || 'Unspecified'}
-                    </p>
-                    {entry.description && (
-                      <p className="text-sm text-gray-500">
-                        {entry.description}
+    <>
+      <div className="space-y-4">
+        {Object.entries(grouped).map(([period, groupEntries]) => (
+          <div key={period}>
+            {recurring && (
+              <h3 className="text-sm font-medium text-muted-foreground mb-1 dark:text-gray-400">
+                {period}
+              </h3>
+            )}
+            <ul className="space-y-1.5">
+              {groupEntries.map((entry) => (
+                <li
+                  key={entry.id}
+                  className="border p-3 rounded-xl shadow-sm bg-white dark:bg-zinc-800 dark:border-zinc-700"
+                >
+                  <div className="flex justify-between items-start gap-3 sm:gap-6">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm text-gray-800 dark:text-gray-100 truncate">
+                        {entry.item?.trim() || 'Unspecified'}
                       </p>
-                    )}
-                    <p className="text-sm text-gray-400">
-                      {formatDate(entry.date)}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-bold text-red-500">
-                      -₱{entry.amount.toFixed(2)}
+                      {entry.description && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                          {entry.description}
+                        </p>
+                      )}
+                      <p className="text-[11px] text-gray-400 dark:text-gray-500">
+                        {formatDate(entry.date)}
+                      </p>
                     </div>
-                    <div className="flex gap-2 justify-end">
-                      <button
-                        onClick={() => onEdit(entry)}
-                        className="text-blue-600 hover:text-blue-800 p-1"
-                        title="Edit"
-                      >
-                        <FiEdit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => onDelete(entry.id)}
-                        className="text-red-500 hover:text-red-800 p-1"
-                        title="Delete"
-                      >
-                        <FiTrash className="w-4 h-4" />
-                      </button>
+
+                    <div className="flex flex-col items-end gap-1 whitespace-nowrap">
+                      <span className="font-bold text-red-500 text-sm">
+                        -₱{entry.amount.toFixed(2)}
+                      </span>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => onEdit(entry)}
+                          className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 p-1"
+                          title="Edit"
+                        >
+                          <FiEdit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setEntryToDelete(entry)}
+                          className="text-red-500 hover:text-red-800 dark:hover:text-red-400 p-1"
+                          title="Delete"
+                        >
+                          <FiTrash className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
-    </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+
+      {/* Delete confirmation dialog */}
+      <ConfirmDialog
+        open={entryToDelete !== null}
+        onClose={() => setEntryToDelete(null)}
+        onConfirm={() => {
+          if (entryToDelete) onDelete(entryToDelete.id);
+        }}
+        title="Delete Entry"
+        description={`Are you sure you want to delete "${entryToDelete?.item}"?`}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        destructive
+      />
+    </>
   );
 }

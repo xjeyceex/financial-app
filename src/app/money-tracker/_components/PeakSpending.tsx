@@ -1,14 +1,21 @@
 import { Zap } from 'lucide-react';
-import { BiweeklyData } from '../../../../lib/types';
+
+export type PeriodData = {
+  total: number;
+  items: Record<string, number>;
+  budget: number;
+  savings: number;
+  debtPayments: number;
+};
 
 export default function PeakSpending({
   peakPeriodKey,
   peakPeriodData,
-  formatBiweeklyLabel,
+  formatPeriodLabel,
 }: {
   peakPeriodKey: string;
-  peakPeriodData: BiweeklyData;
-  formatBiweeklyLabel: (key: string) => string;
+  peakPeriodData: PeriodData;
+  formatPeriodLabel: (key: string) => string;
 }) {
   return (
     <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
@@ -18,7 +25,7 @@ export default function PeakSpending({
       </div>
       <div className="flex justify-between items-center">
         <p className="font-semibold text-sm">
-          {formatBiweeklyLabel(peakPeriodKey)}
+          {formatPeriodLabel(peakPeriodKey)}
         </p>
         <p className="text-sm text-muted-foreground">
           ₱

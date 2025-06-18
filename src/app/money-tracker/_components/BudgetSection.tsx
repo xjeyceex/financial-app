@@ -1,10 +1,7 @@
 'use client';
 
-import { Pencil, History } from 'lucide-react';
-import BudgetEditor from './BudgetEditor';
 import ProgressBar from './ProgressBar';
 import { Entry } from '../../../../lib/types';
-import { formatCurrency } from '../../../../lib/functions';
 
 type BudgetSectionProps = {
   isEditingBudget: boolean;
@@ -30,45 +27,25 @@ export default function BudgetSection({
   setIsEditingBudget,
   setShowBudgetHistory,
 }: BudgetSectionProps) {
+  const totalSpent = (budget * percentageUsed) / 100;
+  const remaining = budget - totalSpent;
+
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex flex-col gap-2 sm:gap-3">
-        {isEditingBudget ? (
-          <BudgetEditor
+      <div className="flex-1 w-full">
+        {budget > 0 ? (
+          <ProgressBar
+            totalSpent={totalSpent}
+            budget={budget}
+            percentageUsed={percentageUsed}
+            remaining={remaining}
+            isEditingBudget={isEditingBudget}
+            setIsEditingBudget={setIsEditingBudget}
+            setShowBudgetHistory={setShowBudgetHistory}
             tempBudget={tempBudget}
             setTempBudget={setTempBudget}
             handleBudgetSave={handleBudgetSave}
             handleBudgetCancel={handleBudgetCancel}
-          />
-        ) : (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setIsEditingBudget(true)}
-              className="flex items-center text-left rounded-lg p-1 transition hover:bg-gray-200 dark:hover:bg-gray-700"
-            >
-              <div className="flex items-center gap-1">
-                <p className="text-2xl font-bold">{formatCurrency(budget)}</p>
-                <Pencil className="w-4 h-4 text-muted-foreground" />
-              </div>
-            </button>
-            <button
-              onClick={() => setShowBudgetHistory(true)}
-              className="p-1 text-muted-foreground hover:text-foreground"
-              title="Budget history"
-            >
-              <History className="w-4 h-4" />
-            </button>
-          </div>
-        )}
-      </div>
-
-      <div className="flex-1 w-full">
-        {budget > 0 ? (
-          <ProgressBar
-            totalSpent={(budget * percentageUsed) / 100}
-            budget={budget}
-            percentageUsed={percentageUsed}
-            remaining={budget - (budget * percentageUsed) / 100}
           />
         ) : (
           <div className="text-xs text-muted-foreground italic">

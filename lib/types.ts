@@ -7,20 +7,6 @@ export type Entry = {
   budgetId: string;
 };
 
-export type BiweeklyData = {
-  total: number;
-  budget: number;
-  savings: number;
-  items: Record<string, number>;
-  debtPayments: number; // Add this
-};
-
-export type BiweeklyRange = {
-  startDay1: number;
-  startDay2: number;
-  label: string;
-};
-
 export type BudgetStorage = {
   currentBudget: number; // The currently active budget amount
   periodBudgets: Record<

@@ -10,40 +10,46 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
-type DeleteBudgetDialogProps = {
+type ConfirmDialogProps = {
   open: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  title?: string;
+  description?: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  destructive?: boolean;
 };
 
-export default function DeleteBudgetDialog({
+export default function ConfirmDialog({
   open,
   onClose,
   onConfirm,
-}: DeleteBudgetDialogProps) {
+  title = 'Delete',
+  description = 'Are you sure you want to delete this?',
+  confirmLabel = 'Delete',
+  cancelLabel = 'Cancel',
+  destructive = true,
+}: ConfirmDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Delete Budget</DialogTitle>
-          <DialogDescription>
-            Are you sure you want to delete this budget? This action cannot be
-            undone.
-          </DialogDescription>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-
         <DialogFooter className="flex justify-end gap-2">
           <Button variant="ghost" onClick={onClose}>
-            Cancel
+            {cancelLabel}
           </Button>
           <Button
-            variant="destructive"
+            variant={destructive ? 'destructive' : 'default'}
             onClick={() => {
               onConfirm();
               onClose();
             }}
           >
-            Delete
+            {confirmLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

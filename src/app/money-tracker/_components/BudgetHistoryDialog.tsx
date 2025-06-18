@@ -5,29 +5,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { BiweeklyRange } from '../../../../lib/types';
 import { formatCurrency } from '../../../../lib/functions';
 
 type BudgetHistoryDialogProps = {
   showBudgetHistory: boolean;
   setShowBudgetHistory: (value: boolean) => void;
   periodBudgets: Record<string, number>;
-  formatBiweeklyLabel: (key: string) => string;
-  biweeklyRange: BiweeklyRange;
+  formatPeriodLabel: (key: string) => string;
 };
 
 export default function BudgetHistoryDialog({
   showBudgetHistory,
   setShowBudgetHistory,
   periodBudgets,
-  formatBiweeklyLabel,
-  biweeklyRange,
+  formatPeriodLabel,
 }: BudgetHistoryDialogProps) {
   const historyEntries = Object.entries(periodBudgets)
-    .filter(([period]) => {
-      const day = parseInt(period.split('-')[2]);
-      return day === biweeklyRange.startDay1 || day === biweeklyRange.startDay2;
-    })
+    .filter(([, budget]) => budget > 0)
     .sort(([a], [b]) => b.localeCompare(a));
 
   return (
@@ -36,7 +30,7 @@ export default function BudgetHistoryDialog({
         <DialogHeader>
           <DialogTitle>Budget History</DialogTitle>
           <DialogDescription>
-            History for {biweeklyRange.label} periods
+            Historical budget entries by period
           </DialogDescription>
         </DialogHeader>
         <div className="max-h-[60vh] overflow-y-auto space-y-2">
@@ -46,15 +40,13 @@ export default function BudgetHistoryDialog({
                 key={period}
                 className="flex justify-between items-center p-2 border rounded"
               >
-                <span className="font-medium">
-                  {formatBiweeklyLabel(period)}
-                </span>
+                <span className="font-medium">{formatPeriodLabel(period)}</span>
                 <span>{formatCurrency(budget)}</span>
               </div>
             ))
           ) : (
             <p className="text-muted-foreground text-center py-4">
-              No historical budgets found for this period range
+              No historical budgets found.
             </p>
           )}
         </div>

@@ -1,35 +1,27 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import PeriodRangeSelector from './PeriodRangeSelector';
 import TopExpenses from './TopExpenses';
 import PeakSpending from './PeakSpending';
-import { BiweeklyRange, Entry } from '../../../../lib/types';
+import { Entry } from '../../../../lib/types';
 import { useBudgetStorage } from '../../../../lib/hooks/useBudgetStorage';
 import BudgetHistoryDialog from './BudgetHistoryDialog';
-import BiweeklyChartDialog from './BiweeklyChartDialog';
 import BudgetSection from './BudgetSection';
-import { getBiweeklyKey, groupPeriodBudgets } from '../../../../lib/functions';
 import StatsGrid from './StatsGrid';
+import PeriodChartDialog from './PeriodChartDialog';
 import {
-  useBiweeklyHistory,
-  useBiweeklySummary,
-} from '../../../../lib/hooks/useBiweeklySummary';
-
-const biweeklyPresets: BiweeklyRange[] = [
-  { startDay1: 1, startDay2: 16, label: '01-15 / 16-30' },
-  { startDay1: 5, startDay2: 21, label: '05-20 / 21-04' },
-];
+  usePeriodHistory,
+  usePeriodSummary,
+} from '../../../../lib/hooks/usePeriodSummary';
 
 type SummaryProps = {
   budgetId: string;
   entries: Entry[];
   budget: number;
   setBudget: (newBudget: number) => void;
-  budgetName?: string;
   isEditingBudget: boolean;
   setIsEditingBudget: (isEditing: boolean) => void;
-  onPayDebt?: (amount: number) => void; // Add this line
+  onPayDebt?: (amount: number) => void;
   recurring: boolean;
 };
 
@@ -43,18 +35,18 @@ export default function Summary({
   setIsEditingBudget,
   recurring,
 }: SummaryProps) {
-  const BIWEEKLY_STORAGE_KEY = `biweekly-range-${budgetId}`;
-
   const [tempBudget, setTempBudget] = useState(budget.toString());
+  const [showBudgetHistory, setShowBudgetHistory] = useState(false);
 
   useEffect(() => {
     setTempBudget(budget.toString());
   }, [budget]);
 
-  const [biweeklyRange, setBiweeklyRangeState] = useState<BiweeklyRange>(
-    biweeklyPresets[0]
-  );
-  const [showBudgetHistory, setShowBudgetHistory] = useState(false);
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = today.getMonth();
+  const day = today.getDate();
+  const activePeriodKey = `${year}-${String(month + 1).padStart(2, '0')}-${day <= 15 ? '01' : '16'}`;
 
   const {
     updateBudget,
@@ -63,50 +55,16 @@ export default function Summary({
     lastResetDate,
   } = useBudgetStorage(budgetId, budget);
 
-  useEffect(() => {
-    loadInitialData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const loadInitialData = () => {
-    // Load biweekly range only — budget data is handled by useBudgetStorage
-    const savedRange = localStorage.getItem(BIWEEKLY_STORAGE_KEY);
-    if (savedRange) {
-      try {
-        const parsed = JSON.parse(savedRange);
-        if (parsed?.startDay1 && parsed?.startDay2) {
-          setBiweeklyRangeState(parsed);
-        }
-      } catch (e) {
-        console.error('Invalid biweekly range:', e);
-      }
-    }
-  };
-
-  const getCurrentPeriodKey = useCallback(() => {
-    const now = new Date();
-    const day = now.getDate();
-    const month = now.getMonth() + 1;
-    const year = now.getFullYear();
-    const startDay =
-      day < biweeklyRange.startDay2
-        ? biweeklyRange.startDay1
-        : biweeklyRange.startDay2;
-    return `${year}-${String(month).padStart(2, '0')}-${String(startDay).padStart(2, '0')}`;
-  }, [biweeklyRange]);
-
   const checkAndResetBudget = useCallback(() => {
     if (!recurring) return false;
+    if (lastResetDate === activePeriodKey) return false;
 
-    const currentPeriodKey = getCurrentPeriodKey();
-    if (lastResetDate === currentPeriodKey) return false;
-
-    const periodBudget = periodBudgets[currentPeriodKey] || storedBudget;
-    updateBudget(periodBudget, currentPeriodKey);
+    const periodBudget = periodBudgets[activePeriodKey] || storedBudget;
+    updateBudget(periodBudget, activePeriodKey);
     return true;
   }, [
-    recurring, // <-- include in deps
-    getCurrentPeriodKey,
+    recurring,
+    activePeriodKey,
     lastResetDate,
     periodBudgets,
     storedBudget,
@@ -115,28 +73,27 @@ export default function Summary({
 
   useEffect(() => {
     checkAndResetBudget();
-  }, [biweeklyRange, checkAndResetBudget]);
+  }, [checkAndResetBudget]);
 
-  const { percentageUsed } = useBiweeklySummary({
+  const { percentageUsed } = usePeriodSummary({
     entries,
     budgetId,
     budget,
-    biweeklyRange,
   });
 
-  const currentKey = getBiweeklyKey(new Date(), biweeklyRange);
+  const currentKey = activePeriodKey;
 
   const computedPeriodBudgets = {
     ...periodBudgets,
-    [currentKey]: budget, // 👈 override the current period with updated budget
+    [currentKey]: budget,
   };
 
-  const { periods, totalSavings, totalDebt } = useBiweeklyHistory({
+  const { periods, totalSavings, totalDebt } = usePeriodHistory({
     entries,
     budgetId,
-    biweeklyRange,
     periodBudgets: computedPeriodBudgets,
   });
+
   const [peakPeriodKey, peakPeriodData] = periods.reduce(
     (a, b) => (b[1].total > a[1].total ? b : a),
     [
@@ -146,7 +103,7 @@ export default function Summary({
         items: {},
         budget: 0,
         savings: 0,
-        debtPayments: 0, // Add this to match the type
+        debtPayments: 0,
       },
     ]
   );
@@ -161,8 +118,7 @@ export default function Summary({
 
   const handleBudgetSave = () => {
     const newBudget = parseFloat(tempBudget) || 0;
-    const currentPeriodKey = getCurrentPeriodKey();
-    updateBudget(newBudget, currentPeriodKey);
+    updateBudget(newBudget, activePeriodKey);
     setIsEditingBudget(false);
     setBudget(newBudget);
   };
@@ -172,21 +128,12 @@ export default function Summary({
     setIsEditingBudget(false);
   };
 
-  const setBiweeklyRange = (range: BiweeklyRange) => {
-    setBiweeklyRangeState(range);
-    localStorage.setItem(BIWEEKLY_STORAGE_KEY, JSON.stringify(range));
-    checkAndResetBudget();
-  };
-
-  const formatBiweeklyLabel = (periodKey: string) => {
+  const formatPeriodLabel = (periodKey: string) => {
     const [year, month, day] = periodKey.split('-').map(Number);
     const monthName = new Date(year, month - 1).toLocaleString('default', {
       month: 'short',
     });
-    const endDay =
-      day === biweeklyRange.startDay1
-        ? biweeklyRange.startDay2 - 1
-        : new Date(year, month, 0).getDate();
+    const endDay = day === 1 ? 15 : new Date(year, month, 0).getDate();
     return `${monthName} ${day}-${endDay}`;
   };
 
@@ -207,16 +154,10 @@ export default function Summary({
 
       {recurring && (
         <>
-          <PeriodRangeSelector
-            biweeklyRange={biweeklyRange}
-            biweeklyPresets={biweeklyPresets}
-            setBiweeklyRange={setBiweeklyRange}
-          />
-
-          <BiweeklyChartDialog
+          <PeriodChartDialog
             periods={periods}
             periodBudgets={periodBudgets}
-            formatBiweeklyLabel={formatBiweeklyLabel}
+            formatPeriodLabel={formatPeriodLabel}
             onBudgetChange={(period, newBudget) =>
               updateBudget(newBudget, period)
             }
@@ -232,25 +173,23 @@ export default function Summary({
             <PeakSpending
               peakPeriodKey={peakPeriodKey}
               peakPeriodData={peakPeriodData}
-              formatBiweeklyLabel={formatBiweeklyLabel}
+              formatPeriodLabel={formatPeriodLabel}
             />
           )}
         </>
       )}
 
-      {mostExpensivePerPeriod.length > 0 && (
-        <TopExpenses
-          expenses={mostExpensivePerPeriod.slice(0, 2)}
-          formatBiweeklyLabel={formatBiweeklyLabel}
-        />
-      )}
+      <TopExpenses
+        expenses={mostExpensivePerPeriod.slice(0, 2)}
+        formatPeriodLabel={formatPeriodLabel}
+        activePeriodKey={activePeriodKey}
+      />
 
       <BudgetHistoryDialog
         showBudgetHistory={showBudgetHistory}
         setShowBudgetHistory={setShowBudgetHistory}
-        periodBudgets={groupPeriodBudgets(periodBudgets, biweeklyRange)}
-        formatBiweeklyLabel={formatBiweeklyLabel}
-        biweeklyRange={biweeklyRange}
+        periodBudgets={periodBudgets}
+        formatPeriodLabel={formatPeriodLabel}
       />
     </div>
   );

@@ -27,7 +27,7 @@ type ChartData = {
 type Props = {
   periods: [string, { total: number }][];
   periodBudgets: Record<string, number>;
-  formatBiweeklyLabel: (period: string) => string;
+  formatPeriodLabel: (period: string) => string;
   onBudgetChange: (period: string, newBudget: number) => void;
   disableEditFor?: (periodKey: string) => boolean;
 };
@@ -41,10 +41,10 @@ function isPastPeriod(periodKey: string): boolean {
   );
 }
 
-export default function BiweeklySpendingChart({
+export default function SpendingChart({
   periods,
   periodBudgets,
-  formatBiweeklyLabel,
+  formatPeriodLabel,
   onBudgetChange,
   disableEditFor,
 }: Props) {
@@ -52,16 +52,23 @@ export default function BiweeklySpendingChart({
   const [editingPeriod, setEditingPeriod] = useState<string | null>(null);
   const [tempBudget, setTempBudget] = useState<number>(0);
 
-  const chartData: ChartData[] = periods.map(([period, data]) => {
-    const budget = periodBudgets[period] || 0;
-    return {
-      period,
-      label: formatBiweeklyLabel(period),
-      total: data.total,
-      budget,
-      savings: Math.max(budget - data.total, 0),
-    };
-  });
+  const chartData: ChartData[] = periods
+    .map(([period, data]) => {
+      const budget = periodBudgets[period] ?? 0;
+      const total = data.total;
+      const savings = Math.max(budget - total, 0);
+
+      return {
+        period,
+        label: formatPeriodLabel(period),
+        total,
+        budget,
+        savings,
+      };
+    })
+    .filter(
+      (data) => !(data.total === 0 && data.budget === 0 && data.savings === 0)
+    );
 
   if (chartData.length === 0) return null;
 
@@ -69,14 +76,15 @@ export default function BiweeklySpendingChart({
   const colors = {
     foreground: isDark ? '#f4f4f5' : '#0c0c0d',
     border: isDark ? '#3f3f46' : '#e4e4e7',
-    primary: '#3b82f6', // blue (not used for spent anymore)
-    secondary: '#10b981', // green for savings
-    danger: '#ef4444', // red for spent
+    primary: '#3b82f6',
+    secondary: '#10b981',
+    danger: '#ef4444',
     popover: isDark ? '#18181b' : '#ffffff',
   };
 
   return (
     <div className="space-y-8">
+      {/* Chart Container */}
       <div className="h-[260px] sm:h-[480px] lg:h-[520px] rounded-2xl bg-card shadow-md overflow-x-auto border">
         <div className="w-full h-full px-2 sm:px-4 pt-2 pb-0">
           <ResponsiveContainer width="100%" height="100%">
@@ -104,24 +112,18 @@ export default function BiweeklySpendingChart({
                 }
               />
               <Tooltip content={<CustomTooltip />} />
-
-              {/* Budget bar - blue */}
               <Bar
                 dataKey="budget"
                 name="Budget"
                 radius={[4, 4, 0, 0]}
                 fill={colors.primary}
               />
-
-              {/* Spent bar - red */}
               <Bar
                 dataKey="total"
                 name="Spent"
                 radius={[4, 4, 0, 0]}
                 fill={colors.danger}
               />
-
-              {/* Savings bar - green */}
               <Bar
                 dataKey="savings"
                 name="Savings"
@@ -134,7 +136,7 @@ export default function BiweeklySpendingChart({
       </div>
 
       {/* Budget Controls */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="flex flex-col gap-4 w-full">
         {chartData.map((data) => {
           const isEditable = disableEditFor
             ? !disableEditFor(data.period)

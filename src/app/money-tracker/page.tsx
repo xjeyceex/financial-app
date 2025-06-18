@@ -25,7 +25,6 @@ import { FiEdit, FiPlus, FiRepeat, FiTrash } from 'react-icons/fi';
 import { Entry } from '../../../lib/types';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
-import DeleteBudgetDialog from './_components/DeleteBudgetDialog';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -34,6 +33,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { HiOutlineDotsHorizontal } from 'react-icons/hi';
+import ConfirmDialog from './_components/DeleteBudgetDialog';
 
 type BudgetData = {
   id: string;
@@ -100,7 +100,7 @@ export default function MoneyTrackerPage() {
     const debtPaymentEntry: Entry = {
       id: uuidv4(),
       budgetId: currentBudget.id,
-      amount: amount,
+      amount: amount, // ✅ make it positive
       date: new Date().toISOString(),
       item: 'Debt Payment',
     };
@@ -259,7 +259,7 @@ export default function MoneyTrackerPage() {
           </DropdownMenu>
           {/* Delete Budget Button with Tooltip and Confirm Dialog */}
 
-          <DeleteBudgetDialog
+          <ConfirmDialog
             open={dialogOpen}
             onClose={() => setDialogOpen(false)}
             onConfirm={() => {
@@ -269,6 +269,11 @@ export default function MoneyTrackerPage() {
               setActiveBudgetIndex(0);
               setEditBudgetModalOpen(false);
             }}
+            title="Delete Budget"
+            description={`Are you sure you want to delete "${budgets[activeBudgetIndex]?.name}"? This action cannot be undone.`}
+            confirmLabel="Delete"
+            cancelLabel="Cancel"
+            destructive
           />
 
           {/* Create Budget Dialog */}
@@ -330,7 +335,6 @@ export default function MoneyTrackerPage() {
           <div className="rounded-2xl bg-muted/40 dark:bg-muted/10 shadow-sm">
             <Summary
               budgetId={currentBudget.id}
-              budgetName={currentBudget.name}
               entries={currentBudget.entries}
               budget={currentBudget.budget}
               setBudget={(value) => updateCurrentBudget({ budget: value })}

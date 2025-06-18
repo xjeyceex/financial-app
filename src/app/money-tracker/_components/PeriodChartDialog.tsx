@@ -10,34 +10,34 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { BarChart } from 'lucide-react';
-import BiweeklySpendingChart from './BiweeklySpendingChart';
-import { BiweeklyData } from '../../../../lib/types';
+import SpendingChart from './SpendingChart';
 
-type BiweeklyChartDialogProps = {
-  periods: [string, BiweeklyData][];
+// Replace BiweeklyData with a general type
+type PeriodData = {
+  total: number;
+};
+
+type SpendingChartDialogProps = {
+  periods: [string, PeriodData][];
   periodBudgets: Record<string, number>;
-  formatBiweeklyLabel: (key: string) => string;
+  formatPeriodLabel: (key: string) => string;
   onBudgetChange: (period: string, newBudget: number) => void;
 };
 
-// Determine end of biweekly period
+// Determine the end of a fixed period (1–15 or 16–end of month)
 function getPeriodEnd(periodKey: string): Date {
   const [year, month, day] = periodKey.split('-').map(Number);
-  if (day === 1) {
-    return new Date(year, month - 1, 15); // 1st–15th
-  } else {
-    const lastDay = new Date(year, month, 0).getDate(); // Last day of month
-    return new Date(year, month - 1, lastDay); // 16th–end of month
-  }
+  const isFirstHalf = day <= 15;
+
+  const endDay = isFirstHalf ? 15 : new Date(year, month, 0).getDate(); // last day of the month
+
+  return new Date(year, month - 1, endDay, 23, 59, 59, 999);
 }
 
-// Check if the period has ended
 function isPastPeriod(periodKey: string): boolean {
-  const now = new Date();
-  return now > getPeriodEnd(periodKey);
+  return new Date() > getPeriodEnd(periodKey);
 }
 
-// Check if the period is ongoing
 function isCurrentPeriod(periodKey: string): boolean {
   const now = new Date();
   const [year, month, day] = periodKey.split('-').map(Number);
@@ -46,18 +46,29 @@ function isCurrentPeriod(periodKey: string): boolean {
   return now >= start && now <= end;
 }
 
-export default function BiweeklyChartDialog({
+function isFuturePeriod(periodKey: string): boolean {
+  const [year, month, day] = periodKey.split('-').map(Number);
+  const start = new Date(year, month - 1, day);
+  return new Date() < start;
+}
+
+export default function PeriodChartDialog({
   periods,
   periodBudgets,
-  formatBiweeklyLabel,
+  formatPeriodLabel,
   onBudgetChange,
-}: BiweeklyChartDialogProps) {
+}: SpendingChartDialogProps) {
+  const filteredPeriods = periods.filter(
+    ([periodKey, data]) =>
+      data.total > 0 || periodBudgets.hasOwnProperty(periodKey)
+  );
+
   return (
     <Dialog>
       <DialogTrigger asChild>
         <Button variant="outline" className="w-full justify-start gap-2">
           <BarChart className="w-4 h-4" />
-          View Biweekly Spending Chart
+          View Spending Chart
         </Button>
       </DialogTrigger>
 
@@ -65,28 +76,32 @@ export default function BiweeklyChartDialog({
         <div className="flex flex-col h-full space-y-6">
           <DialogHeader>
             <DialogTitle className="text-lg sm:text-xl font-semibold">
-              Biweekly Spending Chart
+              Spending Chart
             </DialogTitle>
             <DialogDescription className="text-sm sm:text-base text-muted-foreground">
-              A visual breakdown of your spending and savings across biweekly
-              periods.
+              A visual breakdown of your spending and savings across periods.
             </DialogDescription>
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto rounded-xl pr-2">
-            <BiweeklySpendingChart
-              periods={periods}
+            <SpendingChart
+              periods={filteredPeriods}
               periodBudgets={periodBudgets}
-              formatBiweeklyLabel={(key) => {
-                const base = formatBiweeklyLabel(key);
-                return isCurrentPeriod(key) ? `${base} (Ongoing)` : base;
+              formatPeriodLabel={(key) => {
+                const [year, month, day] = key.split('-').map(Number);
+                const base = formatPeriodLabel(
+                  `${year}-${String(month).padStart(2, '0')}-${day <= 15 ? '01' : '16'}`
+                );
+                return isCurrentPeriod(key) ? `${base}` : base;
               }}
               onBudgetChange={(period, newBudget) => {
                 if (isPastPeriod(period)) {
                   onBudgetChange(period, newBudget);
                 }
               }}
-              disableEditFor={(periodKey) => !isPastPeriod(periodKey)}
+              disableEditFor={(periodKey) =>
+                isCurrentPeriod(periodKey) || isFuturePeriod(periodKey)
+              }
             />
           </div>
         </div>
