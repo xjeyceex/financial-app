@@ -3,7 +3,6 @@ import './globals.css';
 import { Geist, Geist_Mono } from 'next/font/google';
 import ThemeWrapper from '@/components/ThemeWrapper';
 import LayoutWrapper from '@/components/LayoutWrapper';
-import Footer from './money-tracker/_components/Footer';
 import Sidebar from '@/components/Sidebar';
 
 const geistSans = Geist({
@@ -39,7 +38,6 @@ export default function RootLayout({
         <ThemeWrapper>
           <Sidebar />
           <LayoutWrapper>{children}</LayoutWrapper>
-          <Footer />
         </ThemeWrapper>
       </body>
     </html>

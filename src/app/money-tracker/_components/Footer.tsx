@@ -7,7 +7,7 @@ export default function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="w-full border-t border-gray-200 dark:border-zinc-700 mt-12 bg-white dark:bg-zinc-900">
+    <footer className="w-full border-t border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
       <div className="max-w-5xl mx-auto px-4 py-6 flex flex-col sm:flex-row items-center justify-between text-sm text-muted-foreground">
         {/* Left Section: Name & Copyright */}
         <div className="text-center sm:text-left">
