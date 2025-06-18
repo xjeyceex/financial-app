@@ -127,14 +127,13 @@ export default function Summary({
     biweeklyRange,
   });
 
-  const { periods, averageBiweeklyExpenses, averageBiweeklySavings } =
-    useBiweeklyHistory({
-      entries,
-      budgetId,
-      budget,
-      biweeklyRange,
-      budgetStorageKey: `budget-${budgetId}`,
-    });
+  const { periods, totalSavings, totalDebt } = useBiweeklyHistory({
+    entries,
+    budgetId,
+    budget,
+    biweeklyRange,
+    budgetStorageKey: `budget-${budgetId}`,
+  });
 
   const [peakPeriodKey, peakPeriodData] = periods.reduce(
     (a, b) => (b[1].total > a[1].total ? b : a),
@@ -208,10 +207,7 @@ export default function Summary({
         onBudgetChange={(period, newBudget) => updateBudget(newBudget, period)}
       />
 
-      <StatsGrid
-        averageBiweeklyExpenses={averageBiweeklyExpenses}
-        averageBiweeklySavings={averageBiweeklySavings}
-      />
+      <StatsGrid totalDebt={totalDebt} totalSavings={totalSavings} />
 
       {peakPeriodKey && (
         <PeakSpending

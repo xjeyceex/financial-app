@@ -99,11 +99,21 @@ export function useBiweeklyHistory({
 
     const periods = Object.entries(data).sort(([a], [b]) => (a < b ? -1 : 1));
     const savingsPerPeriod = periods.map(([, d]) => d.savings);
+
     const averageBiweeklyExpenses =
       periods.reduce((sum, [, d]) => sum + d.total, 0) / (periods.length || 1);
+
     const averageBiweeklySavings =
       savingsPerPeriod.reduce((sum, s) => sum + s, 0) /
       (savingsPerPeriod.length || 1);
+
+    const totalSavings = savingsPerPeriod
+      .filter((s) => s >= 0)
+      .reduce((sum, s) => sum + s, 0);
+
+    const totalDebt = savingsPerPeriod
+      .filter((s) => s < 0)
+      .reduce((sum, s) => sum + Math.abs(s), 0);
 
     return {
       biweeklyData: data,
@@ -111,6 +121,8 @@ export function useBiweeklyHistory({
       savingsPerPeriod,
       averageBiweeklyExpenses,
       averageBiweeklySavings,
+      totalSavings,
+      totalDebt,
     };
   }, [entries, budgetId, budget, biweeklyRange, budgetStorageKey]);
 }
