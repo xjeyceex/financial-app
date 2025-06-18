@@ -13,7 +13,9 @@ export default function LayoutWrapper({
 
   return (
     <div
-      className={`flex flex-col min-h-[100dvh] ${isHome ? '' : 'pt-12 md:pt-16 md:ml-72'}`}
+      className={`flex flex-col min-h-[100dvh] layout-wrapper ${
+        isHome ? '' : 'pt-12 md:pt-16'
+      }`}
     >
       <main className={`flex-1 ${isHome ? '' : 'p-4'}`}>{children}</main>
       <Footer />

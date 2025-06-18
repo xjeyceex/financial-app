@@ -86,6 +86,14 @@ body {
   overflow-x: hidden;
 }
 
+body:not(.sidebar-open) .layout-wrapper {
+  margin-left: 0;
+}
+
+body.sidebar-open .layout-wrapper {
+  margin-left: 18rem; /* 72 */
+}
+
 .dark {
   --background: oklch(0.13 0.028 261.692);
   --foreground: oklch(0.985 0.002 247.839);

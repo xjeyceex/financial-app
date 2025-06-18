@@ -37,7 +37,7 @@ const navItems: NavItem[] = [
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const { setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -45,11 +45,8 @@ export default function Sidebar() {
   useEffect(() => {
     setMounted(true);
     const handleResize = () => {
-      const mobile = window.innerWidth < 768;
-      setIsMobile(mobile);
-      if (!mobile) setOpen(false);
+      setIsMobile(window.innerWidth < 768);
     };
-
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -58,6 +55,10 @@ export default function Sidebar() {
   const toggleTheme = useCallback(() => {
     setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
   }, [resolvedTheme, setTheme]);
+
+  const toggleSidebar = useCallback(() => {
+    setSidebarOpen((prev) => !prev);
+  }, []);
 
   if (!mounted) return null;
 
@@ -77,19 +78,10 @@ export default function Sidebar() {
       item.disabled && 'opacity-50 cursor-not-allowed pointer-events-none'
     );
 
-    if (item.disabled) {
-      return (
-        <div className={className}>
-          <Icon className="w-5 h-5 flex-shrink-0 text-gray-400" />
-          <span className="truncate">{item.name}</span>
-        </div>
-      );
-    }
-
     return (
       <Link
         href={item.href}
-        onClick={() => isMobile && setOpen(false)}
+        onClick={() => isMobile && setSidebarOpen(false)}
         className={className}
       >
         <Icon className="w-5 h-5 flex-shrink-0" />
@@ -102,58 +94,55 @@ export default function Sidebar() {
     <>
       {/* Top Navbar */}
       <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white dark:bg-zinc-900 shadow-sm border-b border-gray-200 dark:border-zinc-700 px-4 flex items-center justify-between">
-        {/* Logo moved to left */}
-        <Link
-          href="/"
-          className="text-xl font-semibold text-gray-800 dark:text-white pl-2 md:pl-4"
-        >
-          PesoWise
-        </Link>
-
         <div className="flex items-center gap-4">
+          {/* Always visible hamburger menu */}
           <button
-            onClick={toggleTheme}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
+            onClick={toggleSidebar}
+            className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-zinc-800"
+            aria-label="Toggle sidebar"
           >
-            {resolvedTheme === 'dark' ? (
-              <HiSun className="w-5 h-5 text-yellow-400" />
-            ) : (
-              <HiMoon className="w-5 h-5 text-gray-600" />
-            )}
-          </button>
-
-          <button
-            onClick={() => setOpen(!open)}
-            className="md:hidden p-2 rounded-md hover:bg-gray-100 dark:hover:bg-zinc-800"
-          >
-            {open ? (
+            {sidebarOpen ? (
               <HiX className="w-6 h-6 text-gray-600 dark:text-gray-300" />
             ) : (
               <HiMenu className="w-6 h-6 text-gray-600 dark:text-gray-300" />
             )}
           </button>
+
+          {/* Logo */}
+          <Link
+            href="/"
+            className="text-xl font-semibold text-gray-800 dark:text-white"
+          >
+            PesoWise
+          </Link>
         </div>
+
+        <button
+          onClick={toggleTheme}
+          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
+        >
+          {resolvedTheme === 'dark' ? (
+            <HiSun className="w-5 h-5 text-yellow-400" />
+          ) : (
+            <HiMoon className="w-5 h-5 text-gray-600" />
+          )}
+        </button>
       </header>
 
-      {/* Sidebar - now on the right */}
+      {/* Sidebar */}
       <aside
         className={clsx(
-          'fixed top-16 h-[calc(100vh-4rem)] md:h-screen w-72 bg-white dark:bg-zinc-900 shadow-lg p-6 z-40 border-gray-100 dark:border-zinc-700',
-          'transition-transform duration-300 ease-in-out',
-          isMobile ? 'right-0 border-l' : 'left-0 border-r',
-          open
+          'fixed top-16 h-[calc(100vh-4rem)] w-72 bg-white dark:bg-zinc-900 shadow-lg p-6 z-40',
+          'transition-transform duration-300 ease-in-out border-r border-gray-100 dark:border-zinc-700',
+          isMobile ? 'right-0' : 'left-0',
+          sidebarOpen
             ? 'translate-x-0'
             : isMobile
               ? 'translate-x-full'
-              : '-translate-x-full',
-          'md:translate-x-0'
+              : '-translate-x-full'
         )}
-        aria-hidden={!open && isMobile}
+        aria-hidden={!sidebarOpen}
       >
-        <div className="mb-4 hidden md:block text-2xl font-bold text-gray-800 dark:text-white">
-          PesoWise
-        </div>
-
         <nav className="space-y-1 overflow-y-auto max-h-[calc(100vh-180px)]">
           {navItems.map((item) => (
             <div key={item.href}>{renderLink(item)}</div>
@@ -165,11 +154,11 @@ export default function Sidebar() {
         </div>
       </aside>
 
-      {/* Overlay */}
-      {open && isMobile && (
+      {/* Overlay - only on mobile */}
+      {sidebarOpen && isMobile && (
         <div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30"
-          onClick={() => setOpen(false)}
+          onClick={() => setSidebarOpen(false)}
         />
       )}
     </>
