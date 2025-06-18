@@ -158,6 +158,8 @@ export default function Summary({
             periods={periods}
             periodBudgets={periodBudgets}
             formatPeriodLabel={formatPeriodLabel}
+            currentPeriodKey={activePeriodKey} // <--
+            currentBudget={budget} // <--
             onBudgetChange={(period, newBudget) =>
               updateBudget(newBudget, period)
             }

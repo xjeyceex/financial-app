@@ -22,6 +22,8 @@ type SpendingChartDialogProps = {
   periodBudgets: Record<string, number>;
   formatPeriodLabel: (key: string) => string;
   onBudgetChange: (period: string, newBudget: number) => void;
+  currentPeriodKey: string;
+  currentBudget: number;
 };
 
 // Determine the end of a fixed period (1–15 or 16–end of month)
@@ -57,11 +59,19 @@ export default function PeriodChartDialog({
   periodBudgets,
   formatPeriodLabel,
   onBudgetChange,
+  currentPeriodKey,
+  currentBudget,
 }: SpendingChartDialogProps) {
   const filteredPeriods = periods.filter(
     ([periodKey, data]) =>
       data.total > 0 || periodBudgets.hasOwnProperty(periodKey)
   );
+
+  // Inject current budget into periodBudgets (temporary override)
+  const mergedBudgets = {
+    ...periodBudgets,
+    [currentPeriodKey]: currentBudget,
+  };
 
   return (
     <Dialog>
@@ -86,7 +96,7 @@ export default function PeriodChartDialog({
           <div className="flex-1 overflow-y-auto rounded-xl pr-2">
             <SpendingChart
               periods={filteredPeriods}
-              periodBudgets={periodBudgets}
+              periodBudgets={mergedBudgets} // ✅ use the merged version
               formatPeriodLabel={(key) => {
                 const [year, month, day] = key.split('-').map(Number);
                 const base = formatPeriodLabel(
