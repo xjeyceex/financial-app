@@ -12,7 +12,6 @@ import { Button } from '@/components/ui/button';
 import { BarChart } from 'lucide-react';
 import BiweeklySpendingChart from './BiweeklySpendingChart';
 import { BiweeklyData } from '../../../../lib/types';
-import { useMemo } from 'react';
 
 type BiweeklyChartDialogProps = {
   periods: [string, BiweeklyData][];
@@ -21,11 +20,30 @@ type BiweeklyChartDialogProps = {
   onBudgetChange: (period: string, newBudget: number) => void;
 };
 
+// Determine end of biweekly period
+function getPeriodEnd(periodKey: string): Date {
+  const [year, month, day] = periodKey.split('-').map(Number);
+  if (day === 1) {
+    return new Date(year, month - 1, 15); // 1st–15th
+  } else {
+    const lastDay = new Date(year, month, 0).getDate(); // Last day of month
+    return new Date(year, month - 1, lastDay); // 16th–end of month
+  }
+}
+
+// Check if the period has ended
 function isPastPeriod(periodKey: string): boolean {
   const now = new Date();
+  return now > getPeriodEnd(periodKey);
+}
+
+// Check if the period is ongoing
+function isCurrentPeriod(periodKey: string): boolean {
+  const now = new Date();
   const [year, month, day] = periodKey.split('-').map(Number);
-  const periodDate = new Date(year, month - 1, day);
-  return periodDate < now;
+  const start = new Date(year, month - 1, day);
+  const end = getPeriodEnd(periodKey);
+  return now >= start && now <= end;
 }
 
 export default function BiweeklyChartDialog({
@@ -34,10 +52,6 @@ export default function BiweeklyChartDialog({
   formatBiweeklyLabel,
   onBudgetChange,
 }: BiweeklyChartDialogProps) {
-  const totalSavings = useMemo(() => {
-    return periods.reduce((sum, [, data]) => sum + (data.savings ?? 0), 0);
-  }, [periods]);
-
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -46,7 +60,8 @@ export default function BiweeklyChartDialog({
           View Biweekly Spending Chart
         </Button>
       </DialogTrigger>
-      <DialogContent className="w-[96vw] max-w-3xl max-h-[80vh] p-4 sm:p-5 lg:p-6 rounded-2xl overflow-hidden">
+
+      <DialogContent className="w-[96vw] max-w-3xl h-[90vh] p-4 sm:p-5 lg:p-6 rounded-2xl overflow-hidden">
         <div className="flex flex-col h-full space-y-6">
           <DialogHeader>
             <DialogTitle className="text-lg sm:text-xl font-semibold">
@@ -58,15 +73,14 @@ export default function BiweeklyChartDialog({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="text-right text-sm sm:text-base font-medium text-green-600">
-            Total Savings: ₱{totalSavings.toFixed(2)}
-          </div>
-
-          <div className="flex-1 overflow-y-auto rounded-xl">
+          <div className="flex-1 overflow-y-auto rounded-xl pr-2">
             <BiweeklySpendingChart
               periods={periods}
               periodBudgets={periodBudgets}
-              formatBiweeklyLabel={formatBiweeklyLabel}
+              formatBiweeklyLabel={(key) => {
+                const base = formatBiweeklyLabel(key);
+                return isCurrentPeriod(key) ? `${base} (Ongoing)` : base;
+              }}
               onBudgetChange={(period, newBudget) => {
                 if (isPastPeriod(period)) {
                   onBudgetChange(period, newBudget);

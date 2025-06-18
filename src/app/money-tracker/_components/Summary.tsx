@@ -30,6 +30,7 @@ type SummaryProps = {
   isEditingBudget: boolean;
   setIsEditingBudget: (isEditing: boolean) => void;
   onPayDebt?: (amount: number) => void; // Add this line
+  recurring: boolean;
 };
 
 export default function Summary({
@@ -40,6 +41,7 @@ export default function Summary({
   onPayDebt,
   isEditingBudget,
   setIsEditingBudget,
+  recurring,
 }: SummaryProps) {
   const BIWEEKLY_STORAGE_KEY = `biweekly-range-${budgetId}`;
 
@@ -49,8 +51,6 @@ export default function Summary({
   );
   const [showBudgetHistory, setShowBudgetHistory] = useState(false);
 
-  const [, setHasMounted] = useState(false);
-
   const {
     updateBudget,
     currentBudget: storedBudget,
@@ -59,7 +59,6 @@ export default function Summary({
   } = useBudgetStorage(budgetId, budget);
 
   useEffect(() => {
-    setHasMounted(true);
     loadInitialData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -92,15 +91,16 @@ export default function Summary({
   }, [biweeklyRange]);
 
   const checkAndResetBudget = useCallback(() => {
+    if (!recurring) return false;
+
     const currentPeriodKey = getCurrentPeriodKey();
     if (lastResetDate === currentPeriodKey) return false;
 
-    // Get the budget for this period or use current budget
     const periodBudget = periodBudgets[currentPeriodKey] || storedBudget;
-
     updateBudget(periodBudget, currentPeriodKey);
     return true;
   }, [
+    recurring, // <-- include in deps
     getCurrentPeriodKey,
     lastResetDate,
     periodBudgets,
@@ -112,16 +112,6 @@ export default function Summary({
     checkAndResetBudget();
   }, [biweeklyRange, checkAndResetBudget]);
 
-  // Add this to your Summary component
-  useEffect(() => {
-    console.log('Current budget data:', {
-      storedBudget,
-      periodBudgets,
-      lastResetDate,
-      currentPeriodKey: getCurrentPeriodKey(),
-    });
-  }, [storedBudget, periodBudgets, lastResetDate, getCurrentPeriodKey]);
-
   const { percentageUsed } = useBiweeklySummary({
     entries,
     budgetId,
@@ -132,9 +122,8 @@ export default function Summary({
   const { periods, totalSavings, totalDebt } = useBiweeklyHistory({
     entries,
     budgetId,
-    budget,
     biweeklyRange,
-    budgetStorageKey: `budget-${budgetId}`,
+    periodBudgets,
   });
 
   const [peakPeriodKey, peakPeriodData] = periods.reduce(
@@ -205,31 +194,38 @@ export default function Summary({
         setShowBudgetHistory={setShowBudgetHistory}
       />
 
-      <PeriodRangeSelector
-        biweeklyRange={biweeklyRange}
-        biweeklyPresets={biweeklyPresets}
-        setBiweeklyRange={setBiweeklyRange}
-      />
+      {recurring && (
+        <>
+          <PeriodRangeSelector
+            biweeklyRange={biweeklyRange}
+            biweeklyPresets={biweeklyPresets}
+            setBiweeklyRange={setBiweeklyRange}
+          />
 
-      <BiweeklyChartDialog
-        periods={periods}
-        periodBudgets={periodBudgets}
-        formatBiweeklyLabel={formatBiweeklyLabel}
-        onBudgetChange={(period, newBudget) => updateBudget(newBudget, period)}
-      />
+          <BiweeklyChartDialog
+            periods={periods}
+            periodBudgets={periodBudgets}
+            formatBiweeklyLabel={formatBiweeklyLabel}
+            onBudgetChange={(period, newBudget) =>
+              updateBudget(newBudget, period)
+            }
+          />
 
-      <StatsGrid
-        totalDebt={totalDebt}
-        totalSavings={totalSavings}
-        onPayDebt={onPayDebt}
-      />
-      {peakPeriodKey && (
-        <PeakSpending
-          peakPeriodKey={peakPeriodKey}
-          peakPeriodData={peakPeriodData}
-          budget={peakPeriodData.budget}
-          formatBiweeklyLabel={formatBiweeklyLabel}
-        />
+          <StatsGrid
+            totalDebt={totalDebt}
+            totalSavings={totalSavings}
+            onPayDebt={onPayDebt}
+          />
+
+          {peakPeriodKey && (
+            <PeakSpending
+              peakPeriodKey={peakPeriodKey}
+              peakPeriodData={peakPeriodData}
+              budget={peakPeriodData.budget}
+              formatBiweeklyLabel={formatBiweeklyLabel}
+            />
+          )}
+        </>
       )}
 
       {mostExpensivePerPeriod.length > 0 && (

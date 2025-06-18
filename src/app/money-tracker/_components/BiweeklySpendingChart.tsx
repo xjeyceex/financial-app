@@ -7,7 +7,6 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  ReferenceLine,
 } from 'recharts';
 import { useTheme } from 'next-themes';
 import { useState } from 'react';
@@ -30,7 +29,7 @@ type Props = {
   periodBudgets: Record<string, number>;
   formatBiweeklyLabel: (period: string) => string;
   onBudgetChange: (period: string, newBudget: number) => void;
-  disableEditFor?: (periodKey: string) => boolean; // <-- add this line
+  disableEditFor?: (periodKey: string) => boolean;
 };
 
 function isPastPeriod(periodKey: string): boolean {
@@ -70,9 +69,9 @@ export default function BiweeklySpendingChart({
   const colors = {
     foreground: isDark ? '#f4f4f5' : '#0c0c0d',
     border: isDark ? '#3f3f46' : '#e4e4e7',
-    primary: '#3b82f6',
-    secondary: '#10b981',
-    danger: '#ef4444',
+    primary: '#3b82f6', // blue (not used for spent anymore)
+    secondary: '#10b981', // green for savings
+    danger: '#ef4444', // red for spent
     popover: isDark ? '#18181b' : '#ffffff',
   };
 
@@ -105,35 +104,29 @@ export default function BiweeklySpendingChart({
                 }
               />
               <Tooltip content={<CustomTooltip />} />
-              {chartData.map((data, index) => (
-                <ReferenceLine
-                  key={index}
-                  y={data.budget}
-                  stroke={colors.foreground}
-                  strokeDasharray="3 3"
-                  label={{
-                    position: 'top',
-                    value: 'Budget',
-                    fill: colors.foreground,
-                    fontSize: 11,
-                  }}
-                />
-              ))}
+
+              {/* Budget bar - blue */}
+              <Bar
+                dataKey="budget"
+                name="Budget"
+                radius={[4, 4, 0, 0]}
+                fill={colors.primary}
+              />
+
+              {/* Spent bar - red */}
               <Bar
                 dataKey="total"
                 name="Spent"
                 radius={[4, 4, 0, 0]}
-                fill={colors.primary}
-                fillOpacity={1}
-                activeBar={{ fill: colors.primary, fillOpacity: 0.9 }}
+                fill={colors.danger}
               />
+
+              {/* Savings bar - green */}
               <Bar
                 dataKey="savings"
                 name="Savings"
                 radius={[4, 4, 0, 0]}
                 fill={colors.secondary}
-                fillOpacity={1}
-                activeBar={{ fill: colors.secondary, fillOpacity: 0.9 }}
               />
             </BarChart>
           </ResponsiveContainer>
@@ -144,8 +137,9 @@ export default function BiweeklySpendingChart({
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
         {chartData.map((data) => {
           const isEditable = disableEditFor
-            ? disableEditFor(data.period)
+            ? !disableEditFor(data.period)
             : isPastPeriod(data.period);
+
           return (
             <div
               key={data.period}
@@ -156,7 +150,12 @@ export default function BiweeklySpendingChart({
               </span>
 
               {isEditable ? (
-                <Dialog>
+                <Dialog
+                  open={editingPeriod === data.period}
+                  onOpenChange={(open) => {
+                    if (!open) setEditingPeriod(null);
+                  }}
+                >
                   <DialogTrigger asChild>
                     <Button
                       size="sm"
@@ -171,33 +170,40 @@ export default function BiweeklySpendingChart({
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="w-[92vw] max-w-sm max-h-[90vh] overflow-y-auto rounded-2xl px-5 py-4">
-                    <div className="space-y-1.5">
-                      <DialogTitle className="text-base font-semibold">
-                        Edit Budget for {data.label}
-                      </DialogTitle>
-                      <DialogDescription className="text-sm text-muted-foreground">
-                        Set a custom amount for this period.
-                      </DialogDescription>
-                    </div>
-
-                    <Input
-                      type="number"
-                      value={tempBudget}
-                      onChange={(e) => setTempBudget(Number(e.target.value))}
-                      className="text-base py-2"
-                    />
-
-                    <Button
-                      size="sm"
-                      className="w-full mt-3"
-                      onClick={() => {
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
                         if (editingPeriod) {
                           onBudgetChange(editingPeriod, tempBudget);
+                          setEditingPeriod(null);
                         }
                       }}
+                      className="space-y-4"
                     >
-                      Save
-                    </Button>
+                      <div className="space-y-1.5">
+                        <DialogTitle className="text-base font-semibold">
+                          Edit Budget for {data.label}
+                        </DialogTitle>
+                        <DialogDescription className="text-sm text-muted-foreground">
+                          Set a custom amount for this period.
+                        </DialogDescription>
+                      </div>
+
+                      <Input
+                        type="number"
+                        value={tempBudget}
+                        onChange={(e) => setTempBudget(Number(e.target.value))}
+                        className="text-base py-2"
+                        autoFocus
+                        required
+                        min={0}
+                        step={1}
+                      />
+
+                      <Button size="sm" type="submit" className="w-full mt-3">
+                        Save
+                      </Button>
+                    </form>
                   </DialogContent>
                 </Dialog>
               ) : (

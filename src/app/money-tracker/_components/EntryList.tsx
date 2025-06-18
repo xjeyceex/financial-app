@@ -9,6 +9,7 @@ type Props = {
   entries: Entry[];
   onEdit: (entry: Entry) => void;
   onDelete: (id: string) => void;
+  recurring: boolean;
 };
 
 // Get biweekly period with year (e.g., Jun 1–15, 2025)
@@ -38,10 +39,20 @@ function groupEntriesBiweekly(entries: Entry[]) {
   }, {});
 }
 
-export default function EntryList({ entries, onEdit, onDelete }: Props) {
+export default function EntryList({
+  entries,
+  onEdit,
+  onDelete,
+  recurring,
+}: Props) {
   if (entries.length === 0) {
     return <p className="text-gray-500">No entries yet.</p>;
   }
+
+  // Sort entries descending by date (latest first)
+  const sortedEntries = [...entries].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
 
   const formatDate = (isoDate: string) => {
     const date = new Date(isoDate);
@@ -56,15 +67,19 @@ export default function EntryList({ entries, onEdit, onDelete }: Props) {
     });
   };
 
-  const grouped = groupEntriesBiweekly(entries);
+  const grouped = recurring
+    ? groupEntriesBiweekly(sortedEntries)
+    : { All: sortedEntries };
 
   return (
     <div className="space-y-6">
       {Object.entries(grouped).map(([period, groupEntries]) => (
         <div key={period}>
-          <h3 className="text-lg font-semibold text-muted-foreground mb-2">
-            {period}
-          </h3>
+          {recurring && (
+            <h3 className="text-lg font-semibold text-muted-foreground mb-2">
+              {period}
+            </h3>
+          )}
           <ul className="space-y-2">
             {groupEntries.map((entry) => (
               <li key={entry.id} className="border p-3 rounded-2xl shadow-sm">

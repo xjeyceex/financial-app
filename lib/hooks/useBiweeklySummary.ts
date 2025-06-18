@@ -51,15 +51,13 @@ export function useBiweeklySummary({
 export function useBiweeklyHistory({
   entries,
   budgetId,
-  budget,
   biweeklyRange,
-  budgetStorageKey,
+  periodBudgets,
 }: {
   entries: Entry[];
   budgetId: string;
-  budget: number;
   biweeklyRange: BiweeklyRange;
-  budgetStorageKey: string;
+  periodBudgets: Record<string, number>;
 }) {
   return useMemo(() => {
     const data: Record<string, BiweeklyData> = {};
@@ -71,25 +69,14 @@ export function useBiweeklyHistory({
       const key = getBiweeklyKey(date, biweeklyRange);
 
       if (!data[key]) {
-        const savedBudget = localStorage.getItem(budgetStorageKey);
-        let periodBudget = budget;
-
-        if (savedBudget) {
-          try {
-            const parsed = JSON.parse(savedBudget);
-            periodBudget =
-              parsed?.periodBudgets?.[key] ?? parsed?.currentBudget ?? budget;
-          } catch (e) {
-            console.error('Error parsing budget data:', e);
-          }
-        }
+        const periodBudget = periodBudgets?.[key] ?? 0; // ✅ Use passed-in periodBudgets
 
         data[key] = {
           total: 0,
           budget: periodBudget,
           savings: periodBudget,
           items: {},
-          debtPayments: 0, // Initialize debtPayments to 0
+          debtPayments: 0,
         };
       }
 
@@ -118,7 +105,6 @@ export function useBiweeklyHistory({
 
     const periods = Object.entries(data).sort(([a], [b]) => (a < b ? -1 : 1));
 
-    // Calculate savings and debt considering debt payments
     const savingsPerPeriod = periods.map(([, d]) => {
       // Savings after debt payments
       return d.savings - d.debtPayments;
@@ -131,13 +117,10 @@ export function useBiweeklyHistory({
       savingsPerPeriod.reduce((sum, s) => sum + s, 0) /
       (savingsPerPeriod.length || 1);
 
-    // Total savings is the sum of all positive period savings
     const totalSavings = savingsPerPeriod
       .filter((s) => s >= 0)
       .reduce((sum, s) => sum + s, 0);
 
-    // Total debt is the sum of all negative period savings (absolute value)
-    // minus any debt payments made
     const totalDebt = Math.max(
       0,
       savingsPerPeriod
@@ -155,5 +138,5 @@ export function useBiweeklyHistory({
       totalSavings,
       totalDebt,
     };
-  }, [entries, budgetId, budget, biweeklyRange, budgetStorageKey]);
+  }, [entries, budgetId, biweeklyRange, periodBudgets]);
 }

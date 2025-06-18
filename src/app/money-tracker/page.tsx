@@ -21,32 +21,43 @@ import {
   SelectItem,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { FiPlus } from 'react-icons/fi';
+import { FiPlus, FiRepeat } from 'react-icons/fi';
 import { Entry } from '../../../lib/types';
 import { Pencil } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
 
 type BudgetData = {
   id: string;
   name: string;
   entries: Entry[];
   budget: number;
+  recurring: boolean;
 };
 
 export default function MoneyTrackerPage() {
   const [budgets, setBudgets] = useLocalStorage<BudgetData[]>('budgets', [
-    { id: uuidv4(), name: 'Budget 1', entries: [], budget: 5000 },
+    {
+      id: uuidv4(),
+      name: 'Budget 1',
+      entries: [],
+      budget: 5000,
+      recurring: true,
+    },
   ]);
-  const [isEditingBudget, setIsEditingBudget] = useState(false);
 
   const [activeBudgetIndex, setActiveBudgetIndex] = useState(0);
   const [editingEntry, setEditingEntry] = useState<Entry | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  const [isEditingName, setIsEditingName] = useState(false);
-  const [nameInput, setNameInput] = useState(budgets[activeBudgetIndex]?.name);
+  const [editBudgetModalOpen, setEditBudgetModalOpen] = useState(false);
+  const [nameInput, setNameInput] = useState(budgets[0]?.name);
 
   const [newBudgetModalOpen, setNewBudgetModalOpen] = useState(false);
   const [newBudgetName, setNewBudgetName] = useState('');
+  const [newBudgetRecurring, setNewBudgetRecurring] = useState(false);
+
+  const [isEditingBudget, setIsEditingBudget] = useState(false);
 
   useEffect(() => {
     setBudgets((prev) =>
@@ -77,7 +88,6 @@ export default function MoneyTrackerPage() {
   const handlePayDebt = (amount: number) => {
     if (!currentBudget) return;
 
-    // Create a debt payment entry
     const debtPaymentEntry: Entry = {
       id: uuidv4(),
       budgetId: currentBudget.id,
@@ -86,7 +96,6 @@ export default function MoneyTrackerPage() {
       item: 'Debt Payment',
     };
 
-    // Add the new entry
     updateCurrentBudget({
       entries: [debtPaymentEntry, ...currentBudget.entries],
     });
@@ -122,7 +131,6 @@ export default function MoneyTrackerPage() {
       <div className="flex flex-wrap items-center gap-3 mb-4">
         <label className="text-sm font-medium">Budget for:</label>
 
-        {/* Select + Controls Group */}
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <Select
             value={currentBudget.id}
@@ -131,8 +139,6 @@ export default function MoneyTrackerPage() {
               if (index !== -1) {
                 setActiveBudgetIndex(index);
                 setEditingEntry(null);
-                setIsEditingName(false);
-                setIsEditingBudget(false);
               }
             }}
           >
@@ -143,118 +149,167 @@ export default function MoneyTrackerPage() {
               {budgets.map((b) => (
                 <SelectItem key={b.id} value={b.id}>
                   {b.name}
+                  {b.recurring && (
+                    <FiRepeat
+                      className="ml-2 w-4 h-4 text-muted-foreground"
+                      title="Recurring"
+                    />
+                  )}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
 
-          {isEditingName ? (
-            <div className="flex items-center gap-2 flex-wrap">
-              <input
-                value={nameInput}
-                onChange={(e) => setNameInput(e.target.value)}
-                className="px-2 py-1 border rounded text-sm flex-1 min-w-[120px]"
-              />
+          <Dialog
+            open={editBudgetModalOpen}
+            onOpenChange={setEditBudgetModalOpen}
+          >
+            <DialogTrigger asChild>
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => {
-                  if (nameInput.trim() !== '') {
-                    setBudgets((prev) => {
-                      const updated = [...prev];
-                      updated[activeBudgetIndex] = {
-                        ...updated[activeBudgetIndex],
-                        name: nameInput.trim(),
-                      };
-                      return updated;
-                    });
-                    setIsEditingName(false);
-                  }
-                }}
-              >
-                ✓
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => {
-                  setNameInput(currentBudget.name);
-                  setIsEditingName(false);
-                }}
-              >
-                ✕
-              </Button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-1">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setIsEditingName(true)}
                 className="flex items-center gap-1"
               >
                 <span className="block sm:hidden">
                   <Pencil className="w-4 h-4" />
                 </span>
-                <span className="hidden sm:block">Rename</span>
+                <span className="hidden sm:block">Edit</span>
               </Button>
-
-              {/* + Icon for New Budget */}
-              <Dialog
-                open={newBudgetModalOpen}
-                onOpenChange={setNewBudgetModalOpen}
-              >
-                <DialogTrigger asChild>
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    className="w-8 h-8 p-0 flex items-center justify-center"
+            </DialogTrigger>
+            <DialogContent className="max-w-sm top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+              <DialogHeader>
+                <DialogTitle>Edit Budget</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="budget-name"
+                    className="text-sm font-medium pb-2 block"
                   >
-                    <FiPlus size={28} strokeWidth={3} />
+                    Budget Name
+                  </label>
+                  <Input
+                    id="budget-name"
+                    value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)}
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 text-sm">
+                  <Switch
+                    id="edit-recurring-toggle"
+                    checked={budgets[activeBudgetIndex]?.recurring || false}
+                    onCheckedChange={(checked) => {
+                      const updated = [...budgets];
+                      updated[activeBudgetIndex].recurring = checked;
+                      setBudgets(updated);
+                    }}
+                  />
+                  <label
+                    htmlFor="edit-recurring-toggle"
+                    className="text-sm font-medium"
+                  >
+                    Recurring
+                  </label>
+                </div>
+
+                <div className="flex justify-between gap-2">
+                  <Button
+                    onClick={() => {
+                      if (nameInput.trim() !== '') {
+                        const updated = [...budgets];
+                        updated[activeBudgetIndex].name = nameInput.trim();
+                        setBudgets(updated);
+                        setEditBudgetModalOpen(false);
+                      }
+                    }}
+                  >
+                    Save Changes
                   </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-sm">
-                  <DialogHeader>
-                    <DialogTitle>Create New Budget</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-3">
-                    <input
-                      type="text"
-                      className="w-full px-3 py-2 border rounded"
-                      placeholder="Budget Name"
-                      value={newBudgetName}
-                      onChange={(e) => setNewBudgetName(e.target.value)}
-                    />
-                    <Button
-                      onClick={() => {
-                        const trimmed = newBudgetName.trim();
-                        if (trimmed) {
-                          const newBudget: BudgetData = {
-                            id: uuidv4(),
-                            name: trimmed,
-                            entries: [],
-                            budget: 5000,
-                          };
-                          setBudgets((prev) => [...prev, newBudget]);
-                          setActiveBudgetIndex(budgets.length);
-                          setNewBudgetName('');
-                          setNewBudgetModalOpen(false);
-                        }
-                      }}
-                    >
-                      Create Budget
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-          )}
+                  <Button
+                    variant="destructive"
+                    disabled={activeBudgetIndex === 0}
+                    onClick={() => {
+                      if (activeBudgetIndex !== 0) {
+                        const updated = [...budgets];
+                        updated.splice(activeBudgetIndex, 1);
+                        setBudgets(updated);
+                        setActiveBudgetIndex(0);
+                        setEditBudgetModalOpen(false);
+                      }
+                    }}
+                  >
+                    Delete Budget
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog
+            open={newBudgetModalOpen}
+            onOpenChange={setNewBudgetModalOpen}
+          >
+            <DialogTrigger asChild>
+              <Button
+                size="icon"
+                variant="outline"
+                className="w-8 h-8 p-0 flex items-center justify-center"
+              >
+                <FiPlus size={28} strokeWidth={3} />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-sm">
+              <DialogHeader>
+                <DialogTitle>Create New Budget</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  className="w-full px-3 py-2 border rounded"
+                  placeholder="Budget Name"
+                  value={newBudgetName}
+                  onChange={(e) => setNewBudgetName(e.target.value)}
+                />
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="recurring-toggle"
+                    checked={newBudgetRecurring}
+                    onCheckedChange={setNewBudgetRecurring}
+                  />
+                  <label htmlFor="recurring-toggle" className="text-sm">
+                    Recurring
+                  </label>
+                </div>
+                <Button
+                  onClick={() => {
+                    const trimmed = newBudgetName.trim();
+                    if (trimmed) {
+                      const newBudget: BudgetData = {
+                        id: uuidv4(),
+                        name: trimmed,
+                        entries: [],
+                        budget: 5000,
+                        recurring: newBudgetRecurring,
+                      };
+                      setBudgets((prev) => [...prev, newBudget]);
+                      setActiveBudgetIndex(budgets.length);
+                      setNewBudgetName('');
+                      setNewBudgetRecurring(false);
+                      setNewBudgetModalOpen(false);
+                    }
+                  }}
+                >
+                  Create Budget
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
       {/* Dashboard */}
       <section className="flex flex-col lg:flex-row gap-6">
-        {/* Summary */}
         <div className="lg:w-2/3 space-y-3">
           <div className="rounded-2xl bg-muted/40 dark:bg-muted/10 shadow-sm">
             <Summary
@@ -265,12 +320,12 @@ export default function MoneyTrackerPage() {
               setBudget={(value) => updateCurrentBudget({ budget: value })}
               isEditingBudget={isEditingBudget}
               setIsEditingBudget={setIsEditingBudget}
-              onPayDebt={handlePayDebt} // Add this line
+              onPayDebt={handlePayDebt}
+              recurring={currentBudget.recurring}
             />
           </div>
         </div>
 
-        {/* Expenses */}
         <div className="lg:w-1/3 space-y-3">
           <h2 className="text-xl font-semibold mb-2">Your Expenses</h2>
           <EntryList
@@ -280,6 +335,7 @@ export default function MoneyTrackerPage() {
               setEditingEntry(entry);
               setModalOpen(true);
             }}
+            recurring={currentBudget.recurring}
           />
         </div>
       </section>
