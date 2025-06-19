@@ -110,13 +110,15 @@ export default function MoneyTrackerPage() {
           <div className="lg:w-2/3 space-y-3">
             <div className="rounded-2xl bg-muted/20 dark:bg-muted/60 p-6 ">
               <div className="space-y-3">
-                <div className="h-7 w-1/2 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mx-auto" />
-                <div className="h-3 w-130 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mx-auto" />
-                <div className="h-3 w-1/3 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mx-auto" />
-                <div className="h-8 w-full bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                <div className="space-y-2">
+                  <div className="h-7 w-1/2 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mx-auto" />
+                  <div className="h-3 w-130 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse mx-auto" />
+                  <div className="h-4 w-1/3 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mx-auto" />
+                </div>
+                <div className="h-8 w-full bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse" />
                 <div className="flex gap-4">
-                  <div className="h-20 w-1/2 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                  <div className="h-20 w-1/2 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                  <div className="h-20 w-1/2 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse" />
+                  <div className="h-20 w-1/2 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse" />
                 </div>
                 <div className="h-4 w-40 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
                 <div className="h-3 w-45 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
@@ -136,18 +138,18 @@ export default function MoneyTrackerPage() {
                 >
                   <div className="flex items-center space-x-3">
                     <div>
-                      <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-1" />
-                      <div className="h-3 w-36 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                      <div className="h-5 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-1" />
+                      <div className="h-4 w-36 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
                     </div>
                   </div>
                   <div className="text-right">
                     {/* First pulse bar — separate */}
-                    <div className="h-4 w-12 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-1 ml-auto" />
+                    <div className="h-5 w-12 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-1 ml-auto" />
 
                     {/* Grouped pulse bars — side by side */}
                     <div className="flex justify-end space-x-1">
-                      <div className="h-4 w-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                      <div className="h-4 w-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                      <div className="h-5 w-7 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                      <div className="h-5 w-7 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
                     </div>
                   </div>
                 </div>
