@@ -94,10 +94,91 @@ export default function MoneyTrackerPage() {
   }, [activeBudgetIndex, budgets]);
 
   // Don't render until data is ready
-  if (!isReady || budgets.length === 0) return <p>Loading budgets...</p>;
+  if (!isReady || budgets.length === 0) {
+    return (
+      <div className="w-full max-w-7xl mx-auto px-1 md:px-6 lg:px-12 pt-4 space-y-8">
+        {/* Budget Switcher Skeleton */}
+        <div className="flex flex-wrap items-center gap-3 mb-4">
+          <div className="h-6 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+          <div className="h-9 w-50 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+          <div className="h-8 w-9 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+        </div>
+
+        {/* Dashboard Skeleton */}
+        <section className="flex flex-col lg:flex-row gap-6 ">
+          {/* Summary Skeleton */}
+          <div className="lg:w-2/3 space-y-3">
+            <div className="rounded-2xl bg-muted/20 dark:bg-muted/60 p-6 ">
+              <div className="space-y-3">
+                <div className="h-7 w-1/2 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mx-auto" />
+                <div className="h-3 w-130 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mx-auto" />
+                <div className="h-3 w-1/3 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mx-auto" />
+                <div className="h-8 w-full bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                <div className="flex gap-4">
+                  <div className="h-20 w-1/2 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                  <div className="h-20 w-1/2 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                </div>
+                <div className="h-4 w-40 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                <div className="h-3 w-45 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+              </div>
+            </div>
+          </div>
+
+          {/* Entry List Skeleton */}
+          <div className="lg:w-1/3 space-y-3">
+            <div className="h-7 w-1/2 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-2" />
+            <div className="h-4 w-1/3 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-4" />
+            <div className="space-y-2">
+              {[...Array(5)].map((_, i) => (
+                <div
+                  key={i}
+                  className="flex justify-between items-center p-3 bg-gray-100 dark:bg-gray-800 rounded-lg"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div>
+                      <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-1" />
+                      <div className="h-3 w-36 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    {/* First pulse bar — separate */}
+                    <div className="h-4 w-12 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-1 ml-auto" />
+
+                    {/* Grouped pulse bars — side by side */}
+                    <div className="flex justify-end space-x-1">
+                      <div className="h-4 w-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                      <div className="h-4 w-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   const currentBudget = budgets[activeBudgetIndex];
-  if (!currentBudget) return <p>Loading current budget...</p>;
+  if (!currentBudget) {
+    return (
+      <div className="w-full max-w-7xl mx-auto px-1 md:px-6 lg:px-12 pt-4 space-y-8">
+        {/* Budget Switcher Skeleton (simpler version) */}
+        <div className="flex flex-wrap items-center gap-3 mb-4">
+          <div className="h-5 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+          <div className="h-10 w-[200px] bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+        </div>
+
+        {/* Content Loading Skeleton */}
+        <div className="rounded-2xl bg-muted/40 dark:bg-muted/10 p-6 h-64 flex items-center justify-center">
+          <div className="text-center space-y-2">
+            <div className="h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse mx-auto" />
+            <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mx-auto" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Budget update helpers
   const updateCurrentBudget = (newData: Partial<BudgetData>) => {

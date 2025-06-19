@@ -93,7 +93,7 @@ export default function Sidebar() {
   return (
     <>
       {/* Top Navbar */}
-      <header className="fixed top-0 left-0 right-0 z-50 h-16  bg-white dark:bg-zinc-900 shadow-sm border-b border-gray-200 dark:border-zinc-700 px-6 flex items-center justify-between">
+      <header className="fixed top-0 left-0 right-0 z-50 h-16  bg-white dark:bg-zinc-900 shadow-sm border-b border-gray-200 dark:border-zinc-700 px-4 flex items-center justify-between">
         <Link
           href="/"
           className="text-xl font-semibold text-gray-800 dark:text-white"
