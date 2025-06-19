@@ -171,7 +171,7 @@ export default function MoneyTrackerPage() {
       entries: currentBudget.entries.filter((e) => e.id !== id),
     });
   };
-  console.log('MoneyTrackerPage render');
+
   const cancelEdit = () => setEditingEntry(null);
 
   return (
