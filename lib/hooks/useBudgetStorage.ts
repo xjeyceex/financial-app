@@ -1,46 +1,68 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { BudgetStorage } from '../types';
+import { loadBudget, saveBudget } from '../indexedDB';
 
 export function useBudgetStorage(budgetId: string, initialBudget: number) {
-  const BUDGET_STORAGE_KEY = `budget-${budgetId}`;
-
   const [budgetData, setBudgetData] = useState<BudgetStorage>({
     currentBudget: initialBudget,
     periodBudgets: {},
     lastResetDate: '',
   });
 
-  // Load data from localStorage on mount
-  useEffect(() => {
-    try {
-      const savedData = localStorage.getItem(BUDGET_STORAGE_KEY);
-      if (savedData) {
-        const parsed = JSON.parse(savedData);
-        setBudgetData({
-          currentBudget: parsed.currentBudget ?? initialBudget,
-          periodBudgets: parsed.periodBudgets ?? {},
-          lastResetDate: parsed.lastResetDate ?? '',
-        });
-      }
-    } catch (e) {
-      console.error('Failed to parse budget data:', e);
-    }
-  }, [BUDGET_STORAGE_KEY, initialBudget]);
+  const didLoad = useRef(false);
+  const prevData = useRef<BudgetStorage | null>(null);
 
-  // Save data to localStorage whenever it changes
+  // Load from IndexedDB on mount
   useEffect(() => {
-    localStorage.setItem(BUDGET_STORAGE_KEY, JSON.stringify(budgetData));
-  }, [BUDGET_STORAGE_KEY, budgetData]);
+    const loadFromDB = async () => {
+      try {
+        const data = await loadBudget(budgetId);
+        if (data) {
+          const newBudgetData: BudgetStorage = {
+            currentBudget: data.currentBudget ?? initialBudget,
+            periodBudgets: data.periodBudgets ?? {},
+            lastResetDate: data.lastResetDate ?? '',
+          };
+          setBudgetData(newBudgetData);
+          prevData.current = newBudgetData;
+        }
+      } catch (err) {
+        console.error(`Failed to load budget from IndexedDB:`, err);
+      } finally {
+        didLoad.current = true;
+      }
+    };
+
+    loadFromDB();
+  }, [budgetId, initialBudget]);
+
+  // Save to IndexedDB only if data changes and after initial load
+  useEffect(() => {
+    if (!didLoad.current) return;
+
+    const hasChanged =
+      JSON.stringify(prevData.current) !== JSON.stringify(budgetData);
+
+    if (hasChanged) {
+      saveBudget(budgetId, budgetData).catch((err) =>
+        console.error(`Failed to save budget to IndexedDB:`, err)
+      );
+      prevData.current = budgetData;
+    }
+  }, [budgetId, budgetData]);
 
   const updateBudget = useCallback((newBudget: number, periodKey: string) => {
-    setBudgetData((prev) => ({
-      currentBudget: newBudget,
-      periodBudgets: {
-        ...prev.periodBudgets,
-        [periodKey]: newBudget,
-      },
-      lastResetDate: periodKey,
-    }));
+    setBudgetData((prev) => {
+      const updated: BudgetStorage = {
+        currentBudget: newBudget,
+        periodBudgets: {
+          ...prev.periodBudgets,
+          [periodKey]: newBudget,
+        },
+        lastResetDate: periodKey,
+      };
+      return updated;
+    });
   }, []);
 
   return {

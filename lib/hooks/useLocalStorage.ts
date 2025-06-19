@@ -1,59 +1,64 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { openDB } from 'idb';
 
-export function useLocalStorage<T>(key: string, initialValue: T) {
+const DB_NAME = 'AppStorage';
+const STORE_NAME = 'keyval';
+
+const getDb = async () => {
+  return openDB(DB_NAME, 1, {
+    upgrade(db) {
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME);
+      }
+    },
+  });
+};
+
+export function useIndexedDB<T>(key: string, initialValue: T) {
   const [value, setValue] = useState<T>(initialValue);
-  const [isClient, setIsClient] = useState(false);
+  const [isReady, setIsReady] = useState(false);
 
+  // Load value from IndexedDB
   useEffect(() => {
-    setIsClient(true);
-    try {
-      const item = localStorage.getItem(key);
-      if (item) setValue(JSON.parse(item));
-    } catch (error) {
-      console.error(`Error reading localStorage key "${key}":`, error);
-    }
+    const load = async () => {
+      try {
+        const db = await getDb();
+        const stored = await db.get(STORE_NAME, key);
+        if (stored !== undefined) {
+          setValue(stored);
+        }
+      } catch (error) {
+        console.error(`IndexedDB read error for key "${key}":`, error);
+      } finally {
+        setIsReady(true);
+      }
+    };
+    load();
   }, [key]);
 
   const setStoredValue = useCallback(
-    (newValue: T | ((prev: T) => T)) => {
-      setValue((prevValue) => {
+    async (newValue: T | ((prev: T) => T)) => {
+      try {
         const computedValue =
           typeof newValue === 'function'
-            ? (newValue as (prev: T) => T)(prevValue)
+            ? (newValue as (prev: T) => T)(value)
             : newValue;
 
-        try {
-          localStorage.setItem(key, JSON.stringify(computedValue));
-        } catch (error) {
-          console.error(`Error writing to localStorage key "${key}":`, error);
-        }
-
-        return computedValue;
-      });
+        const db = await getDb();
+        await db.put(STORE_NAME, computedValue, key);
+        setValue(computedValue);
+      } catch (error) {
+        console.error(`IndexedDB write error for key "${key}":`, error);
+      }
     },
-    [key]
+    [key, value]
   );
 
-  useEffect(() => {
-    const handleStorage = () => {
-      try {
-        const item = localStorage.getItem(key);
-        if (item) setValue(JSON.parse(item));
-      } catch (error) {
-        console.error(`Error syncing localStorage key "${key}":`, error);
-      }
-    };
-
-    window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
-  }, [key]);
-
-  // Prevent SSR mismatch by returning undefined before hydration
-  if (!isClient) {
-    return [initialValue, () => {}] as const;
+  if (!isReady) {
+    return [initialValue, () => {}, false] as const;
   }
 
-  return [value, setStoredValue] as const;
+  return [value, setStoredValue, true] as const;
 }

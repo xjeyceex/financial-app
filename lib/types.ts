@@ -8,11 +8,7 @@ export type Entry = {
 };
 
 export type BudgetStorage = {
-  currentBudget: number; // The currently active budget amount
-  periodBudgets: Record<
-    // Stores budgets for all historical periods
-    string, // Key format: "YYYY-MM-DD" (start day of period)
-    number // Budget amount for that period
-  >;
-  lastResetDate: string; // When the budget was last reset (in same YYYY-MM-DD format)
+  currentBudget: number;
+  periodBudgets: Record<string, number>;
+  lastResetDate: string;
 };

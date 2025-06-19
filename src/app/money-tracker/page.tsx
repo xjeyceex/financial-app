@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useLocalStorage } from '../../../lib/hooks/useLocalStorage';
+import { useIndexedDB } from '../../../lib/hooks/useLocalStorage';
 import EntryForm from './_components/EntryForm';
 import EntryList from './_components/EntryList';
 import Summary from './_components/Summary';
@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { HiOutlineDotsHorizontal } from 'react-icons/hi';
 import ConfirmDialog from './_components/DeleteBudgetDialog';
+import CreateBudgetDialog from './_components/CreateBudgetDialog';
 
 type BudgetData = {
   id: string;
@@ -44,45 +45,61 @@ type BudgetData = {
 };
 
 export default function MoneyTrackerPage() {
-  const [budgets, setBudgets] = useLocalStorage<BudgetData[]>('budgets', [
-    {
-      id: uuidv4(),
-      name: 'Budget 1',
-      entries: [],
-      budget: 5000,
-      recurring: true,
-    },
-  ]);
-
+  const [budgets, setBudgets, isReady] = useIndexedDB<BudgetData[]>(
+    'budgets',
+    []
+  );
   const [activeBudgetIndex, setActiveBudgetIndex] = useState(0);
   const [editingEntry, setEditingEntry] = useState<Entry | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-
   const [editBudgetModalOpen, setEditBudgetModalOpen] = useState(false);
-  const [nameInput, setNameInput] = useState(budgets[0]?.name);
-
+  const [nameInput, setNameInput] = useState('');
   const [newBudgetModalOpen, setNewBudgetModalOpen] = useState(false);
-  const [newBudgetName, setNewBudgetName] = useState('');
-  const [newBudgetRecurring, setNewBudgetRecurring] = useState(false);
+
   const [dialogOpen, setDialogOpen] = useState(false);
-
   const [isEditingBudget, setIsEditingBudget] = useState(false);
+  const [lastCreatedBudgetId, setLastCreatedBudgetId] = useState<string | null>(
+    null
+  );
 
+  // Ensure there's always at least one default budget
   useEffect(() => {
-    setBudgets((prev) =>
-      prev.map((b) => ({
-        ...b,
-        id: b.id || uuidv4(),
-      }))
-    );
-  }, [setBudgets]);
+    if (isReady && budgets.length === 0) {
+      setBudgets([
+        {
+          id: uuidv4(),
+          name: 'Budget 1',
+          entries: [],
+          budget: 5000,
+          recurring: true,
+        },
+      ]);
+    }
+  }, [isReady, budgets.length, setBudgets]);
 
+  // Sync active index when a new budget is created
   useEffect(() => {
-    setNameInput(budgets[activeBudgetIndex]?.name);
+    if (lastCreatedBudgetId) {
+      const newIndex = budgets.findIndex((b) => b.id === lastCreatedBudgetId);
+      if (newIndex !== -1) {
+        setActiveBudgetIndex(newIndex);
+        setLastCreatedBudgetId(null);
+      }
+    }
+  }, [budgets, lastCreatedBudgetId]);
+
+  // Sync name input with current budget
+  useEffect(() => {
+    setNameInput(budgets[activeBudgetIndex]?.name || '');
   }, [activeBudgetIndex, budgets]);
 
-  const currentBudget = budgets[activeBudgetIndex];
+  // Don't render until data is ready
+  if (!isReady || budgets.length === 0) return <p>Loading budgets...</p>;
 
+  const currentBudget = budgets[activeBudgetIndex];
+  if (!currentBudget) return <p>Loading current budget...</p>;
+
+  // Budget update helpers
   const updateCurrentBudget = (newData: Partial<BudgetData>) => {
     setBudgets((prev) => {
       const updated = [...prev];
@@ -95,19 +112,44 @@ export default function MoneyTrackerPage() {
   };
 
   const handlePayDebt = (amount: number) => {
-    if (!currentBudget) return;
+    updateCurrentBudget({
+      entries: [
+        {
+          id: uuidv4(),
+          budgetId: currentBudget.id,
+          amount,
+          date: new Date().toISOString(),
+          item: 'Debt Payment',
+        },
+        ...currentBudget.entries,
+      ],
+    });
+  };
 
-    const debtPaymentEntry: Entry = {
+  const handleCreateBudget = (name: string, recurring: boolean) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+
+    const isDuplicate = budgets.some(
+      (b) => b.name.toLowerCase() === trimmed.toLowerCase()
+    );
+
+    if (isDuplicate) {
+      alert('A budget with this name already exists.');
+      return;
+    }
+
+    const newBudget: BudgetData = {
       id: uuidv4(),
-      budgetId: currentBudget.id,
-      amount: amount, // ✅ make it positive
-      date: new Date().toISOString(),
-      item: 'Debt Payment',
+      name: trimmed,
+      entries: [],
+      budget: 5000,
+      recurring,
     };
 
-    updateCurrentBudget({
-      entries: [debtPaymentEntry, ...currentBudget.entries],
-    });
+    setNewBudgetModalOpen(false);
+    setBudgets((prev) => [...prev, newBudget]);
+    setLastCreatedBudgetId(newBudget.id);
   };
 
   const addEntry = (entry: Entry) => {
@@ -129,10 +171,8 @@ export default function MoneyTrackerPage() {
       entries: currentBudget.entries.filter((e) => e.id !== id),
     });
   };
-
-  const cancelEdit = () => {
-    setEditingEntry(null);
-  };
+  console.log('MoneyTrackerPage render');
+  const cancelEdit = () => setEditingEntry(null);
 
   return (
     <main className="w-full max-w-7xl mx-auto px-1 md:px-6 lg:px-12 pt-4 space-y-8">
@@ -277,55 +317,11 @@ export default function MoneyTrackerPage() {
           />
 
           {/* Create Budget Dialog */}
-          <Dialog
+          <CreateBudgetDialog
             open={newBudgetModalOpen}
             onOpenChange={setNewBudgetModalOpen}
-          >
-            <DialogContent className="max-w-sm">
-              <DialogHeader>
-                <DialogTitle>Create New Budget</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-3">
-                <Input
-                  type="text"
-                  placeholder="Budget Name"
-                  value={newBudgetName}
-                  onChange={(e) => setNewBudgetName(e.target.value)}
-                />
-                <div className="flex items-center gap-2">
-                  <Switch
-                    id="recurring-toggle"
-                    checked={newBudgetRecurring}
-                    onCheckedChange={setNewBudgetRecurring}
-                  />
-                  <label htmlFor="recurring-toggle" className="text-sm">
-                    Recurring
-                  </label>
-                </div>
-                <Button
-                  onClick={() => {
-                    const trimmed = newBudgetName.trim();
-                    if (trimmed) {
-                      const newBudget: BudgetData = {
-                        id: uuidv4(),
-                        name: trimmed,
-                        entries: [],
-                        budget: 5000,
-                        recurring: newBudgetRecurring,
-                      };
-                      setBudgets((prev) => [...prev, newBudget]);
-                      setActiveBudgetIndex(budgets.length);
-                      setNewBudgetName('');
-                      setNewBudgetRecurring(false);
-                      setNewBudgetModalOpen(false);
-                    }
-                  }}
-                >
-                  Create Budget
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+            onCreate={handleCreateBudget}
+          />
         </div>
       </div>
 
