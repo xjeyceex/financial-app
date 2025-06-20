@@ -9,6 +9,7 @@ import {
   FiX,
   FiCheck,
   FiTrendingDown,
+  FiClock,
 } from 'react-icons/fi';
 import { Budget } from '../../../lib/typesv2';
 import { formatCurrency } from '../../../lib/functions';
@@ -129,6 +130,34 @@ export function BudgetCard({
   }
 
   const maxPay = Math.min(Math.abs(netCarryover), currentBalance);
+
+  const startDate = new Date(currentPeriod.startDate);
+  const today = new Date();
+  const daysPassed = Math.max(
+    1,
+    Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+  );
+
+  const avgDailySpending = totalExpenses / daysPassed;
+
+  let depletionDate: string | null = null;
+  if (avgDailySpending > 0 && currentBalance > 0) {
+    const daysLeft = Math.floor(currentBalance / avgDailySpending);
+    const projectedDate = new Date();
+    projectedDate.setDate(today.getDate() + daysLeft);
+    depletionDate = projectedDate.toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      weekday: 'short',
+    });
+  }
+
+  console.log({
+    daysPassed,
+    avgDailySpending,
+    currentBalance,
+    depletionDate,
+  });
 
   const handleEntrySubmit = (e: React.FormEvent) => {
     onEntrySubmit(e);
@@ -266,6 +295,15 @@ export function BudgetCard({
                   ))}
                 </div>
               </div>
+            )}
+
+            {depletionDate && (
+              <StatsCard
+                icon={<FiClock className="w-4 h-4 text-yellow-600" />}
+                label="Est. Depletion Date"
+                value={depletionDate}
+                isPositive={false}
+              />
             )}
           </div>
 
