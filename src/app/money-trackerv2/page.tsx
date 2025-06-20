@@ -560,18 +560,24 @@ export default function Home() {
         const pastPeriods = budget.pastPeriods ?? [];
         const current = budget.currentPeriod;
 
-        // 🧹 Remove empty past periods
-        const cleanedPastPeriods = pastPeriods.filter(
-          (p) => (p.amount ?? 0) !== 0 || (p.entries?.length ?? 0) > 0
-        );
+        // 🧹 Remove empty past periods and strip stale finalBalance
+        const cleanedPastPeriods = pastPeriods
+          .filter((p) => (p.amount ?? 0) !== 0 || (p.entries?.length ?? 0) > 0)
+          .map((p) => {
+            const amount = p.amount ?? 0;
+            const entriesTotal =
+              p.entries?.reduce((s, e) => s + e.amount, 0) ?? 0;
+            const recalculatedFinal = amount - entriesTotal;
 
-        // 🧮 Total past finalBalance
+            return {
+              ...p,
+              finalBalance: recalculatedFinal, // Optional: or omit this field
+            };
+          });
+
+        // 🧮 Total past finalBalance (always recalculated)
         const pastFinalBalance = cleanedPastPeriods.reduce((sum, period) => {
-          const amount = period.amount ?? 0;
-          const entriesTotal =
-            period.entries?.reduce((s, e) => s + e.amount, 0) ?? 0;
-          const final = period.finalBalance ?? amount - entriesTotal;
-          return sum + final;
+          return sum + (period.finalBalance ?? 0);
         }, 0);
 
         // 💳 Total of Debt Payments made in currentPeriod
@@ -594,7 +600,12 @@ export default function Home() {
           JSON.stringify(current.carriedOver ?? {}) !==
           JSON.stringify(updatedCarriedOver);
 
-        const pastChanged = cleanedPastPeriods.length < pastPeriods.length;
+        const pastChanged =
+          cleanedPastPeriods.length !== pastPeriods.length ||
+          pastPeriods.some((p, i) => {
+            const cleaned = cleanedPastPeriods[i];
+            return p.finalBalance !== cleaned?.finalBalance;
+          });
 
         if (carriedOverChanged || pastChanged) {
           const updatedBudget: Budget = {
@@ -621,7 +632,6 @@ export default function Home() {
     <main className="max-w-5xl mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between gap-2">
         <div className="flex-1">
-          <Label>Select a budget</Label>
           <Select
             value={selectedBudget?.id}
             onValueChange={(id) => refreshBudgets(id)}

@@ -3,17 +3,10 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FiEdit, FiTrash, FiPlus } from 'react-icons/fi';
-import { formatPayPeriodDisplay } from '../../../../lib/functionsv2';
 import { Budget } from '../../../../lib/typesv2';
 import { formatCurrency } from '../../../../lib/functions';
 import { useState } from 'react';
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
   Tooltip,
@@ -80,7 +73,6 @@ export function BudgetCard({
   calculateAmount,
   onEntryEdit,
   onEntryDelete,
-  onEditBudgetClick,
 }: BudgetCardProps) {
   const [isEntryModalOpen, setIsEntryModalOpen] = useState(false);
   const [debtPaymentAmount, setDebtPaymentAmount] = useState(0);
@@ -95,6 +87,19 @@ export function BudgetCard({
   const entries = currentPeriod.entries || [];
   const totalExpenses = entries.reduce((sum, e) => sum + e.amount, 0);
   const currentBalance = currentBaseAmount - totalExpenses;
+  const percentageUsed = Math.min(
+    100,
+    Math.max(0, (totalExpenses / currentBaseAmount) * 100)
+  );
+
+  let progressColor = '';
+  if (percentageUsed < 75) {
+    progressColor = 'bg-green-500';
+  } else if (percentageUsed < 100) {
+    progressColor = 'bg-yellow-500';
+  } else {
+    progressColor = 'bg-red-500';
+  }
 
   const handleEntrySubmit = (e: React.FormEvent) => {
     onEntrySubmit(e);
@@ -104,141 +109,91 @@ export function BudgetCard({
   return (
     <>
       <Card className="shadow-sm">
-        <CardHeader className="pb-4">
-          <div className="flex justify-between items-start">
-            <div>
-              <CardTitle className="text-xl sm:text-2xl">
-                {budget.name}
-              </CardTitle>
-              <CardDescription className="text-xs sm:text-sm">
-                Pay Period:{' '}
-                {formatPayPeriodDisplay(
-                  currentPeriod.startDate,
-                  currentPeriod.endDate
-                )}
-              </CardDescription>
-            </div>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onEditBudgetClick}
-                  className="h-8 w-8"
-                >
-                  <FiEdit className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Edit Budget</TooltipContent>
-            </Tooltip>
-          </div>
-        </CardHeader>
-
-        <CardContent className="space-y-3 sm:space-y-4 px-3 py-4 sm:px-6 sm:py-6">
+        <CardContent className="space-y-3 sm:space-y-4 px-3 sm:px-6 ">
           {/* Main Content Grid - Wraps on mobile */}
           <div className="flex flex-col lg:flex-row gap-3 sm:gap-4">
             {/* Left Column - Budget Summary & Debt */}
-            <div className="flex-1 space-y-3 sm:space-y-4">
+            <div className="flex-1 space-y-3 sm:space-y-4 bg-">
               {/* Budget Summary Section */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base sm:text-lg">
-                      Budget
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-3 sm:p-6">
-                    {editingBudgetAmount ? (
+              <div className="w-full bg-white dark:bg-gray-800 rounded-lg shadow p-4 mx-auto text-center">
+                {/* Budget / Spent / Percent line */}
+                <div className="text-sm font-medium text-muted-foreground flex justify-center items-center gap-2 flex-wrap mb-4">
+                  {editingBudgetAmount ? (
+                    <>
                       <form
                         onSubmit={(e) => {
                           e.preventDefault();
                           onSaveAmount();
                         }}
-                        className="flex flex-col sm:flex-row items-end gap-2 sm:gap-3"
+                        className="flex items-center gap-2"
                       >
-                        <div className="w-full space-y-1">
-                          <label className="text-xs sm:text-sm font-medium">
-                            Amount
-                          </label>
-                          <Input
-                            type="number"
-                            value={
-                              tempBudgetAmount === '' ? '' : tempBudgetAmount
-                            }
-                            onChange={onAmountChange}
-                            autoFocus
-                            className="text-sm sm:text-base px-2 py-1.5 sm:px-3 sm:py-2"
-                          />
-                        </div>
-                        <div className="flex w-full sm:w-auto gap-2">
-                          <Button
-                            type="submit"
-                            size="sm"
-                            className="flex-1 px-2 py-1 sm:px-4 sm:py-2"
-                          >
-                            Save
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={onCancelAmountEdit}
-                            className="flex-1 px-2 py-1 sm:px-4 sm:py-2"
-                          >
-                            Cancel
-                          </Button>
-                        </div>
+                        <input
+                          type="number"
+                          value={
+                            tempBudgetAmount === '' ? '' : tempBudgetAmount
+                          }
+                          onChange={onAmountChange}
+                          autoFocus
+                          className="text-lg font-semibold w-24 text-center px-2 py-1 rounded border border-gray-300 dark:border-gray-600"
+                        />
+                        <button
+                          type="submit"
+                          className="text-sm px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                        >
+                          Save
+                        </button>
+                        <button
+                          type="button"
+                          onClick={onCancelAmountEdit}
+                          className="text-sm px-2 py-1 border border-gray-400 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                        >
+                          Cancel
+                        </button>
                       </form>
-                    ) : (
-                      <div
+                      <span>/</span>
+                      <span>{formatCurrency(totalExpenses)}</span>
+                      <span>-</span>
+                      <span>({Math.round(percentageUsed)}%)</span>
+                    </>
+                  ) : (
+                    <>
+                      <span
                         onClick={onAmountClick}
-                        className="cursor-pointer hover:bg-accent p-2 rounded transition-colors"
+                        className="text-lg font-semibold cursor-pointer hover:underline"
                       >
-                        <p className="text-xs sm:text-sm text-muted-foreground">
-                          Budget Amount
-                        </p>
-                        <p className="text-lg sm:text-xl font-semibold">
-                          {formatCurrency(currentBaseAmount)}
-                        </p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                        {formatCurrency(currentBaseAmount)}
+                      </span>
+                      <span>/</span>
+                      <span>{formatCurrency(totalExpenses)}</span>
+                      <span>-</span>
+                      <span>({Math.round(percentageUsed)}%)</span>
+                    </>
+                  )}
+                </div>
 
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base sm:text-lg">
-                      Balance
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-3 sm:p-6">
-                    <div className="space-y-1">
-                      <p className="text-xs sm:text-sm text-muted-foreground">
-                        Current Balance
-                      </p>
-                      <p
-                        className={`text-lg sm:text-xl font-semibold ${
-                          currentBalance < 0
-                            ? 'text-destructive'
-                            : currentBalance < currentBaseAmount * 0.2
-                              ? 'text-yellow-600'
-                              : 'text-green-600'
-                        }`}
-                      >
-                        {formatCurrency(currentBalance)}
-                      </p>
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      <Badge variant="outline" className="text-xs">
-                        {entries.length}{' '}
-                        {entries.length === 1 ? 'Entry' : 'Entries'}
-                      </Badge>
-                      <Badge variant="outline" className="text-xs">
-                        {formatCurrency(totalExpenses)} Spent
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
+                {/* Progress Bar */}
+                <div className="h-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mb-3">
+                  <div
+                    className={`${progressColor} h-full transition-all duration-500`}
+                    style={{ width: `${Math.min(percentageUsed, 100)}%` }}
+                  />
+                </div>
+
+                {/* Current Balance */}
+                <div className="text-base font-semibold">
+                  Balance:{' '}
+                  <span
+                    className={
+                      currentBalance < 0
+                        ? 'text-destructive'
+                        : currentBalance < currentBaseAmount * 0.2
+                          ? 'text-yellow-600 dark:text-yellow-400'
+                          : 'text-green-600 dark:text-green-400'
+                    }
+                  >
+                    {formatCurrency(currentBalance)}
+                  </span>
+                </div>
               </div>
 
               {/* Savings & Debt Section */}
@@ -374,14 +329,14 @@ export function BudgetCard({
                     </Badge>
                   </div>
                 </CardHeader>
-                <CardContent className="p-3 sm:p-6">
+                <CardContent>
                   {entries.length === 0 ? (
                     <div className="text-center py-4 text-xs sm:text-sm text-muted-foreground">
                       No entries yet. Tap the + button to add your first
                       expense.
                     </div>
                   ) : (
-                    <div className="space-y-2 max-h-[60vh] sm:max-h-[calc(100vh-400px)] overflow-y-auto">
+                    <div className=" max-h-[40vh]  overflow-y-auto">
                       {entries.map((entry) => (
                         <div
                           key={entry.id}
@@ -391,12 +346,16 @@ export function BudgetCard({
                             <p className="font-medium text-sm sm:text-base truncate">
                               {entry.description}
                             </p>
-                            <div className="flex items-center gap-2 text-xs sm:text-sm">
+                            <div className="flex items-center gap-2 text-xs sm:text-sm flex-wrap">
                               <span className="font-semibold">
                                 {formatCurrency(entry.amount)}
                               </span>
                               <span className="text-muted-foreground truncate">
-                                {new Date(entry.date).toLocaleDateString()}
+                                {new Date(entry.date).toLocaleDateString()} •{' '}
+                                {new Date(entry.date).toLocaleTimeString([], {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
                               </span>
                             </div>
                           </div>
@@ -436,41 +395,6 @@ export function BudgetCard({
               </Card>
             </div>
           </div>
-
-          {/* Past Periods Modal */}
-          <Dialog open={showPastPeriods} onOpenChange={setShowPastPeriods}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle className="text-2xl">
-                  {budget.name} - Past Periods
-                </DialogTitle>
-              </DialogHeader>
-
-              {pastPeriods.length === 0 ? (
-                <p className="text-muted-foreground">No past periods.</p>
-              ) : (
-                <div className="space-y-6 mt-4">
-                  {pastPeriods
-                    .sort(
-                      (a, b) =>
-                        new Date(b.startDate).getTime() -
-                        new Date(a.startDate).getTime()
-                    )
-                    .map((period) => (
-                      <BudgetPeriod
-                        key={period.id}
-                        period={period}
-                        onAmountChange={(newAmount) =>
-                          onEditPastAmount(period.id, newAmount)
-                        }
-                        onEntryEdit={onEntryEdit}
-                        onEntryDelete={onEntryDelete}
-                      />
-                    ))}
-                </div>
-              )}
-            </DialogContent>
-          </Dialog>
         </CardContent>
       </Card>
 
@@ -552,6 +476,41 @@ export function BudgetCard({
               <Button type="submit">Add Entry</Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Past Periods Modal */}
+      <Dialog open={showPastPeriods} onOpenChange={setShowPastPeriods}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">
+              {budget.name} - Past Periods
+            </DialogTitle>
+          </DialogHeader>
+
+          {pastPeriods.length === 0 ? (
+            <p className="text-muted-foreground">No past periods.</p>
+          ) : (
+            <div className="space-y-6 mt-4">
+              {pastPeriods
+                .sort(
+                  (a, b) =>
+                    new Date(b.startDate).getTime() -
+                    new Date(a.startDate).getTime()
+                )
+                .map((period) => (
+                  <BudgetPeriod
+                    key={period.id}
+                    period={period}
+                    onAmountChange={(newAmount) =>
+                      onEditPastAmount(period.id, newAmount)
+                    }
+                    onEntryEdit={onEntryEdit}
+                    onEntryDelete={onEntryDelete}
+                  />
+                ))}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </>
