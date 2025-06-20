@@ -147,7 +147,13 @@ export function BudgetPeriod({
       <CardContent className="space-y-6">
         {/* Budget Amount Editor */}
         {isEditing ? (
-          <div className="flex items-center gap-2">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSaveAmount();
+            }}
+            className="flex items-center gap-2"
+          >
             <Input
               type="number"
               value={editAmount}
@@ -155,18 +161,19 @@ export function BudgetPeriod({
               className="w-32"
               autoFocus
             />
-            <Button size="sm" onClick={handleSaveAmount}>
+            <Button type="submit" size="sm">
               <FiSave className="mr-2 h-4 w-4" />
               Save
             </Button>
             <Button
+              type="button"
               size="sm"
               variant="outline"
               onClick={() => setIsEditing(false)}
             >
               Cancel
             </Button>
-          </div>
+          </form>
         ) : (
           <div
             className="grid grid-cols-3 gap-4 text-center cursor-pointer"

@@ -354,7 +354,7 @@ export function BudgetCard({
                         <span className="font-medium text-sm text-destructive">
                           {formatCurrency(entry.amount)}
                         </span>
-                        <div className="flex opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                           <Button
                             variant="ghost"
                             size="icon"
