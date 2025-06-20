@@ -455,12 +455,10 @@ export function BudgetCard({
 
       {/* Add Entry Modal */}
       <Dialog open={isEntryModalOpen} onOpenChange={setIsEntryModalOpen}>
-        <DialogContent className="sm:max-w-md translate-y-[-65%]">
-          <DialogHeader>
-            <DialogTitle>Add New Entry</DialogTitle>
-            <DialogDescription>
-              Add an expense to your current budget period
-            </DialogDescription>
+        <DialogContent className="sm:max-w-md translate-y-[-85%]">
+          <DialogHeader className="p-0 m-0">
+            <DialogTitle className="p-0 m-0">Add New Entry</DialogTitle>
+            <DialogDescription className="p-0 m-0"></DialogDescription>
           </DialogHeader>
           <form onSubmit={handleEntrySubmit} className="space-y-4">
             <div className="space-y-2">
