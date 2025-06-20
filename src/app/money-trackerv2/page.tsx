@@ -168,6 +168,47 @@ export default function Home() {
     [selectedBudget?.id] // dependencies
   );
 
+  const onEditPastAmount = async (periodId: string, newAmount: number) => {
+    if (!selectedBudget) return;
+
+    // Update the target period with new amount and recalculate finalBalance
+    const updatedPastPeriods = (selectedBudget.pastPeriods ?? []).map(
+      (period) =>
+        period.id === periodId
+          ? {
+              ...period,
+              amount: newAmount,
+              finalBalance:
+                newAmount -
+                (period.entries?.reduce((sum, e) => sum + e.amount, 0) ?? 0),
+            }
+          : period
+    );
+
+    // Determine the latest period (by endDate) to recalculate carriedOver
+    const latest = [...updatedPastPeriods].sort(
+      (a, b) => new Date(b.endDate).getTime() - new Date(a.endDate).getTime()
+    )[0];
+
+    const newCarriedOver = {
+      savings: latest.finalBalance > 0 ? latest.finalBalance : 0,
+      debt: latest.finalBalance < 0 ? Math.abs(latest.finalBalance) : 0,
+    };
+
+    const updatedBudget = {
+      ...selectedBudget,
+      pastPeriods: updatedPastPeriods,
+      currentPeriod: {
+        ...selectedBudget.currentPeriod,
+        carriedOver: newCarriedOver,
+      },
+    };
+
+    const db = await getDb();
+    await db.put('budgets', updatedBudget);
+    refreshBudgets();
+  };
+
   const handleBudgetAmountClick = () => {
     if (!selectedBudget) return;
     setTempBudgetAmount((selectedBudget.currentPeriod.amount ?? 0).toString());
@@ -202,21 +243,19 @@ export default function Home() {
   };
 
   const handleDialogSave = async () => {
-    if (!formName.trim()) return;
+    const name = formName.trim();
+    if (!name) return;
 
     const today = new Date();
-    const currentPayPeriod = determinePayPeriod(today.toISOString());
+    const isFirstPeriod = determinePayPeriod(today.toISOString()) === 'first';
 
-    const periodDates =
-      currentPayPeriod === 'first'
-        ? {
-            start: new Date(today.getFullYear(), today.getMonth(), 1),
-            end: new Date(today.getFullYear(), today.getMonth(), 15),
-          }
-        : {
-            start: new Date(today.getFullYear(), today.getMonth(), 16),
-            end: new Date(today.getFullYear(), today.getMonth() + 1, 0),
-          };
+    const start = isFirstPeriod
+      ? new Date(today.getFullYear(), today.getMonth(), 1)
+      : new Date(today.getFullYear(), today.getMonth(), 16);
+
+    const end = isFirstPeriod
+      ? new Date(today.getFullYear(), today.getMonth(), 15)
+      : new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
     let newBudgetId: string | undefined;
 
@@ -224,27 +263,27 @@ export default function Home() {
       newBudgetId = uuidv4();
       await saveBudget({
         id: newBudgetId,
-        name: formName.trim(),
+        name,
         createdAt: today.toISOString(),
         currentPeriod: {
           id: uuidv4(),
           amount: 0,
           entries: [],
-          startDate: periodDates.start.toISOString(),
-          endDate: periodDates.end.toISOString(),
+          startDate: start.toISOString(),
+          endDate: end.toISOString(),
         },
       });
     } else if (selectedBudget) {
       const db = await getDb();
       await db.put('budgets', {
         ...selectedBudget,
-        name: formName.trim(),
+        name,
       });
       newBudgetId = selectedBudget.id;
     }
 
     setDialogOpen(false);
-    refreshBudgets(newBudgetId); // ✅ Now sets the newly created/edited budget
+    refreshBudgets(newBudgetId);
   };
 
   const handleEntryEdit = (entry: {
@@ -288,9 +327,9 @@ export default function Home() {
 
     const isDebt = type === 'debt';
     const current = selectedBudget.currentPeriod;
-    const carried = current.carriedOver ?? { savings: 0, debt: 0 };
     const entries = current.entries ?? [];
 
+    const carried = current.carriedOver ?? { savings: 0, debt: 0 };
     const available = isDebt ? carried.debt : carried.savings;
     if (available <= 0) return;
 
@@ -303,17 +342,13 @@ export default function Home() {
       date: new Date().toISOString(),
     };
 
-    const updatedCarriedOver = {
-      ...carried,
-      [type]: Math.max(0, available - payment),
-    };
-
     const updatedBudget: Budget = {
       ...selectedBudget,
       currentPeriod: {
         ...current,
         entries: [...entries, newEntry],
-        carriedOver: updatedCarriedOver,
+        // ✅ Let the cleanup useEffect recalculate carriedOver
+        // This line is removed for consistency
       },
     };
 
@@ -343,28 +378,14 @@ export default function Home() {
     const db = await getDb();
     const updatedBudget = { ...selectedBudget };
 
-    let newPastPeriodFinalBalance: number | null = null;
-
-    // --- 1. Handle current period
+    // 1. Add to current period if in range
     if (entryDateObj >= currentStart && entryDateObj <= currentEnd) {
-      const current = updatedBudget.currentPeriod;
-
-      // Add new entry
-      current.entries = [...(current.entries ?? []), newEntry];
-
-      const totalExpenses = current.entries.reduce(
-        (sum, e) => sum + e.amount,
-        0
-      );
-      const currentBalance = (current.amount || 0) - totalExpenses;
-
-      // ✅ Reflect savings/debt based on current balance
-      current.carriedOver = {
-        savings: currentBalance > 0 ? currentBalance : 0,
-        debt: currentBalance < 0 ? Math.abs(currentBalance) : 0,
-      };
+      updatedBudget.currentPeriod.entries = [
+        ...(updatedBudget.currentPeriod.entries ?? []),
+        newEntry,
+      ];
     } else {
-      // --- 2. Try matching past period
+      // 2. Add to matching past period
       let matched = false;
       if (updatedBudget.pastPeriods) {
         for (const period of updatedBudget.pastPeriods) {
@@ -372,32 +393,27 @@ export default function Home() {
           const end = new Date(period.endDate);
           if (entryDateObj >= start && entryDateObj <= end) {
             period.entries.push(newEntry);
-            const total = period.entries.reduce((sum, e) => sum + e.amount, 0);
-            period.finalBalance = (period.amount ?? 0) - total;
             matched = true;
             break;
           }
         }
       }
 
-      // --- 3. Create new past period if unmatched
+      // 3. Create new past period if unmatched
       if (!matched) {
         const year = entryDateObj.getFullYear();
         const month = entryDateObj.getMonth();
         const day = entryDateObj.getDate();
 
-        let newStart: Date;
-        let newEnd: Date;
-
-        if (day <= 15) {
-          newStart = new Date(year, month, 1);
-          newEnd = new Date(year, month, 15, 23, 59, 59);
-        } else {
-          newStart = new Date(year, month, 16);
-          newEnd = new Date(year, month + 1, 0, 23, 59, 59);
-        }
-
-        const total = newEntry.amount;
+        const newStart = new Date(year, month, day <= 15 ? 1 : 16);
+        const newEnd = new Date(
+          year,
+          month + (day <= 15 ? 0 : 1),
+          day <= 15 ? 15 : 0,
+          23,
+          59,
+          59
+        );
 
         const newPeriod = {
           id: uuidv4(),
@@ -405,7 +421,7 @@ export default function Home() {
           entries: [newEntry],
           startDate: newStart.toISOString(),
           endDate: newEnd.toISOString(),
-          finalBalance: 0 - total,
+          finalBalance: -newEntry.amount, // ✅ required field
         };
 
         if (!updatedBudget.pastPeriods) {
@@ -413,32 +429,18 @@ export default function Home() {
         }
 
         updatedBudget.pastPeriods.push(newPeriod);
-        newPastPeriodFinalBalance = newPeriod.finalBalance;
       }
     }
 
-    // --- 4. Cleanup: Remove empty past periods
+    // 4. Cleanup: Remove empty past periods
     updatedBudget.pastPeriods = updatedBudget.pastPeriods?.filter((period) => {
       const hasEntries = (period.entries ?? []).length > 0;
       const hasAmount = (period.amount ?? 0) !== 0;
       return hasEntries || hasAmount;
     });
 
-    // --- 5. Only update carriedOver if a new past period was created
-    if (newPastPeriodFinalBalance !== null) {
-      updatedBudget.currentPeriod.carriedOver = {
-        savings: newPastPeriodFinalBalance > 0 ? newPastPeriodFinalBalance : 0,
-        debt:
-          newPastPeriodFinalBalance < 0
-            ? Math.abs(newPastPeriodFinalBalance)
-            : 0,
-      };
-    }
-
-    // --- 6. Save updated budget
+    // 5. Save and refresh
     await db.put('budgets', updatedBudget);
-
-    // --- 7. Reset form
     setEntryDesc('');
     setEntryAmount('');
     setEntryDate(getLocalDateTime());
@@ -451,76 +453,37 @@ export default function Home() {
     const current = selectedBudget.currentPeriod;
     const past = selectedBudget.pastPeriods ?? [];
 
-    const entryInCurrent = current.entries?.some((e) => e.id === entryId);
     let updatedBudget: Budget;
+
+    const entryInCurrent = current.entries?.some((e) => e.id === entryId);
 
     if (entryInCurrent) {
       const updatedEntries = current.entries.filter((e) => e.id !== entryId);
-
-      // ✅ Recalculate carriedOver based on remaining entries
-      const total = updatedEntries.reduce((sum, e) => sum + e.amount, 0);
-      const finalBalance = current.amount + total;
-
-      const updatedCarriedOver = {
-        savings: finalBalance > 0 ? finalBalance : 0,
-        debt: finalBalance < 0 ? Math.abs(finalBalance) : 0,
-      };
 
       updatedBudget = {
         ...selectedBudget,
         currentPeriod: {
           ...current,
           entries: updatedEntries,
-          carriedOver: updatedCarriedOver,
         },
       };
     } else {
-      // Delete from a past period
-      const updatedPastPeriods = past
-        .map((period) => {
-          const entryExists = period.entries?.some((e) => e.id === entryId);
-          if (!entryExists) return period;
+      const updatedPastPeriods = past.map((period) => {
+        const entryExists = period.entries?.some((e) => e.id === entryId);
+        if (!entryExists) return period;
 
-          const updatedEntries = period.entries.filter((e) => e.id !== entryId);
-          const totalExpenses = updatedEntries.reduce(
-            (sum, e) => sum + e.amount,
-            0
-          );
+        const updatedEntries = period.entries.filter((e) => e.id !== entryId);
 
-          return {
-            ...period,
-            entries: updatedEntries,
-            finalBalance: (period.amount || 0) + totalExpenses,
-          };
-        })
-        .filter((period) => {
-          const hasEntries = period.entries?.length > 0;
-          const hasNonZeroAmount = (period.amount ?? 0) !== 0;
-          return hasEntries || hasNonZeroAmount;
-        });
+        return {
+          ...period,
+          entries: updatedEntries,
+        };
+      });
 
       updatedBudget = {
         ...selectedBudget,
         pastPeriods: updatedPastPeriods,
       };
-
-      // Recalculate carriedOver based on remaining past periods
-      if (updatedPastPeriods.length === 0) {
-        updatedBudget.currentPeriod.carriedOver = {
-          savings: 0,
-          debt: 0,
-        };
-      } else {
-        const latest = [...updatedPastPeriods].sort(
-          (a, b) =>
-            new Date(b.endDate).getTime() - new Date(a.endDate).getTime()
-        )[0];
-        const final = latest.finalBalance ?? 0;
-        updatedBudget.currentPeriod.carriedOver = {
-          savings: final > 0 ? final : 0,
-          debt: final < 0 ? Math.abs(final) : 0,
-        };
-      }
     }
 
     const db = await getDb();
@@ -572,34 +535,14 @@ export default function Home() {
             return entry;
           });
 
-          const total = updatedEntries.reduce((sum, e) => sum + e.amount, 0);
-          const finalBalance = (period.amount ?? 0) - total;
-
           return {
             ...period,
             entries: updatedEntries,
-            finalBalance,
           };
         }
       );
     }
 
-    // 3. Recalculate carriedOver for current period
-    if (updatedBudget.pastPeriods?.length) {
-      const totalFinalBalance = updatedBudget.pastPeriods.reduce(
-        (sum, period) => {
-          return sum + (period.finalBalance ?? 0);
-        },
-        0
-      );
-
-      updatedBudget.currentPeriod.carriedOver = {
-        savings: totalFinalBalance > 0 ? totalFinalBalance : 0,
-        debt: totalFinalBalance < 0 ? Math.abs(totalFinalBalance) : 0,
-      };
-    }
-
-    // 4. Save and refresh
     await db.put('budgets', updatedBudget);
     setEntryDialogOpen(false);
     setEditingEntry(null);
@@ -615,39 +558,50 @@ export default function Home() {
 
       for (const budget of budgets) {
         const pastPeriods = budget.pastPeriods ?? [];
+        const current = budget.currentPeriod;
 
-        // 🧹 Filter out empty past periods
+        // 🧹 Remove empty past periods
         const cleanedPastPeriods = pastPeriods.filter(
-          (period) =>
-            (period.amount ?? 0) !== 0 || (period.entries?.length ?? 0) > 0
+          (p) => (p.amount ?? 0) !== 0 || (p.entries?.length ?? 0) > 0
         );
 
-        // 💰 Recalculate cumulative carriedOver
-        const totalFinalBalance = cleanedPastPeriods.reduce((sum, period) => {
+        // 🧮 Total past finalBalance
+        const pastFinalBalance = cleanedPastPeriods.reduce((sum, period) => {
           const amount = period.amount ?? 0;
-          const totalEntries =
+          const entriesTotal =
             period.entries?.reduce((s, e) => s + e.amount, 0) ?? 0;
-          const final = period.finalBalance ?? amount - totalEntries;
+          const final = period.finalBalance ?? amount - entriesTotal;
           return sum + final;
         }, 0);
 
+        // 💳 Total of Debt Payments made in currentPeriod
+        const debtPayments =
+          current.entries?.reduce((sum, entry) => {
+            return entry.description?.toLowerCase().includes('debt payment')
+              ? sum + entry.amount
+              : sum;
+          }, 0) ?? 0;
+
+        // 🧮 Adjust net balance: past + debt payments
+        const adjustedBalance = pastFinalBalance + debtPayments;
+
         const updatedCarriedOver = {
-          savings: totalFinalBalance > 0 ? totalFinalBalance : 0,
-          debt: totalFinalBalance < 0 ? Math.abs(totalFinalBalance) : 0,
+          savings: adjustedBalance > 0 ? adjustedBalance : 0,
+          debt: adjustedBalance < 0 ? Math.abs(adjustedBalance) : 0,
         };
 
-        // ✏️ Only update if pastPeriods or carriedOver changed
-        const pastChanged = cleanedPastPeriods.length < pastPeriods.length;
         const carriedOverChanged =
-          JSON.stringify(budget.currentPeriod.carriedOver ?? {}) !==
+          JSON.stringify(current.carriedOver ?? {}) !==
           JSON.stringify(updatedCarriedOver);
 
-        if (pastChanged || carriedOverChanged) {
+        const pastChanged = cleanedPastPeriods.length < pastPeriods.length;
+
+        if (carriedOverChanged || pastChanged) {
           const updatedBudget: Budget = {
             ...budget,
             pastPeriods: cleanedPastPeriods,
             currentPeriod: {
-              ...budget.currentPeriod,
+              ...current,
               carriedOver: updatedCarriedOver,
             },
           };
@@ -660,7 +614,7 @@ export default function Home() {
       if (modified) refreshBudgets();
     };
 
-    runCleanup();
+    runCleanup().catch((err) => console.error('Budget cleanup failed:', err));
   }, [budgets, refreshBudgets]);
 
   return (
@@ -741,6 +695,7 @@ export default function Home() {
             editingBudgetAmount={editingBudgetAmount}
             tempBudgetAmount={tempBudgetAmount}
             onEntrySubmit={handleEntrySubmit}
+            onEditPastAmount={onEditPastAmount}
             entryDesc={entryDesc}
             payDebt={handlePayDebt}
             setEntryDesc={setEntryDesc}

@@ -28,7 +28,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import Link from 'next/link';
+import { BudgetPeriod } from './BudgetPeriod';
 
 interface BudgetCardProps {
   budget: Budget;
@@ -47,6 +47,7 @@ interface BudgetCardProps {
   setEntryDate: (value: string) => void;
   isValidMathExpression: (input: string) => boolean;
   calculateAmount: (input: string) => number;
+  onEditPastAmount: (periodId: string, newAmount: number) => void;
   payDebt: (params: { type: 'debt' | 'savings'; amount: number }) => void;
   onEntryEdit: (entry: {
     id: string;
@@ -68,6 +69,7 @@ export function BudgetCard({
   tempBudgetAmount,
   onEntrySubmit,
   entryDesc,
+  onEditPastAmount,
   setEntryDesc,
   payDebt,
   entryAmount,
@@ -82,6 +84,7 @@ export function BudgetCard({
 }: BudgetCardProps) {
   const [isEntryModalOpen, setIsEntryModalOpen] = useState(false);
   const [debtPaymentAmount, setDebtPaymentAmount] = useState(0);
+  const [showPastPeriods, setShowPastPeriods] = useState(false);
 
   // Calculate carryover from past periods
   const { currentPeriod, pastPeriods = [] } = budget;
@@ -131,274 +134,343 @@ export function BudgetCard({
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-4">
-          {/* Budget Summary Section */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <Card className="sm:col-span-1">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base sm:text-lg">Budget</CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 sm:p-6">
-                {editingBudgetAmount ? (
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      onSaveAmount();
-                    }}
-                    className="flex items-end gap-2"
-                  >
-                    <div className="space-y-1 flex-1">
-                      <label className="text-xs sm:text-sm font-medium">
-                        Amount
-                      </label>
-                      <Input
-                        type="number"
-                        value={tempBudgetAmount === '' ? '' : tempBudgetAmount}
-                        onChange={onAmountChange}
-                        autoFocus
-                        className="text-sm sm:text-base"
-                      />
+        <CardContent className="space-y-3 sm:space-y-4 px-3 py-4 sm:px-6 sm:py-6">
+          {/* Main Content Grid - Wraps on mobile */}
+          <div className="flex flex-col lg:flex-row gap-3 sm:gap-4">
+            {/* Left Column - Budget Summary & Debt */}
+            <div className="flex-1 space-y-3 sm:space-y-4">
+              {/* Budget Summary Section */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base sm:text-lg">
+                      Budget
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-3 sm:p-6">
+                    {editingBudgetAmount ? (
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          onSaveAmount();
+                        }}
+                        className="flex flex-col sm:flex-row items-end gap-2 sm:gap-3"
+                      >
+                        <div className="w-full space-y-1">
+                          <label className="text-xs sm:text-sm font-medium">
+                            Amount
+                          </label>
+                          <Input
+                            type="number"
+                            value={
+                              tempBudgetAmount === '' ? '' : tempBudgetAmount
+                            }
+                            onChange={onAmountChange}
+                            autoFocus
+                            className="text-sm sm:text-base px-2 py-1.5 sm:px-3 sm:py-2"
+                          />
+                        </div>
+                        <div className="flex w-full sm:w-auto gap-2">
+                          <Button
+                            type="submit"
+                            size="sm"
+                            className="flex-1 px-2 py-1 sm:px-4 sm:py-2"
+                          >
+                            Save
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={onCancelAmountEdit}
+                            className="flex-1 px-2 py-1 sm:px-4 sm:py-2"
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </form>
+                    ) : (
+                      <div
+                        onClick={onAmountClick}
+                        className="cursor-pointer hover:bg-accent p-2 rounded transition-colors"
+                      >
+                        <p className="text-xs sm:text-sm text-muted-foreground">
+                          Budget Amount
+                        </p>
+                        <p className="text-lg sm:text-xl font-semibold">
+                          {formatCurrency(currentBaseAmount)}
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base sm:text-lg">
+                      Balance
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-3 sm:p-6">
+                    <div className="space-y-1">
+                      <p className="text-xs sm:text-sm text-muted-foreground">
+                        Current Balance
+                      </p>
+                      <p
+                        className={`text-lg sm:text-xl font-semibold ${
+                          currentBalance < 0
+                            ? 'text-destructive'
+                            : currentBalance < currentBaseAmount * 0.2
+                              ? 'text-yellow-600'
+                              : 'text-green-600'
+                        }`}
+                      >
+                        {formatCurrency(currentBalance)}
+                      </p>
                     </div>
-                    <Button type="submit" size="sm">
-                      Save
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={onCancelAmountEdit}
-                    >
-                      Cancel
-                    </Button>
-                  </form>
-                ) : (
-                  <div
-                    onClick={onAmountClick}
-                    className="cursor-pointer hover:bg-accent p-2 rounded transition-colors"
-                  >
-                    <p className="text-xs sm:text-sm text-muted-foreground">
-                      Budget Amount
-                    </p>
-                    <p className="text-lg sm:text-xl font-semibold">
-                      {formatCurrency(currentBaseAmount)}
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="sm:col-span-1">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base sm:text-lg">Balance</CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 sm:p-6">
-                <div className="space-y-1">
-                  <p className="text-xs sm:text-sm text-muted-foreground">
-                    Current Balance
-                  </p>
-                  <p
-                    className={`text-lg sm:text-xl font-semibold ${
-                      currentBalance < 0
-                        ? 'text-destructive'
-                        : currentBalance < currentBaseAmount * 0.2
-                          ? 'text-yellow-600'
-                          : 'text-green-600'
-                    }`}
-                  >
-                    {formatCurrency(currentBalance)}
-                  </p>
-                </div>
-                <div className="mt-2 flex flex-wrap gap-1">
-                  <Badge variant="outline" className="text-xs">
-                    {entries.length}{' '}
-                    {entries.length === 1 ? 'Entry' : 'Entries'}
-                  </Badge>
-                  <Badge variant="outline" className="text-xs">
-                    {formatCurrency(totalExpenses)} Spent
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Savings & Debt Section */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base sm:text-lg">
-                Savings & Debt
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 sm:p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                <div className="space-y-1">
-                  <p className="text-xs sm:text-sm text-muted-foreground">
-                    Total Savings
-                  </p>
-                  <p className="text-lg sm:text-xl font-semibold text-green-600">
-                    {formatCurrency(carriedOver.savings || 0)}
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs sm:text-sm text-muted-foreground">
-                    Total Debt
-                  </p>
-                  <p className="text-lg sm:text-xl font-semibold text-destructive">
-                    {formatCurrency(carriedOver.debt || 0)}
-                  </p>
-                </div>
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      <Badge variant="outline" className="text-xs">
+                        {entries.length}{' '}
+                        {entries.length === 1 ? 'Entry' : 'Entries'}
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">
+                        {formatCurrency(totalExpenses)} Spent
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
 
-              {netCarryover < 0 && currentBalance >= 1 && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4 text-yellow-600" />
-                    <p className="text-xs sm:text-sm">
-                      You can pay down debt with your current balance
-                    </p>
-                  </div>
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      const maxPay = Math.min(
-                        Math.abs(netCarryover),
-                        currentBalance
-                      );
-                      if (
-                        debtPaymentAmount > 0 &&
-                        debtPaymentAmount <= maxPay
-                      ) {
-                        payDebt({ type: 'debt', amount: debtPaymentAmount });
-                        setDebtPaymentAmount(0);
-                      }
-                    }}
-                    className="flex flex-col sm:flex-row items-end gap-2"
-                  >
-                    <div className="w-full sm:flex-1 space-y-1">
-                      <label className="text-xs sm:text-sm font-medium">
-                        Payment Amount
-                      </label>
-                      <Input
-                        type="number"
-                        min={1}
-                        max={Math.min(Math.abs(netCarryover), currentBalance)}
-                        value={debtPaymentAmount}
-                        onChange={(e) =>
-                          setDebtPaymentAmount(Number(e.target.value) || 0)
-                        }
-                        placeholder="Amount"
-                        className="text-sm sm:text-base"
-                      />
+              {/* Savings & Debt Section */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base sm:text-lg">
+                    Savings & Debt
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-3 sm:p-6 space-y-4">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                    <div className="space-y-1">
+                      <p className="text-xs sm:text-sm text-muted-foreground">
+                        Total Savings
+                      </p>
+                      <p className="text-lg sm:text-xl font-semibold text-green-600">
+                        {formatCurrency(carriedOver.savings || 0)}
+                      </p>
                     </div>
-                    <div className="flex gap-2 w-full sm:w-auto">
-                      <Button
-                        type="submit"
-                        variant="destructive"
-                        className="flex-1 sm:flex-none"
-                        disabled={
-                          debtPaymentAmount <= 0 ||
-                          debtPaymentAmount >
-                            Math.min(Math.abs(netCarryover), currentBalance)
-                        }
-                      >
-                        Pay Debt
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="flex-1 sm:flex-none"
-                        onClick={() => {
-                          const fullAmount = Math.min(
+                    <div className="space-y-1">
+                      <p className="text-xs sm:text-sm text-muted-foreground">
+                        Total Debt
+                      </p>
+                      <p className="text-lg sm:text-xl font-semibold text-destructive">
+                        {formatCurrency(carriedOver.debt || 0)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {netCarryover < 0 && currentBalance >= 1 && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4 text-yellow-600" />
+                        <p className="text-xs sm:text-sm">
+                          You can pay down debt with your current balance
+                        </p>
+                      </div>
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          const maxPay = Math.min(
                             Math.abs(netCarryover),
                             currentBalance
                           );
-                          payDebt({ type: 'debt', amount: fullAmount });
-                          setDebtPaymentAmount(0);
+                          if (
+                            debtPaymentAmount > 0 &&
+                            debtPaymentAmount <= maxPay
+                          ) {
+                            payDebt({
+                              type: 'debt',
+                              amount: debtPaymentAmount,
+                            });
+                            setDebtPaymentAmount(0);
+                          }
                         }}
+                        className="flex flex-col sm:flex-row items-end gap-2 sm:gap-3"
                       >
-                        Pay Full
-                      </Button>
-                    </div>
-                  </form>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Current Entries */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base sm:text-lg">
-                Current Entries
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 sm:p-6">
-              {entries.length === 0 ? (
-                <div className="text-center py-4 text-xs sm:text-sm text-muted-foreground">
-                  No entries yet. Tap the + button to add your first expense.
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {entries.map((entry) => (
-                    <div
-                      key={entry.id}
-                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 transition-colors"
-                    >
-                      <div className="space-y-0.5">
-                        <p className="font-medium text-sm sm:text-base">
-                          {entry.description}
-                        </p>
-                        <div className="flex items-center gap-2 text-xs sm:text-sm">
-                          <span className="font-semibold">
-                            {formatCurrency(entry.amount)}
-                          </span>
-                          <span className="text-muted-foreground">
-                            {new Date(entry.date).toLocaleDateString()}
-                          </span>
+                        <div className="w-full space-y-1">
+                          <label className="text-xs sm:text-sm font-medium">
+                            Payment Amount
+                          </label>
+                          <Input
+                            type="number"
+                            min={1}
+                            max={Math.min(
+                              Math.abs(netCarryover),
+                              currentBalance
+                            )}
+                            value={debtPaymentAmount}
+                            onChange={(e) =>
+                              setDebtPaymentAmount(Number(e.target.value) || 0)
+                            }
+                            placeholder="Amount"
+                            className="text-sm sm:text-base px-2 py-1.5 sm:px-3 sm:py-2"
+                          />
                         </div>
-                      </div>
-                      <div className="flex gap-1">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => onEntryEdit(entry)}
-                              className="h-7 w-7 sm:h-8 sm:w-8"
-                            >
-                              <FiEdit className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Edit Entry</TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => onEntryDelete(entry.id)}
-                              className="h-7 w-7 sm:h-8 sm:w-8"
-                            >
-                              <FiTrash className="h-3 w-3 sm:h-4 sm:w-4 text-destructive" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Delete Entry</TooltipContent>
-                        </Tooltip>
-                      </div>
+                        <div className="flex w-full sm:w-auto gap-2">
+                          <Button
+                            type="submit"
+                            variant="destructive"
+                            className="flex-1 px-2 py-1 sm:px-4 sm:py-2"
+                            disabled={
+                              debtPaymentAmount <= 0 ||
+                              debtPaymentAmount >
+                                Math.min(Math.abs(netCarryover), currentBalance)
+                            }
+                          >
+                            Pay Debt
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="flex-1 px-2 py-1 sm:px-4 sm:py-2"
+                            onClick={() => {
+                              const fullAmount = Math.min(
+                                Math.abs(netCarryover),
+                                currentBalance
+                              );
+                              payDebt({ type: 'debt', amount: fullAmount });
+                              setDebtPaymentAmount(0);
+                            }}
+                          >
+                            Pay Full
+                          </Button>
+                        </div>
+                      </form>
                     </div>
-                  ))}
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Past Periods Button */}
+              {budget?.pastPeriods && budget.pastPeriods.length > 0 && (
+                <Button
+                  onClick={() => setShowPastPeriods(true)}
+                  className="w-full"
+                >
+                  View Past Periods
+                </Button>
+              )}
+            </div>
+
+            {/* Right Column - Entries List */}
+            <div className="lg:w-96">
+              <Card>
+                <CardHeader className="pb-2">
+                  <div className="flex justify-between items-center">
+                    <CardTitle className="text-base sm:text-lg">
+                      Entries
+                    </CardTitle>
+                    <Badge variant="outline" className="text-xs">
+                      {entries.length} {entries.length === 1 ? 'Item' : 'Items'}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-3 sm:p-6">
+                  {entries.length === 0 ? (
+                    <div className="text-center py-4 text-xs sm:text-sm text-muted-foreground">
+                      No entries yet. Tap the + button to add your first
+                      expense.
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-[60vh] sm:max-h-[calc(100vh-400px)] overflow-y-auto">
+                      {entries.map((entry) => (
+                        <div
+                          key={entry.id}
+                          className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 transition-colors"
+                        >
+                          <div className="space-y-0.5 min-w-0">
+                            <p className="font-medium text-sm sm:text-base truncate">
+                              {entry.description}
+                            </p>
+                            <div className="flex items-center gap-2 text-xs sm:text-sm">
+                              <span className="font-semibold">
+                                {formatCurrency(entry.amount)}
+                              </span>
+                              <span className="text-muted-foreground truncate">
+                                {new Date(entry.date).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex gap-1 shrink-0">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => onEntryEdit(entry)}
+                                  className="h-7 w-7 sm:h-8 sm:w-8"
+                                >
+                                  <FiEdit className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Edit Entry</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => onEntryDelete(entry.id)}
+                                  className="h-7 w-7 sm:h-8 sm:w-8"
+                                >
+                                  <FiTrash className="h-3 w-3 sm:h-4 sm:w-4 text-destructive" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Delete Entry</TooltipContent>
+                            </Tooltip>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Past Periods Modal */}
+          <Dialog open={showPastPeriods} onOpenChange={setShowPastPeriods}>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="text-2xl">
+                  {budget.name} - Past Periods
+                </DialogTitle>
+              </DialogHeader>
+
+              {pastPeriods.length === 0 ? (
+                <p className="text-muted-foreground">No past periods.</p>
+              ) : (
+                <div className="space-y-6 mt-4">
+                  {pastPeriods
+                    .sort(
+                      (a, b) =>
+                        new Date(b.startDate).getTime() -
+                        new Date(a.startDate).getTime()
+                    )
+                    .map((period) => (
+                      <BudgetPeriod
+                        key={period.id}
+                        period={period}
+                        onAmountChange={(newAmount) =>
+                          onEditPastAmount(period.id, newAmount)
+                        }
+                        onEntryEdit={onEntryEdit}
+                        onEntryDelete={onEntryDelete}
+                      />
+                    ))}
                 </div>
               )}
-            </CardContent>
-          </Card>
-
-          {/* Past Periods */}
-          {pastPeriods.length > 0 && (
-            <Link href={`/money-trackerv2/past-periods?budgetId=${budget.id}`}>
-              <Button variant="outline" className="mt-4">
-                View Past Periods
-              </Button>
-            </Link>
-          )}
+            </DialogContent>
+          </Dialog>
         </CardContent>
       </Card>
 
