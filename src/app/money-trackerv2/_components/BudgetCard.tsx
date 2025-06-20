@@ -117,7 +117,7 @@ export function BudgetCard({
         {/* Left Column - Budget Summary & Stats */}
         <div className="flex-1 flex flex-col gap-4">
           {/* Budget Summary Section */}
-          <Card className="shadow-sm">
+          <Card className="shadow-sm p-0">
             <CardContent className="p-4 sm:p-6">
               {/* Spent / Budget / Percent */}
               <div className="text-sm font-medium text-muted-foreground flex justify-center items-center gap-2 flex-wrap mb-3">
