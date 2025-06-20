@@ -2,7 +2,14 @@
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { FiEdit, FiTrash, FiPlus, FiX, FiCheck } from 'react-icons/fi';
+import {
+  FiEdit,
+  FiTrash,
+  FiPlus,
+  FiX,
+  FiCheck,
+  FiTrendingDown,
+} from 'react-icons/fi';
 import { Budget } from '../../../lib/typesv2';
 import { formatCurrency } from '../../../lib/functions';
 import { useState } from 'react';
@@ -94,6 +101,22 @@ export function BudgetCard({
     100,
     Math.max(0, (totalExpenses / currentBaseAmount) * 100)
   );
+
+  const getTopCurrentExpenses = (
+    entries: {
+      description?: string;
+      amount: number;
+      id?: string | number;
+    }[] = [],
+    count: number = 5
+  ) => {
+    return entries
+      .filter((e) => e.amount > 0) // assuming expenses are positive
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, count);
+  };
+
+  const topExpenses = getTopCurrentExpenses(budget.currentPeriod.entries, 3);
 
   let progressColor = '';
   if (percentageUsed < 75) {
@@ -196,21 +219,57 @@ export function BudgetCard({
               </div>
             </CardContent>
           </Card>
+          {/* Financial Overview Section */}
+          <div className="space-y-3">
+            {/* Savings & Debt */}
+            <div>
+              <div className="flex flex-wrap gap-4 ">
+                <div className="flex-1 min-w-[250px]">
+                  <StatsCard
+                    icon={<TrendingUp className="w-4 h-4 text-green-600" />}
+                    label="Total Savings"
+                    value={formatCurrency(carriedOver.savings || 0)}
+                    isPositive={true}
+                  />
+                </div>
+                <div className="flex-1 min-w-[250px]">
+                  <StatsCard
+                    icon={<TrendingDown className="w-4 h-4 text-destructive" />}
+                    label="Total Debt"
+                    value={formatCurrency(carriedOver.debt || 0)}
+                    isPositive={false}
+                  />
+                </div>
+              </div>
+            </div>
 
-          {/* Savings & Debt Section */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <StatsCard
-              icon={<TrendingUp className="w-4 h-4 text-green-600" />}
-              label="Total Savings"
-              value={formatCurrency(carriedOver.savings || 0)}
-              isPositive={true}
-            />
-            <StatsCard
-              icon={<TrendingDown className="w-4 h-4 text-destructive" />}
-              label="Total Debt"
-              value={formatCurrency(carriedOver.debt || 0)}
-              isPositive={false}
-            />
+            {/* Top Expenses */}
+            {topExpenses.length > 0 && (
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">
+                  Recent Top Expenses
+                </h4>
+                <div
+                  className={cn(
+                    'grid gap-4',
+                    topExpenses.length === 1 && 'grid-cols-1',
+                    topExpenses.length === 2 && 'grid-cols-1 sm:grid-cols-2',
+                    topExpenses.length >= 3 &&
+                      'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+                  )}
+                >
+                  {topExpenses.map((entry, index) => (
+                    <StatsCard
+                      key={entry.id || index}
+                      icon={<FiTrendingDown className="w-4 h-4 text-red-500" />}
+                      label={entry.description || 'Unnamed'}
+                      value={formatCurrency(entry.amount)}
+                      isPositive={false}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Debt Payment Section */}
@@ -288,7 +347,6 @@ export function BudgetCard({
               </CardContent>
             </Card>
           )}
-
           {/* Past Periods Button */}
           {budget?.pastPeriods && budget.pastPeriods.length > 0 && (
             <Button
