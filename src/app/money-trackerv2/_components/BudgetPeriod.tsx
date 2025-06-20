@@ -230,23 +230,28 @@ export function BudgetPeriod({
         </div>
 
         {/* Charts - Fixed Height Container */}
-        <div className="h-[300px] w-full">
+        <div className="w-full">
           {chartView === 'bar' ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={barChartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                <Legend />
-                <Bar dataKey="Budget" fill="#8884d8" />
-                <Bar dataKey="Spent" fill="#ff8042" />
-                <Bar dataKey="Remaining" fill="#82ca9d" />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={barChartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip
+                    formatter={(value) => formatCurrency(Number(value))}
+                  />
+                  <Legend />
+                  <Bar dataKey="Budget" fill="#8884d8" />
+                  <Bar dataKey="Spent" fill="#ff8042" />
+                  <Bar dataKey="Remaining" fill="#82ca9d" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           ) : (
-            <div className="flex flex-col md:flex-row h-full gap-4">
-              <div className="h-[250px] md:h-full md:flex-1">
+            <div className="flex flex-col md:flex-row gap-6">
+              {/* Budget Breakdown */}
+              <div className="w-full h-[300px] md:flex-1">
                 <h4 className="text-center text-sm font-medium mb-2">
                   Budget Breakdown
                 </h4>
@@ -257,7 +262,7 @@ export function BudgetPeriod({
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      outerRadius={80}
+                      outerRadius="80%"
                       fill="#8884d8"
                       dataKey="value"
                       label={({ name, percent }) =>
@@ -277,24 +282,23 @@ export function BudgetPeriod({
                   </PieChart>
                 </ResponsiveContainer>
               </div>
+
+              {/* Savings/Debt */}
               {(savings > 0 || debt > 0) && (
-                <div className="h-[250px] md:h-full md:flex-1">
+                <div className="w-full h-[300px] md:flex-1">
                   <h4 className="text-center text-sm font-medium mb-2">
-                    Savings/Debt
+                    Savings / Debt
                   </h4>
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height="80%">
                     <PieChart>
                       <Pie
                         data={savingsDebtData}
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        outerRadius={80}
+                        outerRadius="80%"
                         fill="#8884d8"
                         dataKey="value"
-                        label={({ name, percent }) =>
-                          `${name}: ${(percent * 100).toFixed(0)}%`
-                        }
                       >
                         {savingsDebtData.map((entry, index) => (
                           <Cell
@@ -310,6 +314,24 @@ export function BudgetPeriod({
                       />
                     </PieChart>
                   </ResponsiveContainer>
+
+                  {/* Floating Labels Below Chart */}
+                  <div className="flex justify-center gap-4 mt-2 text-sm">
+                    {savingsDebtData.map((entry, index) => (
+                      <div key={index} className="flex items-center gap-1">
+                        <span
+                          className="inline-block w-3 h-3 rounded-full"
+                          style={{
+                            backgroundColor:
+                              entry.name === 'Savings' ? '#82ca9d' : '#ff8042',
+                          }}
+                        />
+                        <span>
+                          {entry.name}: {formatCurrency(entry.value)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
