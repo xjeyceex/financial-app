@@ -97,10 +97,11 @@ export function BudgetCard({
   const entries = currentPeriod.entries || [];
   const totalExpenses = entries.reduce((sum, e) => sum + e.amount, 0);
   const currentBalance = currentBaseAmount - totalExpenses;
-  const percentageUsed = Math.min(
-    100,
-    Math.max(0, (totalExpenses / currentBaseAmount) * 100)
-  );
+
+  const percentageUsed =
+    currentBaseAmount > 0
+      ? Math.min(100, Math.max(0, (totalExpenses / currentBaseAmount) * 100))
+      : 0;
 
   const getTopCurrentExpenses = (
     entries: {
