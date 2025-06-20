@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { FiEdit, FiTrash, FiPlus } from 'react-icons/fi';
+import { FiEdit, FiTrash, FiPlus, FiX, FiCheck } from 'react-icons/fi';
 import { Budget } from '../../../../lib/typesv2';
 import { formatCurrency } from '../../../../lib/functions';
 import { useState } from 'react';
@@ -13,7 +13,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { AlertCircle } from 'lucide-react';
+import { TrendingDown, TrendingUp } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -22,6 +22,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { BudgetPeriod } from './BudgetPeriod';
+import StatsCard from '@/app/money-tracker/_components/StatsCard';
 
 interface BudgetCardProps {
   budget: Budget;
@@ -116,63 +117,60 @@ export function BudgetCard({
             <div className="flex-1 space-y-3 sm:space-y-4 bg-">
               {/* Budget Summary Section */}
               <div className="w-full bg-white dark:bg-gray-800 rounded-lg shadow p-4 mx-auto text-center">
-                {/* Budget / Spent / Percent line */}
-                <div className="text-sm font-medium text-muted-foreground flex justify-center items-center gap-2 flex-wrap mb-4">
+                {/* Spent / Budget / Percent */}
+                <div className="text-sm font-medium text-muted-foreground flex justify-center items-center gap-2 flex-wrap mb-2">
+                  <span>{formatCurrency(totalExpenses)}</span>
+                  <span>/</span>
                   {editingBudgetAmount ? (
-                    <>
-                      <form
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          onSaveAmount();
-                        }}
-                        className="flex items-center gap-2"
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        onSaveAmount();
+                      }}
+                      className="flex items-center gap-2"
+                    >
+                      <input
+                        type="number"
+                        value={tempBudgetAmount === '' ? '' : tempBudgetAmount}
+                        onChange={onAmountChange}
+                        autoFocus
+                        className="text-lg font-semibold w-24 text-center px-2 py-1 rounded border border-gray-300 dark:border-gray-600"
+                      />
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        type="submit"
+                        className="w-8 h-8 text-green-600 hover:text-green-800 transition"
+                        title="Save"
                       >
-                        <input
-                          type="number"
-                          value={
-                            tempBudgetAmount === '' ? '' : tempBudgetAmount
-                          }
-                          onChange={onAmountChange}
-                          autoFocus
-                          className="text-lg font-semibold w-24 text-center px-2 py-1 rounded border border-gray-300 dark:border-gray-600"
-                        />
-                        <button
-                          type="submit"
-                          className="text-sm px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-                        >
-                          Save
-                        </button>
-                        <button
-                          type="button"
-                          onClick={onCancelAmountEdit}
-                          className="text-sm px-2 py-1 border border-gray-400 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-                        >
-                          Cancel
-                        </button>
-                      </form>
-                      <span>/</span>
-                      <span>{formatCurrency(totalExpenses)}</span>
-                      <span>-</span>
-                      <span>({Math.round(percentageUsed)}%)</span>
-                    </>
+                        <FiCheck className="w-4 h-4" />
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        type="button"
+                        onClick={onCancelAmountEdit}
+                        className="w-8 h-8 text-gray-500 hover:text-red-600 transition"
+                        title="Cancel"
+                      >
+                        <FiX className="w-4 h-4" />
+                      </Button>
+                    </form>
                   ) : (
-                    <>
-                      <span
-                        onClick={onAmountClick}
-                        className="text-lg font-semibold cursor-pointer hover:underline"
-                      >
-                        {formatCurrency(currentBaseAmount)}
-                      </span>
-                      <span>/</span>
-                      <span>{formatCurrency(totalExpenses)}</span>
-                      <span>-</span>
-                      <span>({Math.round(percentageUsed)}%)</span>
-                    </>
+                    <span
+                      onClick={onAmountClick}
+                      className="text-lg font-semibold cursor-pointer hover:underline"
+                    >
+                      {formatCurrency(currentBaseAmount)}
+                    </span>
                   )}
+                  <span>-</span>
+                  <span>({Math.round(percentageUsed)}%)</span>
                 </div>
 
                 {/* Progress Bar */}
-                <div className="h-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mb-3">
+                <div className="h-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mb-2">
                   <div
                     className={`${progressColor} h-full transition-all duration-500`}
                     style={{ width: `${Math.min(percentageUsed, 100)}%` }}
@@ -197,113 +195,94 @@ export function BudgetCard({
               </div>
 
               {/* Savings & Debt Section */}
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base sm:text-lg">
-                    Savings & Debt
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-3 sm:p-6 space-y-4">
-                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                    <div className="space-y-1">
-                      <p className="text-xs sm:text-sm text-muted-foreground">
-                        Total Savings
-                      </p>
-                      <p className="text-lg sm:text-xl font-semibold text-green-600">
-                        {formatCurrency(carriedOver.savings || 0)}
-                      </p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-xs sm:text-sm text-muted-foreground">
-                        Total Debt
-                      </p>
-                      <p className="text-lg sm:text-xl font-semibold text-destructive">
-                        {formatCurrency(carriedOver.debt || 0)}
-                      </p>
-                    </div>
-                  </div>
+              <div className="flex flex-wrap gap-3 sm:gap-4">
+                <div className="flex-1 min-w-[200px]">
+                  <StatsCard
+                    icon={<TrendingUp className="w-4 h-4 text-green-600" />}
+                    label="Total Savings"
+                    value={formatCurrency(carriedOver.savings || 0)}
+                    isPositive={true}
+                  />
+                </div>
 
-                  {netCarryover < 0 && currentBalance >= 1 && (
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <AlertCircle className="h-4 w-4 text-yellow-600" />
-                        <p className="text-xs sm:text-sm">
-                          You can pay down debt with your current balance
-                        </p>
-                      </div>
-                      <form
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          const maxPay = Math.min(
+                <div className="flex-1 min-w-[200px]">
+                  <StatsCard
+                    icon={<TrendingDown className="w-4 h-4 text-destructive" />}
+                    label="Total Debt"
+                    value={formatCurrency(carriedOver.debt || 0)}
+                    isPositive={false}
+                  />
+                </div>
+              </div>
+
+              {netCarryover < 0 && currentBalance >= 1 && (
+                <div className="mt-2 sm:mt-3 w-full">
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const maxPay = Math.min(
+                        Math.abs(netCarryover),
+                        currentBalance
+                      );
+                      if (
+                        debtPaymentAmount > 0 &&
+                        debtPaymentAmount <= maxPay
+                      ) {
+                        payDebt({ type: 'debt', amount: debtPaymentAmount });
+                        setDebtPaymentAmount(0);
+                      }
+                    }}
+                    className="space-y-2 sm:flex sm:items-end sm:gap-3"
+                  >
+                    <div className="w-full sm:max-w-xs space-y-0.5">
+                      <label className="text-xs sm:text-sm font-medium">
+                        Payment Amount
+                      </label>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={Math.min(Math.abs(netCarryover), currentBalance)}
+                        value={debtPaymentAmount}
+                        onChange={(e) =>
+                          setDebtPaymentAmount(Number(e.target.value) || 0)
+                        }
+                        placeholder="Amount"
+                        className="text-sm px-2 py-1.5"
+                      />
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                      <Button
+                        type="submit"
+                        variant="destructive"
+                        className="text-sm px-3 py-1.5"
+                        disabled={
+                          debtPaymentAmount <= 0 ||
+                          debtPaymentAmount >
+                            Math.min(Math.abs(netCarryover), currentBalance)
+                        }
+                      >
+                        Pay Debt
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="text-sm px-3 py-1.5"
+                        onClick={() => {
+                          const fullAmount = Math.min(
                             Math.abs(netCarryover),
                             currentBalance
                           );
-                          if (
-                            debtPaymentAmount > 0 &&
-                            debtPaymentAmount <= maxPay
-                          ) {
-                            payDebt({
-                              type: 'debt',
-                              amount: debtPaymentAmount,
-                            });
-                            setDebtPaymentAmount(0);
-                          }
+                          payDebt({ type: 'debt', amount: fullAmount });
+                          setDebtPaymentAmount(0);
                         }}
-                        className="flex flex-col sm:flex-row items-end gap-2 sm:gap-3"
                       >
-                        <div className="w-full space-y-1">
-                          <label className="text-xs sm:text-sm font-medium">
-                            Payment Amount
-                          </label>
-                          <Input
-                            type="number"
-                            min={1}
-                            max={Math.min(
-                              Math.abs(netCarryover),
-                              currentBalance
-                            )}
-                            value={debtPaymentAmount}
-                            onChange={(e) =>
-                              setDebtPaymentAmount(Number(e.target.value) || 0)
-                            }
-                            placeholder="Amount"
-                            className="text-sm sm:text-base px-2 py-1.5 sm:px-3 sm:py-2"
-                          />
-                        </div>
-                        <div className="flex w-full sm:w-auto gap-2">
-                          <Button
-                            type="submit"
-                            variant="destructive"
-                            className="flex-1 px-2 py-1 sm:px-4 sm:py-2"
-                            disabled={
-                              debtPaymentAmount <= 0 ||
-                              debtPaymentAmount >
-                                Math.min(Math.abs(netCarryover), currentBalance)
-                            }
-                          >
-                            Pay Debt
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="flex-1 px-2 py-1 sm:px-4 sm:py-2"
-                            onClick={() => {
-                              const fullAmount = Math.min(
-                                Math.abs(netCarryover),
-                                currentBalance
-                              );
-                              payDebt({ type: 'debt', amount: fullAmount });
-                              setDebtPaymentAmount(0);
-                            }}
-                          >
-                            Pay Full
-                          </Button>
-                        </div>
-                      </form>
+                        Pay Full
+                      </Button>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
+                  </form>
+                </div>
+              )}
 
               {/* Past Periods Button */}
               {budget?.pastPeriods && budget.pastPeriods.length > 0 && (

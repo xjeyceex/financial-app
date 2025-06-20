@@ -1,1 +1,249 @@
-if(!self.define){let e,i={};const s=(s,a)=>(s=new URL(s+".js",a).href,i[s]||new Promise((i=>{if("document"in self){const e=document.createElement("script");e.src=s,e.onload=i,document.head.appendChild(e)}else e=s,importScripts(s),i()})).then((()=>{let e=i[s];if(!e)throw new Error(`Module ${s} didn’t register its module`);return e})));self.define=(a,t)=>{const c=e||("document"in self?document.currentScript.src:"")||location.href;if(i[c])return;let n={};const d=e=>s(e,c),r={module:{uri:c},exports:n,require:d};i[c]=Promise.all(a.map((e=>r[e]||d(e)))).then((e=>(t(...e),n)))}}define(["./workbox-d50ca814"],(function(e){"use strict";importScripts(),self.skipWaiting(),e.clientsClaim(),e.precacheAndRoute([{url:"/_next/app-build-manifest.json",revision:"0a50741c89a47a12fc4bf68dcd3c5a99"},{url:"/_next/static/-9QKdeKiNxdd9-Fei7Zt_/_buildManifest.js",revision:"eeee87396e9eb13804e1d123fea1556d"},{url:"/_next/static/-9QKdeKiNxdd9-Fei7Zt_/_ssgManifest.js",revision:"b6652df95db52feb4daf4eca35380933"},{url:"/_next/static/chunks/194-fcf85c85c69e3a04.js",revision:"-9QKdeKiNxdd9-Fei7Zt_"},{url:"/_next/static/chunks/341.a4c9e4b8dad9832e.js",revision:"a4c9e4b8dad9832e"},{url:"/_next/static/chunks/472.2c08b965bd9148e2.js",revision:"2c08b965bd9148e2"},{url:"/_next/static/chunks/4bd1b696-ce5d74c1853a7adb.js",revision:"-9QKdeKiNxdd9-Fei7Zt_"},{url:"/_next/static/chunks/66ec4792-2d01277900f2e925.js",revision:"-9QKdeKiNxdd9-Fei7Zt_"},{url:"/_next/static/chunks/684-b23e03cd2c8d200a.js",revision:"-9QKdeKiNxdd9-Fei7Zt_"},{url:"/_next/static/chunks/693-b524b24a732a5cc2.js",revision:"-9QKdeKiNxdd9-Fei7Zt_"},{url:"/_next/static/chunks/8e1d74a4-0e5065d0176afaa1.js",revision:"-9QKdeKiNxdd9-Fei7Zt_"},{url:"/_next/static/chunks/991-a2461f47ea58c343.js",revision:"-9QKdeKiNxdd9-Fei7Zt_"},{url:"/_next/static/chunks/app/_not-found/page-9ea868e55a06fc02.js",revision:"-9QKdeKiNxdd9-Fei7Zt_"},{url:"/_next/static/chunks/app/layout-ad057d1c6d67d7fe.js",revision:"-9QKdeKiNxdd9-Fei7Zt_"},{url:"/_next/static/chunks/app/money-tracker/page-a66d8d47546923f0.js",revision:"-9QKdeKiNxdd9-Fei7Zt_"},{url:"/_next/static/chunks/app/page-e4baae70b03f3d2c.js",revision:"-9QKdeKiNxdd9-Fei7Zt_"},{url:"/_next/static/chunks/app/worth-it/page-4a8d367f6c7e8250.js",revision:"-9QKdeKiNxdd9-Fei7Zt_"},{url:"/_next/static/chunks/ee560e2c-11c28649df54d3b7.js",revision:"-9QKdeKiNxdd9-Fei7Zt_"},{url:"/_next/static/chunks/framework-52167c1502110d79.js",revision:"-9QKdeKiNxdd9-Fei7Zt_"},{url:"/_next/static/chunks/main-54e0ad777dfee000.js",revision:"-9QKdeKiNxdd9-Fei7Zt_"},{url:"/_next/static/chunks/main-app-54b9d53ddb3c905b.js",revision:"-9QKdeKiNxdd9-Fei7Zt_"},{url:"/_next/static/chunks/pages/_app-6635a3a4af8739be.js",revision:"-9QKdeKiNxdd9-Fei7Zt_"},{url:"/_next/static/chunks/pages/_error-da855ac378341690.js",revision:"-9QKdeKiNxdd9-Fei7Zt_"},{url:"/_next/static/chunks/polyfills-42372ed130431b0a.js",revision:"846118c33b2c0e922d7b3a7676f81f6f"},{url:"/_next/static/chunks/webpack-eda1bcf8a707b8f3.js",revision:"-9QKdeKiNxdd9-Fei7Zt_"},{url:"/_next/static/css/acca82d0842611ee.css",revision:"acca82d0842611ee"},{url:"/_next/static/media/569ce4b8f30dc480-s.p.woff2",revision:"ef6cefb32024deac234e82f932a95cbd"},{url:"/_next/static/media/747892c23ea88013-s.woff2",revision:"a0761690ccf4441ace5cec893b82d4ab"},{url:"/_next/static/media/8d697b304b401681-s.woff2",revision:"cc728f6c0adb04da0dfcb0fc436a8ae5"},{url:"/_next/static/media/93f479601ee12b01-s.p.woff2",revision:"da83d5f06d825c5ae65b7cca706cb312"},{url:"/_next/static/media/9610d9e46709d722-s.woff2",revision:"7b7c0ef93df188a852344fc272fc096b"},{url:"/_next/static/media/ba015fad6dcf6784-s.woff2",revision:"8ea4f719af3312a055caf09f34c89a77"},{url:"/file.svg",revision:"d09f95206c3fa0bb9bd9fefabfd0ea71"},{url:"/globe.svg",revision:"2aaafa6a49b6563925fe440891e32717"},{url:"/icons/icon-192.png",revision:"ead578d9da9ae8a85bcb1836d53661b9"},{url:"/icons/icon-512.png",revision:"ead578d9da9ae8a85bcb1836d53661b9"},{url:"/manifest.json",revision:"c181b060194670ad7cf5f2210eab47df"},{url:"/next.svg",revision:"8e061864f388b47f33a1c3780831193e"},{url:"/vercel.svg",revision:"c0af2f507b369b085b35ef4bbe3bcf1e"},{url:"/window.svg",revision:"a2760511c65806022ad20adf74370ff3"}],{ignoreURLParametersMatching:[]}),e.cleanupOutdatedCaches(),e.registerRoute("/",new e.NetworkFirst({cacheName:"start-url",plugins:[{cacheWillUpdate:async({request:e,response:i,event:s,state:a})=>i&&"opaqueredirect"===i.type?new Response(i.body,{status:200,statusText:"OK",headers:i.headers}):i}]}),"GET"),e.registerRoute(/^https:\/\/.*$/,new e.NetworkFirst({cacheName:"pages-cache",networkTimeoutSeconds:10,plugins:[new e.ExpirationPlugin({maxEntries:100,maxAgeSeconds:604800}),new e.CacheableResponsePlugin({statuses:[0,200]})]}),"GET"),e.registerRoute(/\.(?:js|css)$/,new e.StaleWhileRevalidate({cacheName:"assets-cache",plugins:[new e.ExpirationPlugin({maxEntries:100,maxAgeSeconds:2592e3})]}),"GET"),e.registerRoute(/\.(?:woff2?|eot|ttf|otf)$/,new e.CacheFirst({cacheName:"fonts-cache",plugins:[new e.ExpirationPlugin({maxEntries:50,maxAgeSeconds:5184e3})]}),"GET"),e.registerRoute(/\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/,new e.CacheFirst({cacheName:"image-cache",plugins:[new e.ExpirationPlugin({maxEntries:100,maxAgeSeconds:2592e3})]}),"GET")}));
+if (!self.define) {
+  let e,
+    i = {};
+  const s = (s, a) => (
+    (s = new URL(s + '.js', a).href),
+    i[s] ||
+      new Promise((i) => {
+        if ('document' in self) {
+          const e = document.createElement('script');
+          (e.src = s), (e.onload = i), document.head.appendChild(e);
+        } else (e = s), importScripts(s), i();
+      }).then(() => {
+        let e = i[s];
+        if (!e) throw new Error(`Module ${s} didn’t register its module`);
+        return e;
+      })
+  );
+  self.define = (a, t) => {
+    const c =
+      e ||
+      ('document' in self ? document.currentScript.src : '') ||
+      location.href;
+    if (i[c]) return;
+    let n = {};
+    const d = (e) => s(e, c),
+      r = { module: { uri: c }, exports: n, require: d };
+    i[c] = Promise.all(a.map((e) => r[e] || d(e))).then((e) => (t(...e), n));
+  };
+}
+define(['./workbox-d50ca814'], function (e) {
+  'use strict';
+  importScripts(),
+    self.skipWaiting(),
+    e.clientsClaim(),
+    e.precacheAndRoute(
+      [
+        {
+          url: '/_next/app-build-manifest.json',
+          revision: '0a50741c89a47a12fc4bf68dcd3c5a99',
+        },
+        {
+          url: '/_next/static/-9QKdeKiNxdd9-Fei7Zt_/_buildManifest.js',
+          revision: 'eeee87396e9eb13804e1d123fea1556d',
+        },
+        {
+          url: '/_next/static/-9QKdeKiNxdd9-Fei7Zt_/_ssgManifest.js',
+          revision: 'b6652df95db52feb4daf4eca35380933',
+        },
+        {
+          url: '/_next/static/chunks/194-fcf85c85c69e3a04.js',
+          revision: '-9QKdeKiNxdd9-Fei7Zt_',
+        },
+        {
+          url: '/_next/static/chunks/341.a4c9e4b8dad9832e.js',
+          revision: 'a4c9e4b8dad9832e',
+        },
+        {
+          url: '/_next/static/chunks/472.2c08b965bd9148e2.js',
+          revision: '2c08b965bd9148e2',
+        },
+        {
+          url: '/_next/static/chunks/4bd1b696-ce5d74c1853a7adb.js',
+          revision: '-9QKdeKiNxdd9-Fei7Zt_',
+        },
+        {
+          url: '/_next/static/chunks/66ec4792-2d01277900f2e925.js',
+          revision: '-9QKdeKiNxdd9-Fei7Zt_',
+        },
+        {
+          url: '/_next/static/chunks/684-b23e03cd2c8d200a.js',
+          revision: '-9QKdeKiNxdd9-Fei7Zt_',
+        },
+        {
+          url: '/_next/static/chunks/693-b524b24a732a5cc2.js',
+          revision: '-9QKdeKiNxdd9-Fei7Zt_',
+        },
+        {
+          url: '/_next/static/chunks/8e1d74a4-0e5065d0176afaa1.js',
+          revision: '-9QKdeKiNxdd9-Fei7Zt_',
+        },
+        {
+          url: '/_next/static/chunks/991-a2461f47ea58c343.js',
+          revision: '-9QKdeKiNxdd9-Fei7Zt_',
+        },
+        {
+          url: '/_next/static/chunks/app/_not-found/page-9ea868e55a06fc02.js',
+          revision: '-9QKdeKiNxdd9-Fei7Zt_',
+        },
+        {
+          url: '/_next/static/chunks/app/layout-ad057d1c6d67d7fe.js',
+          revision: '-9QKdeKiNxdd9-Fei7Zt_',
+        },
+        {
+          url: '/_next/static/chunks/app/money-tracker/page-a66d8d47546923f0.js',
+          revision: '-9QKdeKiNxdd9-Fei7Zt_',
+        },
+        {
+          url: '/_next/static/chunks/app/page-e4baae70b03f3d2c.js',
+          revision: '-9QKdeKiNxdd9-Fei7Zt_',
+        },
+        {
+          url: '/_next/static/chunks/app/pesowise/page-4a8d367f6c7e8250.js',
+          revision: '-9QKdeKiNxdd9-Fei7Zt_',
+        },
+        {
+          url: '/_next/static/chunks/ee560e2c-11c28649df54d3b7.js',
+          revision: '-9QKdeKiNxdd9-Fei7Zt_',
+        },
+        {
+          url: '/_next/static/chunks/framework-52167c1502110d79.js',
+          revision: '-9QKdeKiNxdd9-Fei7Zt_',
+        },
+        {
+          url: '/_next/static/chunks/main-54e0ad777dfee000.js',
+          revision: '-9QKdeKiNxdd9-Fei7Zt_',
+        },
+        {
+          url: '/_next/static/chunks/main-app-54b9d53ddb3c905b.js',
+          revision: '-9QKdeKiNxdd9-Fei7Zt_',
+        },
+        {
+          url: '/_next/static/chunks/pages/_app-6635a3a4af8739be.js',
+          revision: '-9QKdeKiNxdd9-Fei7Zt_',
+        },
+        {
+          url: '/_next/static/chunks/pages/_error-da855ac378341690.js',
+          revision: '-9QKdeKiNxdd9-Fei7Zt_',
+        },
+        {
+          url: '/_next/static/chunks/polyfills-42372ed130431b0a.js',
+          revision: '846118c33b2c0e922d7b3a7676f81f6f',
+        },
+        {
+          url: '/_next/static/chunks/webpack-eda1bcf8a707b8f3.js',
+          revision: '-9QKdeKiNxdd9-Fei7Zt_',
+        },
+        {
+          url: '/_next/static/css/acca82d0842611ee.css',
+          revision: 'acca82d0842611ee',
+        },
+        {
+          url: '/_next/static/media/569ce4b8f30dc480-s.p.woff2',
+          revision: 'ef6cefb32024deac234e82f932a95cbd',
+        },
+        {
+          url: '/_next/static/media/747892c23ea88013-s.woff2',
+          revision: 'a0761690ccf4441ace5cec893b82d4ab',
+        },
+        {
+          url: '/_next/static/media/8d697b304b401681-s.woff2',
+          revision: 'cc728f6c0adb04da0dfcb0fc436a8ae5',
+        },
+        {
+          url: '/_next/static/media/93f479601ee12b01-s.p.woff2',
+          revision: 'da83d5f06d825c5ae65b7cca706cb312',
+        },
+        {
+          url: '/_next/static/media/9610d9e46709d722-s.woff2',
+          revision: '7b7c0ef93df188a852344fc272fc096b',
+        },
+        {
+          url: '/_next/static/media/ba015fad6dcf6784-s.woff2',
+          revision: '8ea4f719af3312a055caf09f34c89a77',
+        },
+        { url: '/file.svg', revision: 'd09f95206c3fa0bb9bd9fefabfd0ea71' },
+        { url: '/globe.svg', revision: '2aaafa6a49b6563925fe440891e32717' },
+        {
+          url: '/icons/icon-192.png',
+          revision: 'ead578d9da9ae8a85bcb1836d53661b9',
+        },
+        {
+          url: '/icons/icon-512.png',
+          revision: 'ead578d9da9ae8a85bcb1836d53661b9',
+        },
+        { url: '/manifest.json', revision: 'c181b060194670ad7cf5f2210eab47df' },
+        { url: '/next.svg', revision: '8e061864f388b47f33a1c3780831193e' },
+        { url: '/vercel.svg', revision: 'c0af2f507b369b085b35ef4bbe3bcf1e' },
+        { url: '/window.svg', revision: 'a2760511c65806022ad20adf74370ff3' },
+      ],
+      { ignoreURLParametersMatching: [] }
+    ),
+    e.cleanupOutdatedCaches(),
+    e.registerRoute(
+      '/',
+      new e.NetworkFirst({
+        cacheName: 'start-url',
+        plugins: [
+          {
+            cacheWillUpdate: async ({
+              request: e,
+              response: i,
+              event: s,
+              state: a,
+            }) =>
+              i && 'opaqueredirect' === i.type
+                ? new Response(i.body, {
+                    status: 200,
+                    statusText: 'OK',
+                    headers: i.headers,
+                  })
+                : i,
+          },
+        ],
+      }),
+      'GET'
+    ),
+    e.registerRoute(
+      /^https:\/\/.*$/,
+      new e.NetworkFirst({
+        cacheName: 'pages-cache',
+        networkTimeoutSeconds: 10,
+        plugins: [
+          new e.ExpirationPlugin({ maxEntries: 100, maxAgeSeconds: 604800 }),
+          new e.CacheableResponsePlugin({ statuses: [0, 200] }),
+        ],
+      }),
+      'GET'
+    ),
+    e.registerRoute(
+      /\.(?:js|css)$/,
+      new e.StaleWhileRevalidate({
+        cacheName: 'assets-cache',
+        plugins: [
+          new e.ExpirationPlugin({ maxEntries: 100, maxAgeSeconds: 2592e3 }),
+        ],
+      }),
+      'GET'
+    ),
+    e.registerRoute(
+      /\.(?:woff2?|eot|ttf|otf)$/,
+      new e.CacheFirst({
+        cacheName: 'fonts-cache',
+        plugins: [
+          new e.ExpirationPlugin({ maxEntries: 50, maxAgeSeconds: 5184e3 }),
+        ],
+      }),
+      'GET'
+    ),
+    e.registerRoute(
+      /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/,
+      new e.CacheFirst({
+        cacheName: 'image-cache',
+        plugins: [
+          new e.ExpirationPlugin({ maxEntries: 100, maxAgeSeconds: 2592e3 }),
+        ],
+      }),
+      'GET'
+    );
+});

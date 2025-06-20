@@ -7,9 +7,9 @@ import {
   HiMenu,
   HiX,
   HiCurrencyDollar,
-  HiCalculator,
   HiMoon,
   HiSun,
+  HiOutlineCurrencyDollar,
 } from 'react-icons/hi';
 import clsx from 'clsx';
 import { useTheme } from 'next-themes';
@@ -29,9 +29,9 @@ const navItems: NavItem[] = [
     icon: HiCurrencyDollar,
   },
   {
-    name: 'Worth It Calculator',
-    href: '/worth-it',
-    icon: HiCalculator,
+    name: 'Money Tracker Update',
+    href: '/money-trackerv2',
+    icon: HiOutlineCurrencyDollar,
   },
 ];
 
