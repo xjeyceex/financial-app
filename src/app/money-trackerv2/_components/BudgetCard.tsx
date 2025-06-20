@@ -224,8 +224,8 @@ export function BudgetCard({
           <div className="space-y-3">
             {/* Savings & Debt */}
             <div>
-              <div className="flex flex-wrap gap-4 ">
-                <div className="flex-1 min-w-[250px]">
+              <div className="flex flex-nowrap gap-4 w-full">
+                <div className="basis-0 grow">
                   <StatsCard
                     icon={<TrendingUp className="w-4 h-4 text-green-600" />}
                     label="Total Savings"
@@ -233,7 +233,7 @@ export function BudgetCard({
                     isPositive={true}
                   />
                 </div>
-                <div className="flex-1 min-w-[250px]">
+                <div className="basis-0 grow">
                   <StatsCard
                     icon={<TrendingDown className="w-4 h-4 text-destructive" />}
                     label="Total Debt"
@@ -250,23 +250,19 @@ export function BudgetCard({
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">
                   Recent Top Expenses
                 </h4>
-                <div
-                  className={cn(
-                    'grid gap-4',
-                    topExpenses.length === 1 && 'grid-cols-1',
-                    topExpenses.length === 2 && 'grid-cols-1 sm:grid-cols-2',
-                    topExpenses.length >= 3 &&
-                      'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
-                  )}
-                >
+                <div className="flex flex-wrap gap-4">
                   {topExpenses.map((entry, index) => (
-                    <StatsCard
+                    <div
                       key={entry.id || index}
-                      icon={<FiTrendingDown className="w-4 h-4 text-red-500" />}
-                      label={entry.description || 'Unnamed'}
-                      value={formatCurrency(entry.amount)}
-                      isPositive={false}
-                    />
+                      className="flex-1 min-w-[200px]"
+                    >
+                      <StatsCard
+                        icon={<FiTrendingDown className="w-4 h-4" />}
+                        label={entry.description || 'Unnamed'}
+                        value={formatCurrency(entry.amount)}
+                        isPositive={false}
+                      />
+                    </div>
                   ))}
                 </div>
               </div>
