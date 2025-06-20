@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Entry } from '../../../../lib/types';
+import { Entry } from '../../../lib/types';
 
 type Props = {
   onAdd: (entry: Entry) => void;

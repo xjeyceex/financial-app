@@ -3,8 +3,8 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FiEdit, FiTrash, FiPlus, FiX, FiCheck } from 'react-icons/fi';
-import { Budget } from '../../../../lib/typesv2';
-import { formatCurrency } from '../../../../lib/functions';
+import { Budget } from '../../../lib/typesv2';
+import { formatCurrency } from '../../../lib/functions';
 import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +13,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { TrendingDown, TrendingUp } from 'lucide-react';
+import { AlertCircle, TrendingDown, TrendingUp } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -22,7 +22,8 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { BudgetPeriod } from './BudgetPeriod';
-import StatsCard from '@/app/money-tracker/_components/StatsCard';
+import StatsCard from './StatsCard';
+import { cn } from '../../../lib/utils';
 
 interface BudgetCardProps {
   budget: Budget;
@@ -102,6 +103,8 @@ export function BudgetCard({
     progressColor = 'bg-red-500';
   }
 
+  const maxPay = Math.min(Math.abs(netCarryover), currentBalance);
+
   const handleEntrySubmit = (e: React.FormEvent) => {
     onEntrySubmit(e);
     setIsEntryModalOpen(false);
@@ -178,16 +181,18 @@ export function BudgetCard({
                 </div>
 
                 {/* Current Balance */}
-                <div className="text-base font-semibold">
+                <div className="text-sm font-medium text-muted-foreground">
                   Balance:{' '}
                   <span
-                    className={
+                    className={cn(
+                      'font-semibold',
                       currentBalance < 0
                         ? 'text-destructive'
                         : currentBalance < currentBaseAmount * 0.2
                           ? 'text-yellow-600 dark:text-yellow-400'
-                          : 'text-green-600 dark:text-green-400'
-                    }
+                          : 'text-green-600 dark:text-green-400',
+                      'text-sm' // or 'text-base' if you want value slightly larger
+                    )}
                   >
                     {formatCurrency(currentBalance)}
                   </span>
@@ -216,7 +221,16 @@ export function BudgetCard({
               </div>
 
               {netCarryover < 0 && currentBalance >= 1 && (
-                <div className="mt-2 sm:mt-3 w-full">
+                <div className="w-full mt-3 space-y-3 sm:space-y-4">
+                  <div className="flex items-center gap-2 text-xs sm:text-sm text-yellow-700 dark:text-yellow-400">
+                    <AlertCircle className="h-4 w-4" />
+                    <p>
+                      {maxPay === Math.abs(netCarryover)
+                        ? 'You can fully pay your debt using your current balance'
+                        : `You can pay down your debt with ₱${maxPay.toLocaleString()} of your current balance`}
+                    </p>
+                  </div>
+
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
@@ -232,10 +246,11 @@ export function BudgetCard({
                         setDebtPaymentAmount(0);
                       }
                     }}
-                    className="space-y-2 sm:flex sm:items-end sm:gap-3"
+                    className="flex flex-col sm:flex-row sm:items-end gap-2 sm:gap-3"
                   >
-                    <div className="w-full sm:max-w-xs space-y-0.5">
-                      <label className="text-xs sm:text-sm font-medium">
+                    {/* Amount Input */}
+                    <div className="w-full sm:w-auto flex-1 space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground">
                         Payment Amount
                       </label>
                       <Input
@@ -246,16 +261,17 @@ export function BudgetCard({
                         onChange={(e) =>
                           setDebtPaymentAmount(Number(e.target.value) || 0)
                         }
-                        placeholder="Amount"
-                        className="text-sm px-2 py-1.5"
+                        placeholder="₱0.00"
+                        className="text-sm px-3 py-1.5"
                       />
                     </div>
 
-                    <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                    {/* Buttons */}
+                    <div className="flex gap-2 w-full sm:w-auto">
                       <Button
                         type="submit"
                         variant="destructive"
-                        className="text-sm px-3 py-1.5"
+                        className="flex-1 sm:flex-none px-3 py-1.5 text-sm"
                         disabled={
                           debtPaymentAmount <= 0 ||
                           debtPaymentAmount >
@@ -267,17 +283,18 @@ export function BudgetCard({
                       <Button
                         type="button"
                         variant="outline"
-                        className="text-sm px-3 py-1.5"
+                        className="flex-1 sm:flex-none px-3 py-1.5 text-sm"
+                        disabled={currentBalance <= 0}
                         onClick={() => {
-                          const fullAmount = Math.min(
+                          const partialAmount = Math.min(
                             Math.abs(netCarryover),
                             currentBalance
                           );
-                          payDebt({ type: 'debt', amount: fullAmount });
+                          payDebt({ type: 'debt', amount: partialAmount });
                           setDebtPaymentAmount(0);
                         }}
                       >
-                        Pay Full
+                        {`Pay ₱${Math.min(Math.abs(netCarryover), currentBalance).toLocaleString()}`}
                       </Button>
                     </div>
                   </form>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useIndexedDB } from '../../../lib/hooks/useLocalStorage';
+import { useIndexedDB } from '../../lib/hooks/useLocalStorage';
 import EntryForm from './_components/EntryForm';
 import EntryList from './_components/EntryList';
 import Summary from './_components/Summary';
@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { FiEdit, FiPlus, FiRepeat, FiTrash } from 'react-icons/fi';
-import { Entry } from '../../../lib/types';
+import { Entry } from '../../lib/types';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import {

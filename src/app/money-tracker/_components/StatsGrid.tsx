@@ -2,7 +2,7 @@
 
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import StatsCard from './StatsCard';
-import { formatCurrency } from '../../../../lib/functions';
+import { formatCurrency } from '../../../lib/functions';
 import { Button } from '@/components/ui/button';
 
 type StatsGridProps = {

@@ -2,7 +2,7 @@
 
 import { History, Pencil } from 'lucide-react';
 import BudgetEditor from './BudgetEditor';
-import { formatCurrency } from '../../../../lib/functions';
+import { formatCurrency } from '../../../lib/functions';
 
 type Props = {
   totalSpent: number;

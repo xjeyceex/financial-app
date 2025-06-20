@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { getDb, getAllBudgets, saveBudget } from '../../../lib/db';
-import { Budget } from '../../../lib/typesv2';
+import { getDb, getAllBudgets, saveBudget } from '../../lib/db';
+import { Budget } from '../../lib/typesv2';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import {
@@ -34,7 +34,7 @@ import {
   formatPayPeriodDisplay,
   getCurrentPeriodDates,
   getLocalDateTime,
-} from '../../../lib/functionsv2';
+} from '../../lib/functionsv2';
 import { BudgetCard } from './_components/BudgetCard';
 
 export default function Home() {

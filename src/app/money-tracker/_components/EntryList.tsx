@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { FiEdit, FiTrash } from 'react-icons/fi';
 import { format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
-import { Entry } from '../../../../lib/types';
+import { Entry } from '../../../lib/types';
 import ConfirmDialog from './DeleteBudgetDialog';
 
 type Props = {

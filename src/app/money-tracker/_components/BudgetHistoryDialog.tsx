@@ -6,7 +6,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useEffect, useMemo } from 'react';
-import { formatCurrency } from '../../../../lib/functions';
+import { formatCurrency } from '../../../lib/functions';
 
 type BudgetHistoryDialogProps = {
   showBudgetHistory: boolean;

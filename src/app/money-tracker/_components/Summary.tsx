@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import TopExpenses from './TopExpenses';
 import PeakSpending from './PeakSpending';
-import { Entry } from '../../../../lib/types';
-import { useBudgetStorage } from '../../../../lib/hooks/useBudgetStorage';
+import { Entry } from '../../../lib/types';
+import { useBudgetStorage } from '../../../lib/hooks/useBudgetStorage';
 import BudgetHistoryDialog from './BudgetHistoryDialog';
 import BudgetSection from './BudgetSection';
 import StatsGrid from './StatsGrid';
@@ -12,7 +12,7 @@ import PeriodChartDialog from './PeriodChartDialog';
 import {
   usePeriodHistory,
   usePeriodSummary,
-} from '../../../../lib/hooks/usePeriodSummary';
+} from '../../../lib/hooks/usePeriodSummary';
 
 type SummaryProps = {
   budgetId: string;

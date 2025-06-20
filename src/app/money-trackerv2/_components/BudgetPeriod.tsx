@@ -26,7 +26,7 @@ import {
   FiPieChart,
   FiTrash,
 } from 'react-icons/fi';
-import { formatCurrency } from '../../../../lib/functions';
+import { formatCurrency } from '../../../lib/functions';
 
 interface BudgetPeriodProps {
   period: {

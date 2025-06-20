@@ -1,7 +1,7 @@
 'use client';
 
 import ProgressBar from './ProgressBar';
-import { Entry } from '../../../../lib/types';
+import { Entry } from '../../../lib/types';
 
 type BudgetSectionProps = {
   isEditingBudget: boolean;
