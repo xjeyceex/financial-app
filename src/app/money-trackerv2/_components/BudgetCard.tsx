@@ -304,15 +304,15 @@ export function BudgetCard({
         {/* Right Column - Entries List (1/3 width on larger screens) */}
         <div className="w-full lg:w-1/3">
           <Card className="h-full">
-            <CardHeader className="pb-3">
+            <CardHeader>
               <div className="flex justify-between items-center">
-                <CardTitle className="text-lg">Entries</CardTitle>
+                <CardTitle className="text-md">Entries</CardTitle>
                 <Badge variant="secondary">
                   {entries.length} {entries.length === 1 ? 'Item' : 'Items'}
                 </Badge>
               </div>
             </CardHeader>
-            <CardContent className="p-4">
+            <CardContent className="px-4">
               {entries.length === 0 ? (
                 <div className="text-center py-6 text-sm text-muted-foreground">
                   No entries yet. Tap the + button to add your first expense.
