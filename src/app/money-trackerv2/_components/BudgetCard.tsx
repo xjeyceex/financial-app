@@ -163,7 +163,7 @@ export function BudgetCard({
                   ) : (
                     <span
                       onClick={onAmountClick}
-                      className="text-lg font-semibold cursor-pointer hover:underline"
+                      className="text-xl font-semibold text-white cursor-pointer transition-colors hover:text-gray-200 hover:underline"
                     >
                       {formatCurrency(currentBaseAmount)}
                     </span>
@@ -185,7 +185,7 @@ export function BudgetCard({
                   Balance:{' '}
                   <span
                     className={cn(
-                      'font-semibold',
+                      'font-medium', // changed from font-semibold
                       currentBalance < 0
                         ? 'text-destructive'
                         : currentBalance < currentBaseAmount * 0.2
