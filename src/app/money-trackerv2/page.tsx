@@ -168,47 +168,6 @@ export default function Home() {
     [selectedBudget?.id] // dependencies
   );
 
-  const onEditPastAmount = async (periodId: string, newAmount: number) => {
-    if (!selectedBudget) return;
-
-    // Update the target period with new amount and recalculate finalBalance
-    const updatedPastPeriods = (selectedBudget.pastPeriods ?? []).map(
-      (period) =>
-        period.id === periodId
-          ? {
-              ...period,
-              amount: newAmount,
-              finalBalance:
-                newAmount -
-                (period.entries?.reduce((sum, e) => sum + e.amount, 0) ?? 0),
-            }
-          : period
-    );
-
-    // Determine the latest period (by endDate) to recalculate carriedOver
-    const latest = [...updatedPastPeriods].sort(
-      (a, b) => new Date(b.endDate).getTime() - new Date(a.endDate).getTime()
-    )[0];
-
-    const newCarriedOver = {
-      savings: latest.finalBalance > 0 ? latest.finalBalance : 0,
-      debt: latest.finalBalance < 0 ? Math.abs(latest.finalBalance) : 0,
-    };
-
-    const updatedBudget = {
-      ...selectedBudget,
-      pastPeriods: updatedPastPeriods,
-      currentPeriod: {
-        ...selectedBudget.currentPeriod,
-        carriedOver: newCarriedOver,
-      },
-    };
-
-    const db = await getDb();
-    await db.put('budgets', updatedBudget);
-    refreshBudgets();
-  };
-
   const handleBudgetAmountClick = () => {
     if (!selectedBudget) return;
     setTempBudgetAmount((selectedBudget.currentPeriod.amount ?? 0).toString());
@@ -656,17 +615,43 @@ export default function Home() {
 
       for (const budget of budgets) {
         const pastPeriods = budget.pastPeriods ?? [];
+
+        // 🧹 Filter out empty past periods
         const cleanedPastPeriods = pastPeriods.filter(
           (period) =>
             (period.amount ?? 0) !== 0 || (period.entries?.length ?? 0) > 0
         );
 
-        // Only update if there was a change
-        if (cleanedPastPeriods.length < pastPeriods.length) {
+        // 💰 Recalculate cumulative carriedOver
+        const totalFinalBalance = cleanedPastPeriods.reduce((sum, period) => {
+          const amount = period.amount ?? 0;
+          const totalEntries =
+            period.entries?.reduce((s, e) => s + e.amount, 0) ?? 0;
+          const final = period.finalBalance ?? amount - totalEntries;
+          return sum + final;
+        }, 0);
+
+        const updatedCarriedOver = {
+          savings: totalFinalBalance > 0 ? totalFinalBalance : 0,
+          debt: totalFinalBalance < 0 ? Math.abs(totalFinalBalance) : 0,
+        };
+
+        // ✏️ Only update if pastPeriods or carriedOver changed
+        const pastChanged = cleanedPastPeriods.length < pastPeriods.length;
+        const carriedOverChanged =
+          JSON.stringify(budget.currentPeriod.carriedOver ?? {}) !==
+          JSON.stringify(updatedCarriedOver);
+
+        if (pastChanged || carriedOverChanged) {
           const updatedBudget: Budget = {
             ...budget,
             pastPeriods: cleanedPastPeriods,
+            currentPeriod: {
+              ...budget.currentPeriod,
+              carriedOver: updatedCarriedOver,
+            },
           };
+
           await db.put('budgets', updatedBudget);
           modified = true;
         }
@@ -756,7 +741,6 @@ export default function Home() {
             editingBudgetAmount={editingBudgetAmount}
             tempBudgetAmount={tempBudgetAmount}
             onEntrySubmit={handleEntrySubmit}
-            onEditPastAmount={onEditPastAmount}
             entryDesc={entryDesc}
             payDebt={handlePayDebt}
             setEntryDesc={setEntryDesc}

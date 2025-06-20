@@ -15,7 +15,6 @@ import {
   CardContent,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import {
   Tooltip,
   TooltipContent,
@@ -29,6 +28,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import Link from 'next/link';
 
 interface BudgetCardProps {
   budget: Budget;
@@ -47,7 +47,6 @@ interface BudgetCardProps {
   setEntryDate: (value: string) => void;
   isValidMathExpression: (input: string) => boolean;
   calculateAmount: (input: string) => number;
-  onEditPastAmount: (periodId: string, newAmount: number) => void;
   payDebt: (params: { type: 'debt' | 'savings'; amount: number }) => void;
   onEntryEdit: (entry: {
     id: string;
@@ -69,7 +68,6 @@ export function BudgetCard({
   tempBudgetAmount,
   onEntrySubmit,
   entryDesc,
-  onEditPastAmount,
   setEntryDesc,
   payDebt,
   entryAmount,
@@ -82,9 +80,6 @@ export function BudgetCard({
   onEntryDelete,
   onEditBudgetClick,
 }: BudgetCardProps) {
-  const [editingPastAmounts, setEditingPastAmounts] = useState<
-    Record<string, string>
-  >({});
   const [isEntryModalOpen, setIsEntryModalOpen] = useState(false);
   const [debtPaymentAmount, setDebtPaymentAmount] = useState(0);
 
@@ -398,200 +393,11 @@ export function BudgetCard({
 
           {/* Past Periods */}
           {pastPeriods.length > 0 && (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base sm:text-lg">
-                  Past Periods
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 sm:p-6 space-y-4">
-                {pastPeriods
-                  .sort(
-                    (a, b) =>
-                      new Date(b.startDate).getTime() -
-                      new Date(a.startDate).getTime()
-                  )
-                  .map((period) => {
-                    const periodEntries = period.entries || [];
-                    const periodAmount = period.amount || 0;
-                    const periodTotal = periodEntries.reduce(
-                      (sum, e) => sum + e.amount,
-                      0
-                    );
-                    const finalBalance =
-                      period.finalBalance ?? periodAmount - periodTotal;
-
-                    return (
-                      <div key={period.id} className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h4 className="font-medium text-sm sm:text-base">
-                              {formatPayPeriodDisplay(
-                                period.startDate,
-                                period.endDate
-                              )}
-                            </h4>
-                            <p className="text-xs text-muted-foreground">
-                              ID: {period.id}
-                            </p>
-                          </div>
-                          <Badge
-                            variant={
-                              finalBalance > 0
-                                ? 'secondary'
-                                : finalBalance < 0
-                                  ? 'destructive'
-                                  : 'outline'
-                            }
-                            className="text-xs"
-                          >
-                            {finalBalance > 0
-                              ? `Savings: +${formatCurrency(finalBalance)}`
-                              : finalBalance < 0
-                                ? `Debt: ${formatCurrency(finalBalance)}`
-                                : 'Balanced'}
-                          </Badge>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                          <div className="space-y-1">
-                            <p className="text-xs sm:text-sm text-muted-foreground">
-                              Budget Amount
-                            </p>
-                            {editingPastAmounts[period.id] !== undefined ? (
-                              <form
-                                onSubmit={(e) => {
-                                  e.preventDefault();
-                                  const parsed = parseFloat(
-                                    editingPastAmounts[period.id]
-                                  );
-                                  if (!isNaN(parsed)) {
-                                    onEditPastAmount(period.id, parsed);
-                                    setEditingPastAmounts((prev) => {
-                                      const updated = { ...prev };
-                                      delete updated[period.id];
-                                      return updated;
-                                    });
-                                  }
-                                }}
-                                className="flex flex-col sm:flex-row items-end gap-2"
-                              >
-                                <Input
-                                  type="number"
-                                  value={
-                                    editingPastAmounts[period.id] === ''
-                                      ? ''
-                                      : editingPastAmounts[period.id]
-                                  }
-                                  onChange={(e) =>
-                                    setEditingPastAmounts((prev) => ({
-                                      ...prev,
-                                      [period.id]: e.target.value,
-                                    }))
-                                  }
-                                  autoFocus
-                                  className="text-sm sm:text-base"
-                                />
-                                <div className="flex gap-2">
-                                  <Button size="sm" type="submit">
-                                    Save
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() =>
-                                      setEditingPastAmounts((prev) => {
-                                        const updated = { ...prev };
-                                        delete updated[period.id];
-                                        return updated;
-                                      })
-                                    }
-                                  >
-                                    Cancel
-                                  </Button>
-                                </div>
-                              </form>
-                            ) : (
-                              <p
-                                className="cursor-pointer hover:bg-accent p-2 rounded transition-colors text-sm sm:text-base"
-                                onClick={() =>
-                                  setEditingPastAmounts((prev) => ({
-                                    ...prev,
-                                    [period.id]:
-                                      period.amount?.toString() || '',
-                                  }))
-                                }
-                              >
-                                {formatCurrency(periodAmount)}
-                              </p>
-                            )}
-                          </div>
-                          <div className="space-y-1">
-                            <p className="text-xs sm:text-sm text-muted-foreground">
-                              Total Expenses
-                            </p>
-                            <p className="text-sm sm:text-base">
-                              {formatCurrency(periodTotal)}
-                            </p>
-                          </div>
-                        </div>
-
-                        {periodEntries.length > 0 && (
-                          <div className="space-y-2">
-                            <Separator />
-                            <h5 className="text-xs sm:text-sm font-medium">
-                              Entries
-                            </h5>
-                            <div className="space-y-2">
-                              {periodEntries.map((entry) => (
-                                <div
-                                  key={entry.id}
-                                  className="flex items-center justify-between p-2 border rounded hover:bg-accent/50 transition-colors"
-                                >
-                                  <div className="space-y-0.5">
-                                    <p className="font-medium text-xs sm:text-sm">
-                                      {entry.description}
-                                    </p>
-                                    <div className="flex items-center gap-2 text-xs">
-                                      <span>
-                                        {formatCurrency(entry.amount)}
-                                      </span>
-                                      <span className="text-muted-foreground">
-                                        {new Date(
-                                          entry.date
-                                        ).toLocaleDateString()}
-                                      </span>
-                                    </div>
-                                  </div>
-                                  <div className="flex gap-1">
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => onEntryEdit(entry)}
-                                      className="h-7 w-7 sm:h-8 sm:w-8"
-                                    >
-                                      <FiEdit className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => onEntryDelete(entry.id)}
-                                      className="h-7 w-7 sm:h-8 sm:w-8"
-                                    >
-                                      <FiTrash className="h-3 w-3 sm:h-4 sm:w-4 text-destructive" />
-                                    </Button>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        <Separator />
-                      </div>
-                    );
-                  })}
-              </CardContent>
-            </Card>
+            <Link href={`/money-trackerv2/past-periods?budgetId=${budget.id}`}>
+              <Button variant="outline" className="mt-4">
+                View Past Periods
+              </Button>
+            </Link>
           )}
         </CardContent>
       </Card>
