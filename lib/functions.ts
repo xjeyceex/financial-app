@@ -1,7 +1,11 @@
-export const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('en-PH', {
+export const formatCurrency = (
+  amount: number,
+  currency: string = 'PHP',
+  locale: string = 'en-PH'
+) => {
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
-    currency: 'PHP',
+    currency,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount);
