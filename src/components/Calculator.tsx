@@ -8,6 +8,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { loadCalculatorState, saveCalculatorState } from '@/lib/indexedDB';
+import {
+  FiDelete,
+  FiDivide,
+  FiMinus,
+  FiPercent,
+  FiPlus,
+  FiX,
+} from 'react-icons/fi';
 
 type CalculatorModalProps = {
   open: boolean;
@@ -145,93 +153,112 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
     clearAll,
   ]);
 
-  const buttons: {
-    label: string;
-    action: () => void;
-    className?: string;
-    span?: boolean;
-  }[] = [
-    { label: 'C', action: clearAll, className: 'text-red-500' },
-    { label: '±', action: toggleSign },
-    { label: '%', action: inputPercent },
+  const buttons = [
     {
-      label: '÷',
-      action: () => handleOperation('÷'),
-      className: 'bg-orange-500 text-white',
+      label: 'C',
+      action: clearAll,
+      className: 'text-red-500 hover:bg-red-500/10 dark:hover:bg-red-500/20',
+    },
+    {
+      label: <FiDelete size={20} />,
+      action: backspace,
+      className:
+        'text-amber-500 hover:bg-amber-500/10 dark:hover:bg-amber-500/20',
+    },
+    {
+      label: '±',
+      action: toggleSign,
+      className: 'text-muted-foreground hover:bg-muted-foreground/10',
+    },
+    {
+      label: <FiPercent size={20} />,
+      action: inputPercent,
+      className: 'text-muted-foreground hover:bg-muted-foreground/10',
     },
     {
       label: '7',
       action: () => inputDigit(7),
-      className: 'bg-gray-100 dark:bg-gray-800',
+      className: 'text-foreground hover:bg-muted-foreground/10',
     },
     {
       label: '8',
       action: () => inputDigit(8),
-      className: 'bg-gray-100 dark:bg-gray-800',
+      className: 'text-foreground hover:bg-muted-foreground/10',
     },
     {
       label: '9',
       action: () => inputDigit(9),
-      className: 'bg-gray-100 dark:bg-gray-800',
+      className: 'text-foreground hover:bg-muted-foreground/10',
     },
     {
-      label: '×',
-      action: () => handleOperation('×'),
-      className: 'bg-orange-500 text-white',
+      label: <FiDivide size={20} />,
+      action: () => handleOperation('÷'),
+      className: 'bg-primary text-primary-foreground hover:bg-primary/90',
     },
     {
       label: '4',
       action: () => inputDigit(4),
-      className: 'bg-gray-100 dark:bg-gray-800',
+      className: 'text-foreground hover:bg-muted-foreground/10',
     },
     {
       label: '5',
       action: () => inputDigit(5),
-      className: 'bg-gray-100 dark:bg-gray-800',
+      className: 'text-foreground hover:bg-muted-foreground/10',
     },
     {
       label: '6',
       action: () => inputDigit(6),
-      className: 'bg-gray-100 dark:bg-gray-800',
+      className: 'text-foreground hover:bg-muted-foreground/10',
     },
     {
-      label: '-',
-      action: () => handleOperation('-'),
-      className: 'bg-orange-500 text-white',
+      label: <FiX size={20} />,
+      action: () => handleOperation('×'),
+      className: 'bg-primary text-primary-foreground hover:bg-primary/90',
     },
     {
       label: '1',
       action: () => inputDigit(1),
-      className: 'bg-gray-100 dark:bg-gray-800',
+      className: 'text-foreground hover:bg-muted-foreground/10',
     },
     {
       label: '2',
       action: () => inputDigit(2),
-      className: 'bg-gray-100 dark:bg-gray-800',
+      className: 'text-foreground hover:bg-muted-foreground/10',
     },
     {
       label: '3',
       action: () => inputDigit(3),
-      className: 'bg-gray-100 dark:bg-gray-800',
+      className: 'text-foreground hover:bg-muted-foreground/10',
     },
     {
-      label: '+',
-      action: () => handleOperation('+'),
-      className: 'bg-orange-500 text-white',
+      label: <FiMinus size={20} />,
+      action: () => handleOperation('-'),
+      className: 'bg-primary text-primary-foreground hover:bg-primary/90',
     },
     {
       label: '0',
       action: () => inputDigit(0),
-      className: 'col-span-2 bg-gray-100 dark:bg-gray-800',
+      className: 'text-foreground hover:bg-muted-foreground/10 col-span-2',
       span: true,
     },
-    { label: '.', action: inputDot, className: 'bg-gray-100 dark:bg-gray-800' },
+    {
+      label: '.',
+      action: inputDot,
+      className: 'text-foreground hover:bg-muted-foreground/10',
+    },
+    {
+      label: <FiPlus size={20} />,
+      action: () => handleOperation('+'),
+      className: 'bg-primary text-primary-foreground hover:bg-primary/90',
+    },
     {
       label: '=',
       action: performOperation,
-      className: 'bg-orange-500 text-white',
+      className:
+        'bg-primary text-primary-foreground hover:bg-primary/90 col-span-4',
+      span: true,
     },
-  ];
+  ] as const;
 
   useEffect(() => {
     loadCalculatorState().then((state) => {
@@ -239,7 +266,7 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
         setDisplayValue(state.displayValue || '0');
         setHistory(state.history || []);
       }
-      setHasLoaded(true); // ✅ only mark after load completes
+      setHasLoaded(true);
     });
   }, []);
 
@@ -251,7 +278,7 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[320px] p-0 rounded-lg overflow-hidden">
+      <DialogContent className="sm:max-w-[360px] p-0 rounded-lg overflow-hidden">
         <DialogHeader className="px-4 pt-4">
           <div className="flex justify-between items-center w-full">
             <DialogTitle>Calculator</DialogTitle>
@@ -264,22 +291,29 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
             </div>
           )}
           <Input
-            className="text-right font-bold font-mono border-0 p-5 cursor-default bg-transparent select-none leading-none tracking-tight"
+            className="text-right text-[56px] sm:text-[64px] font-extrabold font-mono border-0 px-6 py-6 cursor-default bg-transparent select-none leading-none tracking-tight"
             value={displayValue}
             readOnly
             tabIndex={-1}
             onFocus={(e) => e.target.blur()}
           />
-
           <div className="grid grid-cols-4 gap-px bg-gray-300 dark:bg-gray-700">
-            {buttons.map(({ label, action, className, span }) => (
+            {buttons.map((button, index) => (
               <Button
-                key={label}
+                key={
+                  typeof button.label === 'string'
+                    ? button.label
+                    : `icon-${index}`
+                }
                 variant="ghost"
-                className={`h-16 rounded-none text-2xl font-light ${span ? 'col-span-2' : ''} ${className || ''}`}
-                onClick={action}
+                className={`
+              h-16 rounded-none text-2xl font-light
+              ${'span' in button && button.span ? 'col-span-2' : ''}
+              ${button.className || ''}
+            `}
+                onClick={button.action}
               >
-                {label}
+                {button.label}
               </Button>
             ))}
           </div>
