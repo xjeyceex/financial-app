@@ -102,9 +102,8 @@ export function BudgetCard({
 
   const currentBaseAmount = currentPeriod.amount || 0;
   const entries = currentPeriod.entries || [];
-  const totalExpenses = entries
-    .filter((e) => !e.excludeFromDepletion)
-    .reduce((sum, e) => sum + e.amount, 0);
+  const totalExpenses = entries.reduce((sum, e) => sum + e.amount, 0);
+
   const currentBalance = currentBaseAmount - totalExpenses;
 
   const percentageUsed =
@@ -169,6 +168,7 @@ export function BudgetCard({
       weekday: 'short',
     });
   }
+
   const handleEntrySubmit = (e: React.FormEvent) => {
     onEntrySubmit(e);
     setIsEntryModalOpen(false);
