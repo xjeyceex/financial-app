@@ -11,8 +11,8 @@ import {
   FiClock,
   FiEyeOff,
 } from 'react-icons/fi';
-import { Budget } from '../../../lib/typesv2';
-import { formatCurrency } from '../../../lib/functions';
+import { Budget } from '../lib/typesv2';
+import { formatCurrency } from '../lib/functions';
 import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -37,7 +37,7 @@ import {
 } from '@/components/ui/dialog';
 import { BudgetPeriod } from './BudgetPeriod';
 import StatsCard from './StatsCard';
-import { cn } from '../../../lib/utils';
+import { cn } from '../lib/utils';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { CalculatorModal } from '@/components/Calculator';
