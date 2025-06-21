@@ -535,7 +535,7 @@ export function BudgetCard({
       </div>
       {/* Add Entry Modal */}
       <Dialog open={isEntryModalOpen} onOpenChange={setIsEntryModalOpen}>
-        <DialogContent className="sm:max-w-md translate-y-[-85%]">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader className="p-0 m-0">
             <DialogTitle className="p-0 m-0">Add New Entry</DialogTitle>
             <DialogDescription className="p-0 m-0"></DialogDescription>
