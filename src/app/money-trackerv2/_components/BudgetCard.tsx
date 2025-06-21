@@ -10,6 +10,7 @@ import {
   FiCheck,
   FiTrendingDown,
   FiClock,
+  FiEyeOff,
 } from 'react-icons/fi';
 import { Budget } from '../../../lib/typesv2';
 import { formatCurrency } from '../../../lib/functions';
@@ -33,6 +34,7 @@ import { BudgetPeriod } from './BudgetPeriod';
 import StatsCard from './StatsCard';
 import { cn } from '../../../lib/utils';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 
 interface BudgetCardProps {
   budget: Budget;
@@ -214,11 +216,13 @@ export function BudgetCard({
                 ) : (
                   <span
                     onClick={onAmountClick}
-                    className="text-xl font-semibold text-primary cursor-pointer transition-colors hover:text-primary/80 hover:underline"
+                    className="flex items-center gap-1 text-xl font-semibold text-primary cursor-pointer transition-colors hover:text-primary/80 hover:underline"
                   >
                     {formatCurrency(currentBaseAmount)}
+                    <FiEdit className="w-3 h-3 text-muted-foreground" />
                   </span>
                 )}
+
                 <span>-</span>
                 <span>({Math.round(percentageUsed)}%)</span>
               </div>
@@ -424,25 +428,37 @@ export function BudgetCard({
                             {entry.description}
                           </p>
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                          <span>
-                            {new Date(entry.date).toLocaleDateString(
-                              undefined,
-                              {
-                                month: 'short',
-                                day: 'numeric',
-                              }
-                            )}
-                          </span>
-                          <span>•</span>
-                          <span>
-                            {new Date(entry.date).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </span>
+
+                        <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span>
+                              {new Date(entry.date).toLocaleDateString(
+                                undefined,
+                                {
+                                  month: 'short',
+                                  day: 'numeric',
+                                }
+                              )}
+                            </span>
+                            <span>•</span>
+                            <span>
+                              {new Date(entry.date).toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                          </div>
+
+                          {/* Exclusion Icon Line */}
+                          {entry.excludeFromDepletion && (
+                            <div className="flex items-center gap-1 text-orange-500 pt-0.5">
+                              <FiEyeOff className="w-3.5 h-3.5 " />
+                              <span className="text-xs">Recurring Bill</span>
+                            </div>
+                          )}
                         </div>
                       </div>
+
                       <div className="flex items-center gap-1">
                         <span className="font-medium text-sm text-destructive">
                           {formatCurrency(entry.amount)}
@@ -542,15 +558,13 @@ export function BudgetCard({
             </div>
 
             <div className="flex items-center gap-2">
-              <input
+              <Switch
                 id="exclude-entry"
-                type="checkbox"
                 checked={entryExclude}
-                onChange={(e) => setEntryExclude(e.target.checked)}
-                className="h-4 w-4 accent-primary"
+                onCheckedChange={setEntryExclude}
               />
               <label htmlFor="exclude-entry" className="text-sm">
-                Exclude from depletion info
+                Recurring Bill
               </label>
             </div>
 

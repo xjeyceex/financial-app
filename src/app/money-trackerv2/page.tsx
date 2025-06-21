@@ -37,6 +37,7 @@ import {
   getLocalDateTime,
 } from '../../lib/functionsv2';
 import { BudgetCard } from './_components/BudgetCard';
+import { Switch } from '@/components/ui/switch';
 
 export default function Home() {
   const [budgets, setBudgets] = useState<Budget[]>([]);
@@ -825,20 +826,18 @@ export default function Home() {
 
               {/* Exclude from depletion */}
               <div className="flex items-center gap-2">
-                <input
+                <Switch
                   id="exclude-toggle"
-                  type="checkbox"
                   checked={editingEntry.excludeFromDepletion ?? false}
-                  onChange={(e) =>
+                  onCheckedChange={(checked) =>
                     setEditingEntry({
                       ...editingEntry,
-                      excludeFromDepletion: e.target.checked,
+                      excludeFromDepletion: checked,
                     })
                   }
-                  className="h-4 w-4 accent-primary"
                 />
                 <label htmlFor="exclude-toggle" className="text-sm">
-                  Exclude from depletion info
+                  Recurring Bill
                 </label>
               </div>
 
