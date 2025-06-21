@@ -1,474 +1,853 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useIndexedDB } from '../../lib/hooks/useLocalStorage';
-import EntryForm from './_components/EntryForm';
-import EntryList from './_components/EntryList';
-import Summary from './_components/Summary';
+import { useCallback, useEffect, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import { getDb, getAllBudgets, saveBudget } from '../../lib/db';
+import { Budget, Entry } from '../../lib/typesv2';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { FiEdit, FiMoreHorizontal, FiPlus, FiTrash } from 'react-icons/fi';
+import BudgetDialog from './_components/BudgetDialog';
 import {
   Dialog,
-  DialogTrigger,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { FiEdit, FiPlus, FiRepeat, FiTrash } from 'react-icons/fi';
-import { Entry } from '../../lib/types';
-import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
-import { HiOutlineDotsHorizontal } from 'react-icons/hi';
-import ConfirmDialog from './_components/DeleteBudgetDialog';
-import CreateBudgetDialog from './_components/CreateBudgetDialog';
+  calculatePeriodBalance,
+  determinePayPeriod,
+  formatDateForDatetimeLocal,
+  formatPayPeriodDisplay,
+  getCurrentPeriodDates,
+  getLocalDateTime,
+} from '../../lib/functionsv2';
+import { BudgetCard } from './_components/BudgetCard';
+import { Switch } from '@/components/ui/switch';
 
-type BudgetData = {
-  id: string;
-  name: string;
-  entries: Entry[];
-  budget: number;
-  recurring: boolean;
-};
-
-export default function MoneyTrackerPage() {
-  const [budgets, setBudgets, isReady] = useIndexedDB<BudgetData[]>(
-    'budgets',
-    []
-  );
-  const [activeBudgetIndex, setActiveBudgetIndex] = useState(0);
-  const [editingEntry, setEditingEntry] = useState<Entry | null>(null);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editBudgetModalOpen, setEditBudgetModalOpen] = useState(false);
-  const [nameInput, setNameInput] = useState('');
-  const [newBudgetModalOpen, setNewBudgetModalOpen] = useState(false);
-
+export default function Home() {
+  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [selectedBudget, setSelectedBudget] = useState<Budget | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [isEditingBudget, setIsEditingBudget] = useState(false);
-  const [lastCreatedBudgetId, setLastCreatedBudgetId] = useState<string | null>(
-    null
-  );
+  const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
+  const [formName, setFormName] = useState('');
+  const [entryDesc, setEntryDesc] = useState('');
+  const [entryAmount, setEntryAmount] = useState('');
+  const [entryDialogOpen, setEntryDialogOpen] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<{
+    id: string;
+    description: string;
+    amount: string;
+    date: string;
+    excludeFromDepletion: boolean;
+  } | null>(null);
+  const [editingBudgetAmount, setEditingBudgetAmount] = useState(false);
+  const [tempBudgetAmount, setTempBudgetAmount] = useState('');
+  const [entryExclude, setEntryExclude] = useState(false);
 
-  // Ensure there's always at least one default budget
-  useEffect(() => {
-    if (isReady && budgets.length === 0) {
-      setBudgets([
-        {
-          id: uuidv4(),
-          name: 'Budget 1',
-          entries: [],
-          budget: 5000,
-          recurring: true,
-        },
-      ]);
-    }
-  }, [isReady, budgets.length, setBudgets]);
+  const [entryDate, setEntryDate] = useState(() => {
+    const now = new Date();
+    const offset = now.getTimezoneOffset();
+    const localDate = new Date(now.getTime() - offset * 60 * 1000);
+    return localDate.toISOString().slice(0, 16);
+  });
 
-  // Sync active index when a new budget is created
-  useEffect(() => {
-    if (lastCreatedBudgetId) {
-      const newIndex = budgets.findIndex((b) => b.id === lastCreatedBudgetId);
-      if (newIndex !== -1) {
-        setActiveBudgetIndex(newIndex);
-        setLastCreatedBudgetId(null);
-      }
-    }
-  }, [budgets, lastCreatedBudgetId]);
-
-  // Sync name input with current budget
-  useEffect(() => {
-    setNameInput(budgets[activeBudgetIndex]?.name || '');
-  }, [activeBudgetIndex, budgets]);
-
-  // Don't render until data is ready
-  if (!isReady || budgets.length === 0) {
+  const isPayday = (date: Date): boolean => {
+    const day = date.getDate();
     return (
-      <div className="w-full max-w-7xl mx-auto px-1 md:px-6 lg:px-12 pt-4 space-y-8">
-        {/* Budget Switcher Skeleton */}
-        <div className="flex flex-wrap items-center gap-3 mb-4">
-          <div className="h-6 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-          <div className="h-9 w-50 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-          <div className="h-8 w-9 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-        </div>
-
-        {/* Dashboard Skeleton */}
-        <section className="flex flex-col lg:flex-row gap-6 ">
-          {/* Summary Skeleton */}
-          <div className="lg:w-2/3 space-y-3">
-            <div className="rounded-2xl bg-muted/20 dark:bg-muted/60 p-6 ">
-              <div className="space-y-3">
-                <div className="space-y-2">
-                  <div className="h-7 w-1/2 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mx-auto" />
-                  <div className="h-3 w-130 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse mx-auto" />
-                  <div className="h-4 w-1/3 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mx-auto" />
-                </div>
-                <div className="h-8 w-full bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse" />
-                <div className="flex gap-4">
-                  <div className="h-20 w-1/2 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse" />
-                  <div className="h-20 w-1/2 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse" />
-                </div>
-                <div className="h-4 w-40 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                <div className="h-3 w-45 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-              </div>
-            </div>
-          </div>
-
-          {/* Entry List Skeleton */}
-          <div className="lg:w-1/3 space-y-3">
-            <div className="h-7 w-1/2 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-2" />
-            <div className="h-4 w-1/3 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-4" />
-            <div className="space-y-2">
-              {[...Array(5)].map((_, i) => (
-                <div
-                  key={i}
-                  className="flex justify-between items-center p-3 bg-gray-100 dark:bg-gray-800 rounded-lg"
-                >
-                  <div className="flex items-center space-x-3">
-                    <div>
-                      <div className="h-5 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-1" />
-                      <div className="h-4 w-36 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    {/* First pulse bar — separate */}
-                    <div className="h-5 w-12 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-1 ml-auto" />
-
-                    {/* Grouped pulse bars — side by side */}
-                    <div className="flex justify-end space-x-1">
-                      <div className="h-5 w-7 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                      <div className="h-5 w-7 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      </div>
+      day === 15 ||
+      day === new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
     );
-  }
-
-  const currentBudget = budgets[activeBudgetIndex];
-  if (!currentBudget) {
-    return (
-      <div className="w-full max-w-7xl mx-auto px-1 md:px-6 lg:px-12 pt-4 space-y-8">
-        {/* Budget Switcher Skeleton (simpler version) */}
-        <div className="flex flex-wrap items-center gap-3 mb-4">
-          <div className="h-5 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-          <div className="h-10 w-[200px] bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-        </div>
-
-        {/* Content Loading Skeleton */}
-        <div className="rounded-2xl bg-muted/40 dark:bg-muted/10 p-6 h-64 flex items-center justify-center">
-          <div className="text-center space-y-2">
-            <div className="h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse mx-auto" />
-            <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mx-auto" />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Budget update helpers
-  const updateCurrentBudget = (newData: Partial<BudgetData>) => {
-    setBudgets((prev) => {
-      const updated = [...prev];
-      updated[activeBudgetIndex] = {
-        ...updated[activeBudgetIndex],
-        ...newData,
-      };
-      return updated;
-    });
   };
 
-  const handlePayDebt = (amount: number) => {
-    updateCurrentBudget({
-      entries: [
-        {
-          id: uuidv4(),
-          budgetId: currentBudget.id,
-          amount,
-          date: new Date().toISOString(),
-          item: 'Debt Payment',
-        },
-        ...currentBudget.entries,
-      ],
-    });
-  };
+  // Create new budget on payday
+  const createNewBudgetOnPayday = async () => {
+    const today = new Date();
+    if (!isPayday(today)) return;
 
-  const handleCreateBudget = (name: string, recurring: boolean) => {
-    const trimmed = name.trim();
-    if (!trimmed) return;
-
-    const isDuplicate = budgets.some(
-      (b) => b.name.toLowerCase() === trimmed.toLowerCase()
-    );
-
-    if (isDuplicate) {
-      alert('A budget with this name already exists.');
+    const lastBudget = budgets[budgets.length - 1];
+    if (
+      lastBudget &&
+      new Date(lastBudget.currentPeriod.startDate).getMonth() ===
+        today.getMonth()
+    ) {
       return;
     }
 
-    const newBudget: BudgetData = {
+    // Calculate final balance of previous period
+    const previousBalance = lastBudget
+      ? calculatePeriodBalance(lastBudget.currentPeriod)
+      : 0;
+
+    const periodId = uuidv4();
+    const periodDates = getCurrentPeriodDates(today);
+
+    const newBudget: Budget = {
       id: uuidv4(),
-      name: trimmed,
-      entries: [],
-      budget: 5000,
-      recurring,
+      name: `Budget ${formatPayPeriodDisplay(periodDates.start, periodDates.end)}`,
+      createdAt: today.toISOString(),
+      currentPeriod: {
+        id: periodId,
+        amount: 0,
+        entries: [],
+        startDate: periodDates.start,
+        endDate: periodDates.end,
+        carriedOver: {
+          savings: previousBalance > 0 ? previousBalance : 0,
+          debt: previousBalance < 0 ? Math.abs(previousBalance) : 0,
+        },
+      },
+      pastPeriods: lastBudget
+        ? [
+            ...(lastBudget.pastPeriods || []),
+            {
+              ...lastBudget.currentPeriod,
+              finalBalance: previousBalance,
+            },
+          ]
+        : [],
     };
 
-    setNewBudgetModalOpen(false);
-    setBudgets((prev) => [...prev, newBudget]);
-    setLastCreatedBudgetId(newBudget.id);
+    await saveBudget(newBudget);
+    refreshBudgets();
   };
 
-  const addEntry = (entry: Entry) => {
-    updateCurrentBudget({ entries: [entry, ...currentBudget.entries] });
-    setModalOpen(false);
+  useEffect(() => {
+    const loadBudgets = async () => {
+      const all = await getAllBudgets();
+      setBudgets(all);
+      const lastId = localStorage.getItem('selectedBudgetId');
+      const found = all.find((b) => b.id === lastId) ?? all[0] ?? null;
+      setSelectedBudget(found);
+    };
+    loadBudgets();
+
+    // Check for payday every day
+    const checkPayday = () => {
+      const now = new Date();
+      const msUntilMidnight =
+        new Date(now).setHours(24, 0, 0, 0) - now.getTime();
+      setTimeout(
+        () => {
+          createNewBudgetOnPayday();
+          setInterval(createNewBudgetOnPayday, 24 * 60 * 60 * 1000);
+        },
+        msUntilMidnight > 0 ? msUntilMidnight : 0
+      );
+    };
+
+    checkPayday();
+    // eslint-disable-next-line
+  }, []);
+
+  const refreshBudgets = useCallback(
+    async (targetId?: string) => {
+      const all = await getAllBudgets();
+      setBudgets(all);
+
+      const found =
+        all.find((b) => b.id === (targetId ?? selectedBudget?.id)) ??
+        all[0] ??
+        null;
+
+      setSelectedBudget(found);
+
+      if (found) {
+        localStorage.setItem('selectedBudgetId', found.id);
+      }
+    },
+    [selectedBudget?.id] // dependencies
+  );
+
+  const onEditPastAmount = async (periodId: string, newAmount: number) => {
+    if (!selectedBudget) return;
+
+    // Update the target period with new amount and recalculate finalBalance
+    const updatedPastPeriods = (selectedBudget.pastPeriods ?? []).map(
+      (period) =>
+        period.id === periodId
+          ? {
+              ...period,
+              amount: newAmount,
+              finalBalance:
+                newAmount -
+                (period.entries?.reduce((sum, e) => sum + e.amount, 0) ?? 0),
+            }
+          : period
+    );
+
+    // Determine the latest period (by endDate) to recalculate carriedOver
+    const latest = [...updatedPastPeriods].sort(
+      (a, b) => new Date(b.endDate).getTime() - new Date(a.endDate).getTime()
+    )[0];
+
+    const newCarriedOver = {
+      savings: latest.finalBalance > 0 ? latest.finalBalance : 0,
+      debt: latest.finalBalance < 0 ? Math.abs(latest.finalBalance) : 0,
+    };
+
+    const updatedBudget = {
+      ...selectedBudget,
+      pastPeriods: updatedPastPeriods,
+      currentPeriod: {
+        ...selectedBudget.currentPeriod,
+        carriedOver: newCarriedOver,
+      },
+    };
+
+    const db = await getDb();
+    await db.put('budgets', updatedBudget);
+    refreshBudgets();
   };
 
-  const updateEntry = (updated: Entry) => {
-    updateCurrentBudget({
-      entries: currentBudget.entries.map((e) =>
-        e.id === updated.id ? updated : e
-      ),
+  const handleBudgetAmountClick = () => {
+    if (!selectedBudget) return;
+    setTempBudgetAmount((selectedBudget.currentPeriod.amount ?? 0).toString());
+    setEditingBudgetAmount(true);
+  };
+
+  const handleBudgetAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTempBudgetAmount(e.target.value);
+  };
+
+  const saveBudgetAmount = async () => {
+    if (!selectedBudget || !tempBudgetAmount) return;
+
+    const amount = parseFloat(tempBudgetAmount);
+    if (isNaN(amount)) return;
+
+    const db = await getDb();
+    await db.put('budgets', {
+      ...selectedBudget,
+      currentPeriod: {
+        ...selectedBudget.currentPeriod,
+        amount: amount,
+      },
     });
+
+    setEditingBudgetAmount(false);
+    refreshBudgets();
+  };
+
+  const cancelBudgetAmountEdit = () => {
+    setEditingBudgetAmount(false);
+  };
+
+  const handleDialogSave = async () => {
+    const name = formName.trim();
+    if (!name) return;
+
+    const today = new Date();
+    const isFirstPeriod = determinePayPeriod(today.toISOString()) === 'first';
+
+    const start = isFirstPeriod
+      ? new Date(today.getFullYear(), today.getMonth(), 1)
+      : new Date(today.getFullYear(), today.getMonth(), 16);
+
+    const end = isFirstPeriod
+      ? new Date(today.getFullYear(), today.getMonth(), 15)
+      : new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+    let newBudgetId: string | undefined;
+
+    if (dialogMode === 'create') {
+      newBudgetId = uuidv4();
+      await saveBudget({
+        id: newBudgetId,
+        name,
+        createdAt: today.toISOString(),
+        currentPeriod: {
+          id: uuidv4(),
+          amount: 0,
+          entries: [],
+          startDate: start.toISOString(),
+          endDate: end.toISOString(),
+        },
+      });
+    } else if (selectedBudget) {
+      const db = await getDb();
+      await db.put('budgets', {
+        ...selectedBudget,
+        name,
+      });
+      newBudgetId = selectedBudget.id;
+    }
+
+    setDialogOpen(false);
+    refreshBudgets(newBudgetId);
+  };
+
+  const handleEntryEdit = (entry: Entry) => {
+    setEditingEntry({
+      id: entry.id,
+      description: entry.description ?? 'Unspecified',
+      amount: entry.amount.toString(),
+      date: formatDateForDatetimeLocal(entry.date), // ✅ Local time
+      excludeFromDepletion: entry.excludeFromDepletion ?? false,
+    });
+
+    setEntryDialogOpen(true);
+  };
+
+  const isValidMathExpression = (input: string): boolean => {
+    const sanitized = input.replace(/\s+/g, '');
+    if (!/^[0-9+\-*/.]+$/.test(sanitized)) return false;
+
+    try {
+      const result = new Function(`return ${sanitized}`)();
+      return typeof result === 'number' && isFinite(result);
+    } catch {
+      return false;
+    }
+  };
+
+  const calculateAmount = (input: string): number => {
+    const sanitized = input.replace(/\s+/g, '');
+    return new Function(`return ${sanitized}`)();
+  };
+
+  const handlePayDebt = async ({
+    type,
+    amount,
+  }: {
+    type: 'debt' | 'savings';
+    amount: number;
+  }) => {
+    if (!selectedBudget || amount <= 0) return;
+
+    const isDebt = type === 'debt';
+    const current = selectedBudget.currentPeriod;
+    const entries = current.entries ?? [];
+
+    const carried = current.carriedOver ?? { savings: 0, debt: 0 };
+    const available = isDebt ? carried.debt : carried.savings;
+    if (available <= 0) return;
+
+    const payment = Math.min(available, amount);
+
+    const newEntry = {
+      id: uuidv4(),
+      description: isDebt ? 'Debt Payment' : 'Used Savings',
+      amount: payment, // ✅ always positive
+      date: new Date().toISOString(),
+    };
+
+    const updatedBudget: Budget = {
+      ...selectedBudget,
+      currentPeriod: {
+        ...current,
+        entries: [...entries, newEntry],
+        // ✅ Let the cleanup useEffect recalculate carriedOver
+        // This line is removed for consistency
+      },
+    };
+
+    const db = await getDb();
+    await db.put('budgets', updatedBudget);
+    refreshBudgets();
+  };
+
+  const handleEntrySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedBudget) return;
+
+    const calculatedAmount = calculateAmount(entryAmount);
+    if (isNaN(calculatedAmount)) return;
+
+    const newEntry = {
+      id: uuidv4(),
+      description: entryDesc.trim() || 'Unspecified',
+      amount: calculatedAmount,
+      date: new Date(entryDate).toISOString(),
+      excludeFromDepletion: entryExclude, // ✅ Add this line
+    };
+
+    const entryDateObj = new Date(newEntry.date);
+    const currentStart = new Date(selectedBudget.currentPeriod.startDate);
+    const currentEnd = new Date(selectedBudget.currentPeriod.endDate);
+
+    const db = await getDb();
+    const updatedBudget = { ...selectedBudget };
+
+    // 1. Add to current period if in range
+    if (entryDateObj >= currentStart && entryDateObj <= currentEnd) {
+      updatedBudget.currentPeriod.entries = [
+        ...(updatedBudget.currentPeriod.entries ?? []),
+        newEntry,
+      ];
+    } else {
+      // 2. Add to matching past period
+      let matched = false;
+      if (updatedBudget.pastPeriods) {
+        for (const period of updatedBudget.pastPeriods) {
+          const start = new Date(period.startDate);
+          const end = new Date(period.endDate);
+          if (entryDateObj >= start && entryDateObj <= end) {
+            period.entries.push(newEntry);
+            matched = true;
+            break;
+          }
+        }
+      }
+
+      // 3. Create new past period if unmatched
+      if (!matched) {
+        const year = entryDateObj.getFullYear();
+        const month = entryDateObj.getMonth();
+        const day = entryDateObj.getDate();
+
+        const newStart = new Date(year, month, day <= 15 ? 1 : 16);
+        const newEnd = new Date(
+          year,
+          month + (day <= 15 ? 0 : 1),
+          day <= 15 ? 15 : 0,
+          23,
+          59,
+          59
+        );
+
+        const newPeriod = {
+          id: uuidv4(),
+          amount: 0,
+          entries: [newEntry],
+          startDate: newStart.toISOString(),
+          endDate: newEnd.toISOString(),
+          finalBalance: -newEntry.amount,
+        };
+
+        if (!updatedBudget.pastPeriods) {
+          updatedBudget.pastPeriods = [];
+        }
+
+        updatedBudget.pastPeriods.push(newPeriod);
+      }
+    }
+
+    // 4. Cleanup: Remove empty past periods
+    updatedBudget.pastPeriods = updatedBudget.pastPeriods?.filter((period) => {
+      const hasEntries = (period.entries ?? []).length > 0;
+      const hasAmount = (period.amount ?? 0) !== 0;
+      return hasEntries || hasAmount;
+    });
+
+    // 5. Save and refresh
+    await db.put('budgets', updatedBudget);
+
+    // 6. Reset form state
+    setEntryDesc('');
+    setEntryAmount('');
+    setEntryDate(getLocalDateTime());
+    setEntryExclude(false); // ✅ reset exclude state
+    refreshBudgets();
+  };
+
+  const handleEntryDelete = async (entryId: string) => {
+    if (!selectedBudget) return;
+
+    const current = selectedBudget.currentPeriod;
+    const past = selectedBudget.pastPeriods ?? [];
+
+    let updatedBudget: Budget;
+
+    const entryInCurrent = current.entries?.some((e) => e.id === entryId);
+
+    if (entryInCurrent) {
+      const updatedEntries = current.entries.filter((e) => e.id !== entryId);
+
+      updatedBudget = {
+        ...selectedBudget,
+        currentPeriod: {
+          ...current,
+          entries: updatedEntries,
+        },
+      };
+    } else {
+      const updatedPastPeriods = past.map((period) => {
+        const entryExists = period.entries?.some((e) => e.id === entryId);
+        if (!entryExists) return period;
+
+        const updatedEntries = period.entries.filter((e) => e.id !== entryId);
+
+        return {
+          ...period,
+          entries: updatedEntries,
+        };
+      });
+
+      updatedBudget = {
+        ...selectedBudget,
+        pastPeriods: updatedPastPeriods,
+      };
+    }
+
+    const db = await getDb();
+    await db.put('budgets', updatedBudget);
+    refreshBudgets();
+  };
+
+  const handleEntryUpdate = async () => {
+    if (!selectedBudget || !editingEntry) return;
+    if (!isValidMathExpression(editingEntry.amount)) return;
+
+    const calculatedAmount = calculateAmount(editingEntry.amount);
+    const db = await getDb();
+    const updatedBudget = { ...selectedBudget };
+
+    let entryUpdated = false;
+
+    // 1. Try updating in current period
+    const currentEntries = updatedBudget.currentPeriod.entries ?? [];
+    const updatedCurrentEntries = currentEntries.map((entry) => {
+      if (entry.id === editingEntry.id) {
+        entryUpdated = true;
+        return {
+          ...entry,
+          description: editingEntry.description.trim() || 'Unspecified',
+          amount: calculatedAmount,
+          date: editingEntry.date, // ✅ Add date update
+          excludeFromDepletion: editingEntry.excludeFromDepletion ?? false,
+        };
+      }
+      return entry;
+    });
+
+    if (entryUpdated) {
+      updatedBudget.currentPeriod.entries = updatedCurrentEntries;
+    } else {
+      // 2. Try updating in past periods
+      updatedBudget.pastPeriods = (updatedBudget.pastPeriods ?? []).map(
+        (period) => {
+          const found = period.entries?.some((e) => e.id === editingEntry.id);
+          if (!found) return period;
+
+          const updatedEntries = period.entries.map((entry) => {
+            if (entry.id === editingEntry.id) {
+              return {
+                ...entry,
+                description: editingEntry.description.trim() || 'Unspecified',
+                amount: calculatedAmount,
+                date: editingEntry.date, // ✅ Add date update here too
+                excludeFromDepletion:
+                  editingEntry.excludeFromDepletion ?? false,
+              };
+            }
+            return entry;
+          });
+
+          return {
+            ...period,
+            entries: updatedEntries,
+          };
+        }
+      );
+    }
+
+    await db.put('budgets', updatedBudget);
+    setEntryDialogOpen(false);
     setEditingEntry(null);
+    setEntryExclude(false);
+    refreshBudgets();
   };
 
-  const deleteEntry = (id: string) => {
-    updateCurrentBudget({
-      entries: currentBudget.entries.filter((e) => e.id !== id),
-    });
-  };
+  useEffect(() => {
+    if (!budgets || budgets.length === 0) return;
 
-  const cancelEdit = () => setEditingEntry(null);
+    const runCleanup = async () => {
+      const db = await getDb();
+      let modified = false;
+
+      for (const budget of budgets) {
+        const pastPeriods = budget.pastPeriods ?? [];
+        const current = budget.currentPeriod;
+
+        // 🧹 Remove empty past periods and strip stale finalBalance
+        const cleanedPastPeriods = pastPeriods
+          .filter((p) => (p.amount ?? 0) !== 0 || (p.entries?.length ?? 0) > 0)
+          .map((p) => {
+            const amount = p.amount ?? 0;
+            const entriesTotal =
+              p.entries?.reduce((s, e) => s + e.amount, 0) ?? 0;
+            const recalculatedFinal = amount - entriesTotal;
+
+            return {
+              ...p,
+              finalBalance: recalculatedFinal, // Optional: or omit this field
+            };
+          });
+
+        // 🧮 Total past finalBalance (always recalculated)
+        const pastFinalBalance = cleanedPastPeriods.reduce((sum, period) => {
+          return sum + (period.finalBalance ?? 0);
+        }, 0);
+
+        // 💳 Total of Debt Payments made in currentPeriod
+        const debtPayments =
+          current.entries?.reduce((sum, entry) => {
+            return entry.description?.toLowerCase().includes('debt payment')
+              ? sum + entry.amount
+              : sum;
+          }, 0) ?? 0;
+
+        // 🧮 Adjust net balance: past + debt payments
+        const adjustedBalance = pastFinalBalance + debtPayments;
+
+        const updatedCarriedOver = {
+          savings: adjustedBalance > 0 ? adjustedBalance : 0,
+          debt: adjustedBalance < 0 ? Math.abs(adjustedBalance) : 0,
+        };
+
+        const carriedOverChanged =
+          JSON.stringify(current.carriedOver ?? {}) !==
+          JSON.stringify(updatedCarriedOver);
+
+        const pastChanged =
+          cleanedPastPeriods.length !== pastPeriods.length ||
+          pastPeriods.some((p, i) => {
+            const cleaned = cleanedPastPeriods[i];
+            return p.finalBalance !== cleaned?.finalBalance;
+          });
+
+        if (carriedOverChanged || pastChanged) {
+          const updatedBudget: Budget = {
+            ...budget,
+            pastPeriods: cleanedPastPeriods,
+            currentPeriod: {
+              ...current,
+              carriedOver: updatedCarriedOver,
+            },
+          };
+
+          await db.put('budgets', updatedBudget);
+          modified = true;
+        }
+      }
+
+      if (modified) refreshBudgets();
+    };
+
+    runCleanup().catch((err) => console.error('Budget cleanup failed:', err));
+  }, [budgets, refreshBudgets]);
 
   return (
-    <main className="w-full max-w-7xl mx-auto px-1 md:px-6 lg:px-12 pt-4 space-y-8">
-      {/* Budget Switcher */}
-      <div className="flex flex-wrap items-center gap-3 mb-4">
-        <label className="text-sm font-medium">Budget for:</label>
-
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          {/* Budget Select */}
+    <main className="max-w-5xl mx-auto space-y-6">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex-1">
           <Select
-            value={currentBudget.id}
-            onValueChange={(value) => {
-              const index = budgets.findIndex((b) => b.id === value);
-              if (index !== -1) {
-                setActiveBudgetIndex(index);
-                setEditingEntry(null);
-              }
-            }}
+            value={selectedBudget?.id}
+            onValueChange={(id) => refreshBudgets(id)}
           >
-            <SelectTrigger className="w-[160px] sm:w-[200px]">
+            <SelectTrigger>
               <SelectValue placeholder="Select budget" />
             </SelectTrigger>
             <SelectContent>
               {budgets.map((b) => (
                 <SelectItem key={b.id} value={b.id}>
                   {b.name}
-                  {b.recurring && (
-                    <FiRepeat
-                      className="ml-2 w-4 h-4 text-muted-foreground"
-                      title="Recurring"
-                    />
-                  )}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-
-          {/* Edit Budget Dialog */}
-          <Dialog
-            open={editBudgetModalOpen}
-            onOpenChange={setEditBudgetModalOpen}
-          >
-            <DialogContent className="max-w-sm">
-              <DialogHeader>
-                <DialogTitle>Edit Budget</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor="budget-name"
-                    className="text-sm font-medium pb-2 block"
-                  >
-                    Budget Name
-                  </label>
-                  <Input
-                    id="budget-name"
-                    value={nameInput}
-                    onChange={(e) => setNameInput(e.target.value)}
-                  />
-                </div>
-
-                <div className="flex items-center gap-2 text-sm">
-                  <Switch
-                    id="edit-recurring-toggle"
-                    checked={budgets[activeBudgetIndex]?.recurring || false}
-                    onCheckedChange={(checked) => {
-                      const updated = [...budgets];
-                      updated[activeBudgetIndex].recurring = checked;
-                      setBudgets(updated);
-                    }}
-                  />
-                  <label
-                    htmlFor="edit-recurring-toggle"
-                    className="text-sm font-medium"
-                  >
-                    Recurring
-                  </label>
-                </div>
-
-                <div className="flex justify-end gap-2">
-                  <Button
-                    onClick={() => {
-                      if (nameInput.trim() !== '') {
-                        const updated = [...budgets];
-                        updated[activeBudgetIndex].name = nameInput.trim();
-                        setBudgets(updated);
-                        setEditBudgetModalOpen(false);
-                      }
-                    }}
-                  >
-                    Save Changes
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="sm" variant="outline">
-                <HiOutlineDotsHorizontal className="w-4 h-4" />
-              </Button>
-            </DropdownMenuTrigger>
-
-            <DropdownMenuContent align="end" className="w-44">
-              <DropdownMenuItem onClick={() => setEditBudgetModalOpen(true)}>
-                <FiEdit className="mr-2 w-4 h-4" />
-                Edit Budget
-              </DropdownMenuItem>
-
-              {activeBudgetIndex !== 0 && (
-                <DropdownMenuItem onClick={() => setDialogOpen(true)}>
-                  <FiTrash className="mr-2 w-4 h-4 text-red-500" />
-                  Delete Budget
-                </DropdownMenuItem>
-              )}
-
-              <DropdownMenuSeparator />
-
-              <DropdownMenuItem onClick={() => setNewBudgetModalOpen(true)}>
-                <FiPlus className="mr-2 w-4 h-4" />
-                New Budget
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          {/* Delete Budget Button with Tooltip and Confirm Dialog */}
-
-          <ConfirmDialog
-            open={dialogOpen}
-            onClose={() => setDialogOpen(false)}
-            onConfirm={() => {
-              const updated = [...budgets];
-              updated.splice(activeBudgetIndex, 1);
-              setBudgets(updated);
-              setActiveBudgetIndex(0);
-              setEditBudgetModalOpen(false);
-            }}
-            title="Delete Budget"
-            description={`Are you sure you want to delete "${budgets[activeBudgetIndex]?.name}"? This action cannot be undone.`}
-            confirmLabel="Delete"
-            cancelLabel="Cancel"
-            destructive
-          />
-
-          {/* Create Budget Dialog */}
-          <CreateBudgetDialog
-            open={newBudgetModalOpen}
-            onOpenChange={setNewBudgetModalOpen}
-            onCreate={handleCreateBudget}
-          />
         </div>
-      </div>
-
-      {/* Dashboard */}
-      <section className="flex flex-col lg:flex-row gap-6">
-        <div className="lg:w-2/3 space-y-3">
-          <div className="rounded-2xl bg-muted/40 dark:bg-muted/10 shadow-sm">
-            <Summary
-              budgetId={currentBudget.id}
-              entries={currentBudget.entries}
-              budget={currentBudget.budget}
-              setBudget={(value) => updateCurrentBudget({ budget: value })}
-              isEditingBudget={isEditingBudget}
-              setIsEditingBudget={setIsEditingBudget}
-              onPayDebt={handlePayDebt}
-              recurring={currentBudget.recurring}
-            />
-          </div>
-        </div>
-
-        <div className="lg:w-1/3 space-y-3">
-          <h2 className="text-xl font-semibold mb-2">Your Expenses</h2>
-          <EntryList
-            entries={currentBudget.entries}
-            onDelete={deleteEntry}
-            onEdit={(entry) => {
-              setEditingEntry(entry);
-              setModalOpen(true);
-            }}
-            recurring={currentBudget.recurring}
-          />
-        </div>
-      </section>
-
-      {/* Entry Form Modal */}
-      <div className="fixed bottom-6 right-6 z-50">
-        <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-          <DialogTrigger asChild>
-            <Button
-              className="h-12 w-12 p-0 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-xl flex items-center justify-center"
-              aria-label="Add Expense"
-            >
-              <FiPlus size={28} strokeWidth={3} />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <FiMoreHorizontal className="w-4 h-4" />
             </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>
-                {editingEntry ? 'Edit Expense' : 'Add Expense'}
-              </DialogTitle>
-            </DialogHeader>
-            <EntryForm
-              onAdd={addEntry}
-              onUpdate={updateEntry}
-              editingEntry={editingEntry}
-              cancelEdit={() => {
-                cancelEdit();
-                setModalOpen(false);
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem
+              onClick={() => {
+                setDialogMode('create');
+                setFormName('');
+                setDialogOpen(true);
               }}
-              budgetId={currentBudget.id}
-            />
-          </DialogContent>
-        </Dialog>
+            >
+              <FiPlus className="mr-2 h-4 w-4" /> Create
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              disabled={!selectedBudget}
+              onClick={() => {
+                if (!selectedBudget) return;
+                setDialogMode('edit');
+                setFormName(selectedBudget.name);
+                setDialogOpen(true);
+              }}
+            >
+              <FiEdit className="mr-2 h-4 w-4" /> Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              disabled={!selectedBudget}
+              onClick={async () => {
+                if (!selectedBudget) return;
+                const confirmDelete = confirm(
+                  `Delete "${selectedBudget.name}"?`
+                );
+                if (!confirmDelete) return;
+                const db = await getDb();
+                await db.delete('budgets', selectedBudget.id);
+                refreshBudgets();
+              }}
+            >
+              <FiTrash className="mr-2 h-4 w-4 text-red-500" /> Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
+
+      <div>
+        {selectedBudget ? (
+          <BudgetCard
+            budget={selectedBudget}
+            onAmountClick={handleBudgetAmountClick}
+            onAmountChange={handleBudgetAmountChange}
+            onSaveAmount={saveBudgetAmount}
+            onCancelAmountEdit={cancelBudgetAmountEdit}
+            editingBudgetAmount={editingBudgetAmount}
+            tempBudgetAmount={tempBudgetAmount}
+            onEntrySubmit={handleEntrySubmit}
+            onEditPastAmount={onEditPastAmount}
+            entryDesc={entryDesc}
+            payDebt={handlePayDebt}
+            setEntryDesc={setEntryDesc}
+            entryAmount={entryAmount}
+            setEntryAmount={setEntryAmount}
+            entryDate={entryDate}
+            setEntryDate={setEntryDate}
+            isValidMathExpression={isValidMathExpression}
+            calculateAmount={calculateAmount}
+            onEntryEdit={handleEntryEdit}
+            entryExclude={entryExclude}
+            setEntryExclude={setEntryExclude}
+            onEntryDelete={handleEntryDelete}
+            onEditBudgetClick={() => {
+              setDialogMode('edit');
+              setFormName(selectedBudget.name);
+              setDialogOpen(true);
+            }}
+          />
+        ) : (
+          <div className="p-4 border rounded bg-gray-50 dark:bg-zinc-900 text-center">
+            <p>No budget selected</p>
+            <Button
+              onClick={() => {
+                setDialogMode('create');
+                setDialogOpen(true);
+              }}
+              className="mt-2"
+            >
+              Create New Budget
+            </Button>
+          </div>
+        )}
+      </div>
+
+      <BudgetDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        mode={dialogMode}
+        name={formName}
+        onNameChange={setFormName}
+        onSave={handleDialogSave}
+      />
+
+      <Dialog open={entryDialogOpen} onOpenChange={setEntryDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Entry</DialogTitle>
+          </DialogHeader>
+
+          {editingEntry && (
+            <div className="space-y-4">
+              {/* Description */}
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <Input
+                  value={editingEntry.description}
+                  onChange={(e) =>
+                    setEditingEntry({
+                      ...editingEntry,
+                      description: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              {/* Amount */}
+              <div className="space-y-2">
+                <Label>Amount (e.g., 85+15+30)</Label>
+                <Input
+                  value={editingEntry.amount}
+                  onChange={(e) =>
+                    setEditingEntry({
+                      ...editingEntry,
+                      amount: e.target.value,
+                    })
+                  }
+                />
+                {editingEntry.amount.trim() !== '' &&
+                  (isValidMathExpression(editingEntry.amount) ? (
+                    <p className="text-sm text-green-600">
+                      Calculated amount: ₱
+                      {calculateAmount(editingEntry.amount).toLocaleString()}
+                    </p>
+                  ) : (
+                    <p className="text-sm text-red-600">Invalid expression</p>
+                  ))}
+              </div>
+
+              {/* Date */}
+              <div className="space-y-2">
+                <Label>Date</Label>
+                <Input
+                  type="datetime-local"
+                  value={editingEntry.date}
+                  onChange={(e) =>
+                    setEditingEntry({
+                      ...editingEntry,
+                      date: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              {/* Exclude from depletion */}
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="exclude-toggle"
+                  checked={editingEntry.excludeFromDepletion ?? false}
+                  onCheckedChange={(checked) =>
+                    setEditingEntry({
+                      ...editingEntry,
+                      excludeFromDepletion: checked,
+                    })
+                  }
+                />
+                <label htmlFor="exclude-toggle" className="text-sm">
+                  Recurring Bill
+                </label>
+              </div>
+
+              <Button className="w-full" onClick={handleEntryUpdate}>
+                Save Changes
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }

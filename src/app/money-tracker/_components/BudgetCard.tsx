@@ -35,6 +35,8 @@ import StatsCard from './StatsCard';
 import { cn } from '../../../lib/utils';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { HiCalculator } from 'react-icons/hi';
+import { CalculatorModal } from '@/components/Calculator';
 
 interface BudgetCardProps {
   budget: Budget;
@@ -94,6 +96,7 @@ export function BudgetCard({
   const [isEntryModalOpen, setIsEntryModalOpen] = useState(false);
   const [debtPaymentAmount, setDebtPaymentAmount] = useState(0);
   const [showPastPeriods, setShowPastPeriods] = useState(false);
+  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
 
   // Calculate carryover from past periods
   const { currentPeriod, pastPeriods = [] } = budget;
@@ -498,9 +501,22 @@ export function BudgetCard({
           </Card>
         </div>
       </div>
-
       {/* Floating Add Button */}
-      <div className="fixed bottom-6 right-6 z-10">
+      <div className="fixed bottom-6 right-6 z-10 flex flex-row items-center gap-3">
+        {/* Calculator Button */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              size="lg"
+              className="rounded-full h-14 w-14 shadow-lg"
+              onClick={() => setIsCalculatorOpen(true)}
+            >
+              <HiCalculator className="h-6 w-6" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top">Calculator</TooltipContent>
+        </Tooltip>
+        {/* Add Entry Button */}
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -511,10 +527,9 @@ export function BudgetCard({
               <FiPlus className="h-6 w-6" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="left">Add New Entry</TooltipContent>
+          <TooltipContent side="top">Add New Entry</TooltipContent>
         </Tooltip>
       </div>
-
       {/* Add Entry Modal */}
       <Dialog open={isEntryModalOpen} onOpenChange={setIsEntryModalOpen}>
         <DialogContent className="sm:max-w-md translate-y-[-85%]">
@@ -595,7 +610,6 @@ export function BudgetCard({
           </form>
         </DialogContent>
       </Dialog>
-
       {/* Past Periods Modal */}
       <Dialog open={showPastPeriods} onOpenChange={setShowPastPeriods}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -630,6 +644,10 @@ export function BudgetCard({
           )}
         </DialogContent>
       </Dialog>
+      <CalculatorModal
+        open={isCalculatorOpen}
+        onOpenChange={setIsCalculatorOpen}
+      />{' '}
     </>
   );
 }

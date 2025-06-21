@@ -3,14 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect, useCallback } from 'react';
-import {
-  HiMenu,
-  HiX,
-  HiCurrencyDollar,
-  HiMoon,
-  HiSun,
-  HiOutlineCurrencyDollar,
-} from 'react-icons/hi';
+import { HiMenu, HiX, HiCurrencyDollar, HiMoon, HiSun } from 'react-icons/hi';
 import clsx from 'clsx';
 import { useTheme } from 'next-themes';
 import { IconType } from 'react-icons';
@@ -27,11 +20,6 @@ const navItems: NavItem[] = [
     name: 'Money Tracker',
     href: '/money-tracker',
     icon: HiCurrencyDollar,
-  },
-  {
-    name: 'Money Tracker Update',
-    href: '/money-trackerv2',
-    icon: HiOutlineCurrencyDollar,
   },
 ];
 

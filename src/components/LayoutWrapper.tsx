@@ -1,6 +1,6 @@
 'use client';
 
-import Footer from '@/app/money-tracker/_components/Footer';
+import Footer from '@/components/Footer';
 import { usePathname } from 'next/navigation';
 
 export default function LayoutWrapper({
