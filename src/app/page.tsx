@@ -643,7 +643,7 @@ export default function Home() {
   }, [budgets, refreshBudgets]);
 
   return (
-    <main className="max-w-5xl mx-auto space-y-6">
+    <main className="max-w-5xl mx-auto space-y-6 mt-16">
       <div className="flex items-center justify-between gap-2">
         <div className="flex-1">
           <Select

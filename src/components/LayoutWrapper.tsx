@@ -17,7 +17,7 @@ export default function LayoutWrapper({
         isHome ? '' : 'pt-12 md:pt-16'
       }`}
     >
-      <main className={`flex-1 ${isHome ? '' : 'p-4'}`}>{children}</main>
+      <main className="flex-1 p-4">{children}</main>
       <Footer />
     </div>
   );
