@@ -558,6 +558,7 @@ export default function Home() {
     await db.put('budgets', updatedBudget);
     setEntryDialogOpen(false);
     setEditingEntry(null);
+    setEntryExclude(false);
     refreshBudgets();
   };
 
