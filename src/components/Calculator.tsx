@@ -154,7 +154,7 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
 
   const buttons = [
     {
-      label: 'C',
+      label: 'AC',
       action: clearAll,
       className: 'bg-[#D4D4D2] text-black',
     },
@@ -290,13 +290,13 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
             <div className="w-full min-h-[72px] overflow-hidden">
               <div className="w-full max-w-full overflow-hidden text-right">
                 <div
-                  className="text-white font-thin font-mono leading-none tracking-tight text-right inline-block text-[clamp(24px,7vw,64px)]"
+                  className="text-white font-thin font-mono leading-none tracking-tight text-right inline-block text-[clamp(24px,7vw,64px)] select-none pointer-events-none"
                   style={{
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     maxWidth: '100%',
-                    direction: 'rtl', // Right-to-left helps with right alignment
+                    direction: 'rtl',
                   }}
                 >
                   {displayValue}
