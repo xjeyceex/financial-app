@@ -100,7 +100,9 @@ export function BudgetCard({
 
   const currentBaseAmount = currentPeriod.amount || 0;
   const entries = currentPeriod.entries || [];
-  const totalExpenses = entries.reduce((sum, e) => sum + e.amount, 0);
+  const totalExpenses = entries
+    .filter((e) => !e.excludeFromDepletion)
+    .reduce((sum, e) => sum + e.amount, 0);
   const currentBalance = currentBaseAmount - totalExpenses;
 
   const percentageUsed =
@@ -113,16 +115,17 @@ export function BudgetCard({
       description?: string;
       amount: number;
       id?: string | number;
+      excludeFromDepletion?: boolean;
     }[] = [],
     count: number = 5
   ) => {
     return entries
-      .filter((e) => e.amount > 0) // assuming expenses are positive
+      .filter((e) => e.amount > 0 && !e.excludeFromDepletion)
       .sort((a, b) => b.amount - a.amount)
       .slice(0, count);
   };
 
-  const topExpenses = getTopCurrentExpenses(budget.currentPeriod.entries, 3);
+  const topExpenses = getTopCurrentExpenses(entries, 3);
 
   let progressColor = '';
   if (percentageUsed < 75) {
@@ -155,13 +158,6 @@ export function BudgetCard({
       weekday: 'short',
     });
   }
-
-  console.log({
-    daysPassed,
-    avgDailySpending,
-    currentBalance,
-    depletionDate,
-  });
 
   const handleEntrySubmit = (e: React.FormEvent) => {
     onEntrySubmit(e);
