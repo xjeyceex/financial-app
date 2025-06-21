@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { getDb, getAllBudgets, saveBudget } from '../../lib/db';
-import { Budget } from '../../lib/typesv2';
+import { Budget, Entry } from '../../lib/typesv2';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import {
@@ -31,6 +31,7 @@ import { Input } from '@/components/ui/input';
 import {
   calculatePeriodBalance,
   determinePayPeriod,
+  formatDateForDatetimeLocal,
   formatPayPeriodDisplay,
   getCurrentPeriodDates,
   getLocalDateTime,
@@ -50,9 +51,12 @@ export default function Home() {
     id: string;
     description: string;
     amount: string;
+    date: string;
+    excludeFromDepletion: boolean;
   } | null>(null);
   const [editingBudgetAmount, setEditingBudgetAmount] = useState(false);
   const [tempBudgetAmount, setTempBudgetAmount] = useState('');
+  const [entryExclude, setEntryExclude] = useState(false);
 
   const [entryDate, setEntryDate] = useState(() => {
     const now = new Date();
@@ -286,16 +290,15 @@ export default function Home() {
     refreshBudgets(newBudgetId);
   };
 
-  const handleEntryEdit = (entry: {
-    id: string;
-    description?: string;
-    amount: number;
-  }) => {
+  const handleEntryEdit = (entry: Entry) => {
     setEditingEntry({
       id: entry.id,
       description: entry.description ?? 'Unspecified',
       amount: entry.amount.toString(),
+      date: formatDateForDatetimeLocal(entry.date), // ✅ Local time
+      excludeFromDepletion: entry.excludeFromDepletion ?? false,
     });
+
     setEntryDialogOpen(true);
   };
 
@@ -369,6 +372,7 @@ export default function Home() {
       description: entryDesc.trim() || 'Unspecified',
       amount: calculatedAmount,
       date: new Date(entryDate).toISOString(),
+      excludeFromDepletion: entryExclude, // ✅ Add this line
     };
 
     const entryDateObj = new Date(newEntry.date);
@@ -421,7 +425,7 @@ export default function Home() {
           entries: [newEntry],
           startDate: newStart.toISOString(),
           endDate: newEnd.toISOString(),
-          finalBalance: -newEntry.amount, // ✅ required field
+          finalBalance: -newEntry.amount,
         };
 
         if (!updatedBudget.pastPeriods) {
@@ -441,9 +445,12 @@ export default function Home() {
 
     // 5. Save and refresh
     await db.put('budgets', updatedBudget);
+
+    // 6. Reset form state
     setEntryDesc('');
     setEntryAmount('');
     setEntryDate(getLocalDateTime());
+    setEntryExclude(false); // ✅ reset exclude state
     refreshBudgets();
   };
 
@@ -510,6 +517,8 @@ export default function Home() {
           ...entry,
           description: editingEntry.description.trim() || 'Unspecified',
           amount: calculatedAmount,
+          date: editingEntry.date, // ✅ Add date update
+          excludeFromDepletion: editingEntry.excludeFromDepletion ?? false,
         };
       }
       return entry;
@@ -530,6 +539,9 @@ export default function Home() {
                 ...entry,
                 description: editingEntry.description.trim() || 'Unspecified',
                 amount: calculatedAmount,
+                date: editingEntry.date, // ✅ Add date update here too
+                excludeFromDepletion:
+                  editingEntry.excludeFromDepletion ?? false,
               };
             }
             return entry;
@@ -716,6 +728,8 @@ export default function Home() {
             isValidMathExpression={isValidMathExpression}
             calculateAmount={calculateAmount}
             onEntryEdit={handleEntryEdit}
+            entryExclude={entryExclude}
+            setEntryExclude={setEntryExclude}
             onEntryDelete={handleEntryDelete}
             onEditBudgetClick={() => {
               setDialogMode('edit');
@@ -753,8 +767,10 @@ export default function Home() {
           <DialogHeader>
             <DialogTitle>Edit Entry</DialogTitle>
           </DialogHeader>
+
           {editingEntry && (
             <div className="space-y-4">
+              {/* Description */}
               <div className="space-y-2">
                 <Label>Description</Label>
                 <Input
@@ -767,6 +783,8 @@ export default function Home() {
                   }
                 />
               </div>
+
+              {/* Amount */}
               <div className="space-y-2">
                 <Label>Amount (e.g., 85+15+30)</Label>
                 <Input
@@ -788,6 +806,41 @@ export default function Home() {
                     <p className="text-sm text-red-600">Invalid expression</p>
                   ))}
               </div>
+
+              {/* Date */}
+              <div className="space-y-2">
+                <Label>Date</Label>
+                <Input
+                  type="datetime-local"
+                  value={editingEntry.date}
+                  onChange={(e) =>
+                    setEditingEntry({
+                      ...editingEntry,
+                      date: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              {/* Exclude from depletion */}
+              <div className="flex items-center gap-2">
+                <input
+                  id="exclude-toggle"
+                  type="checkbox"
+                  checked={editingEntry.excludeFromDepletion ?? false}
+                  onChange={(e) =>
+                    setEditingEntry({
+                      ...editingEntry,
+                      excludeFromDepletion: e.target.checked,
+                    })
+                  }
+                  className="h-4 w-4 accent-primary"
+                />
+                <label htmlFor="exclude-toggle" className="text-sm">
+                  Exclude from depletion info
+                </label>
+              </div>
+
               <Button className="w-full" onClick={handleEntryUpdate}>
                 Save Changes
               </Button>

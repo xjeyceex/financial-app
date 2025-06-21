@@ -31,6 +31,13 @@ export const getBudgetPeriodInfo = (budget: Budget) => {
   };
 };
 
+export function formatDateForDatetimeLocal(dateString: string) {
+  const date = new Date(dateString);
+  const offset = date.getTimezoneOffset();
+  const local = new Date(date.getTime() - offset * 60 * 1000);
+  return local.toISOString().slice(0, 16); // "YYYY-MM-DDTHH:MM"
+}
+
 export const calculatePeriodBalance = (
   period: Budget['currentPeriod']
 ): number => {

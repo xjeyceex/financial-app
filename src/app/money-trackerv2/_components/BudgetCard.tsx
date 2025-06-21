@@ -61,6 +61,8 @@ interface BudgetCardProps {
   }) => void;
   onEntryDelete: (entryId: string) => void;
   onEditBudgetClick: () => void;
+  entryExclude: boolean;
+  setEntryExclude: (value: boolean) => void;
 }
 
 export function BudgetCard({
@@ -84,6 +86,8 @@ export function BudgetCard({
   calculateAmount,
   onEntryEdit,
   onEntryDelete,
+  entryExclude,
+  setEntryExclude,
 }: BudgetCardProps) {
   const [isEntryModalOpen, setIsEntryModalOpen] = useState(false);
   const [debtPaymentAmount, setDebtPaymentAmount] = useState(0);
@@ -498,6 +502,7 @@ export function BudgetCard({
             <DialogTitle className="p-0 m-0">Add New Entry</DialogTitle>
             <DialogDescription className="p-0 m-0"></DialogDescription>
           </DialogHeader>
+
           <form onSubmit={handleEntrySubmit} className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Description</label>
@@ -540,11 +545,30 @@ export function BudgetCard({
               />
             </div>
 
+            <div className="flex items-center gap-2">
+              <input
+                id="exclude-entry"
+                type="checkbox"
+                checked={entryExclude}
+                onChange={(e) => setEntryExclude(e.target.checked)}
+                className="h-4 w-4 accent-primary"
+              />
+              <label htmlFor="exclude-entry" className="text-sm">
+                Exclude from depletion info
+              </label>
+            </div>
+
             <div className="flex justify-end gap-2 pt-2">
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setIsEntryModalOpen(false)}
+                onClick={() => {
+                  setIsEntryModalOpen(false);
+                  setEntryDesc('');
+                  setEntryAmount('');
+                  setEntryDate(new Date().toISOString().slice(0, 16));
+                  setEntryExclude(false);
+                }}
               >
                 Cancel
               </Button>
