@@ -156,98 +156,99 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
     {
       label: 'C',
       action: clearAll,
-      className: 'bg-[#D4D4D2] text-black',
+      className: 'bg-[#D4D4D2] text-black hover:bg-[#D4D4D2]/90',
     },
     {
       label: <FiDelete size={20} />,
       action: backspace,
-      className: 'bg-[#D4D4D2] text-black',
+      className: 'bg-[#D4D4D2] text-black hover:bg-[#D4D4D2]/90',
     },
     {
       label: '±',
       action: toggleSign,
-      className: 'bg-[#D4D4D2] text-black',
+      className: 'bg-[#D4D4D2] text-black hover:bg-[#D4D4D2]/90',
     },
     {
       label: <FiDivide size={20} />,
       action: () => handleOperation('÷'),
-      className: 'bg-[#FF9500] text-white',
+      className: 'bg-[#FF9500] text-white hover:bg-[#FF9500]/90',
     },
     {
       label: '7',
       action: () => inputDigit(7),
-      className: 'bg-[#505050] text-white',
+      className: 'bg-[#505050] text-white hover:bg-[#505050]/90',
     },
     {
       label: '8',
       action: () => inputDigit(8),
-      className: 'bg-[#505050] text-white',
+      className: 'bg-[#505050] text-white hover:bg-[#505050]/90',
     },
     {
       label: '9',
       action: () => inputDigit(9),
-      className: 'bg-[#505050] text-white',
+      className: 'bg-[#505050] text-white hover:bg-[#505050]/90',
     },
     {
       label: <FiX size={20} />,
       action: () => handleOperation('×'),
-      className: 'bg-[#FF9500] text-white',
+      className: 'bg-[#FF9500] text-white hover:bg-[#FF9500]/90',
     },
     {
       label: '4',
       action: () => inputDigit(4),
-      className: 'bg-[#505050] text-white',
+      className: 'bg-[#505050] text-white hover:bg-[#505050]/90',
     },
     {
       label: '5',
       action: () => inputDigit(5),
-      className: 'bg-[#505050] text-white',
+      className: 'bg-[#505050] text-white hover:bg-[#505050]/90',
     },
     {
       label: '6',
       action: () => inputDigit(6),
-      className: 'bg-[#505050] text-white',
+      className: 'bg-[#505050] text-white hover:bg-[#505050]/90',
     },
     {
       label: <FiMinus size={20} />,
       action: () => handleOperation('-'),
-      className: 'bg-[#FF9500] text-white',
+      className: 'bg-[#FF9500] text-white hover:bg-[#FF9500]/90',
     },
     {
       label: '1',
       action: () => inputDigit(1),
-      className: 'bg-[#505050] text-white',
+      className: 'bg-[#505050] text-white hover:bg-[#505050]/90',
     },
     {
       label: '2',
       action: () => inputDigit(2),
-      className: 'bg-[#505050] text-white',
+      className: 'bg-[#505050] text-white hover:bg-[#505050]/90',
     },
     {
       label: '3',
       action: () => inputDigit(3),
-      className: 'bg-[#505050] text-white',
+      className: 'bg-[#505050] text-white hover:bg-[#505050]/90',
     },
     {
       label: <FiPlus size={20} />,
       action: () => handleOperation('+'),
-      className: 'bg-[#FF9500] text-white',
+      className: 'bg-[#FF9500] text-white hover:bg-[#FF9500]/90',
     },
     {
       label: '0',
       action: () => inputDigit(0),
-      className: 'bg-[#505050] text-white col-span-2 justify-start pl-6',
+      className:
+        'bg-[#505050] text-white hover:bg-[#505050]/90 col-span-2 justify-start pl-6',
       span: true,
     },
     {
       label: '.',
       action: inputDot,
-      className: 'bg-[#505050] text-white',
+      className: 'bg-[#505050] text-white hover:bg-[#505050]/90',
     },
     {
       label: '=',
       action: performOperation,
-      className: 'bg-[#FF9500] text-white',
+      className: 'bg-[#FF9500] text-white hover:bg-[#FF9500]/90',
     },
   ];
 
@@ -269,19 +270,15 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[360px] p-4 rounded-[40px] overflow-hidden bg-black text-white border-none shadow-none">
+      <DialogContent className="w-[340px] p-4 rounded-[40px] bg-black text-white border-none shadow-lg">
         <DialogHeader className="px-4 pt-4">
           <div className="flex justify-between items-center w-full">
             <DialogTitle className="text-white">Calculator</DialogTitle>
           </div>
         </DialogHeader>
-        <div className="flex flex-col overflow-hidden">
-          {' '}
-          {/* Added overflow-hidden here */}
+        <div className="flex flex-col">
           {history.length > 0 && (
             <div className="px-4 text-sm text-gray-500 text-right h-6 truncate">
-              {' '}
-              {/* Added truncate */}
               {history[history.length - 1]}
             </div>
           )}
@@ -290,13 +287,13 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
             <div className="w-full min-h-[72px] overflow-hidden">
               <div className="w-full max-w-full overflow-hidden text-right">
                 <div
-                  className="text-white font-thin font-mono leading-none tracking-tight text-right inline-block text-[clamp(24px,7vw,64px)]"
+                  className="text-white font-thin font-mono leading-none tracking-tight text-right inline-block text-[64px]"
                   style={{
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     maxWidth: '100%',
-                    direction: 'rtl', // Right-to-left helps with right alignment
+                    direction: 'rtl',
                   }}
                 >
                   {displayValue}
@@ -305,8 +302,6 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
             </div>
           </div>
           <div className="grid grid-cols-4 gap-2 bg-black px-2">
-            {' '}
-            {/* Added px-2 for padding */}
             {buttons.map((button, index) => (
               <Button
                 key={
@@ -316,10 +311,11 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
                 }
                 variant="ghost"
                 className={`
-              h-[70px] w-[70px] m-1 rounded-full text-2xl font-light flex items-center justify-center
-              ${'span' in button && button.span ? 'col-span-2 w-[150px]' : ''}
-              ${button.className || ''}
-            `}
+                  h-[70px] w-[70px] m-1 rounded-full text-2xl font-light flex items-center justify-center
+                  ${'span' in button && button.span ? 'col-span-2 w-[150px]' : ''}
+                  ${button.className || ''}
+                  transition-colors duration-150
+                `}
                 onClick={button.action}
               >
                 {button.label}
