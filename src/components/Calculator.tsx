@@ -154,7 +154,7 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
 
   const buttons = [
     {
-      label: 'AC',
+      label: 'C',
       action: clearAll,
       className: 'bg-[#D4D4D2] text-black',
     },
@@ -269,7 +269,7 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-[360px] p-4 rounded-[40px] overflow-hidden bg-black text-white border-none shadow-none">
+      <DialogContent className="sm:max-w-[360px] p-4 rounded-[40px] overflow-hidden bg-black text-white border-none shadow-none">
         <DialogHeader className="px-4 pt-4">
           <div className="flex justify-between items-center w-full">
             <DialogTitle className="text-white">Calculator</DialogTitle>
@@ -290,13 +290,13 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
             <div className="w-full min-h-[72px] overflow-hidden">
               <div className="w-full max-w-full overflow-hidden text-right">
                 <div
-                  className="text-white font-thin font-mono leading-none tracking-tight text-right inline-block text-[clamp(28px,8vw,64px)] select-none pointer-events-none"
+                  className="text-white font-thin font-mono leading-none tracking-tight text-right inline-block text-[clamp(24px,7vw,64px)]"
                   style={{
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     maxWidth: '100%',
-                    direction: 'rtl',
+                    direction: 'rtl', // Right-to-left helps with right alignment
                   }}
                 >
                   {displayValue}
@@ -316,10 +316,10 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
                 }
                 variant="ghost"
                 className={`
-                  h-[60px] w-[60px] m-1 rounded-full text-xl font-light flex items-center justify-center
-                  ${'span' in button && button.span ? 'col-span-2 w-[130px]' : ''}
-                  ${button.className || ''}
-                `}
+              h-[70px] w-[70px] m-1 rounded-full text-2xl font-light flex items-center justify-center
+              ${'span' in button && button.span ? 'col-span-2 w-[150px]' : ''}
+              ${button.className || ''}
+            `}
                 onClick={button.action}
               >
                 {button.label}
