@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input';
 import {
   FiEdit,
   FiTrash,
-  FiPlus,
   FiX,
   FiCheck,
   FiTrendingDown,
@@ -22,7 +21,13 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { AlertCircle, TrendingDown, TrendingUp } from 'lucide-react';
+import {
+  AlertCircle,
+  Calculator,
+  PlusIcon,
+  TrendingDown,
+  TrendingUp,
+} from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -35,7 +40,6 @@ import StatsCard from './StatsCard';
 import { cn } from '../../../lib/utils';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { HiCalculator } from 'react-icons/hi';
 import { CalculatorModal } from '@/components/Calculator';
 
 interface BudgetCardProps {
@@ -506,26 +510,25 @@ export function BudgetCard({
         {/* Calculator Button */}
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
-              size="lg"
-              className="rounded-full h-14 w-14 shadow-lg"
+            <button
               onClick={() => setIsCalculatorOpen(true)}
+              className="bg-white text-zinc-700 rounded-full h-14 w-14 shadow-lg flex items-center justify-center hover:opacity-90 transition"
             >
-              <HiCalculator className="h-6 w-6" />
-            </Button>
+              <Calculator className="text-[32px]" />
+            </button>
           </TooltipTrigger>
           <TooltipContent side="top">Calculator</TooltipContent>
         </Tooltip>
+
         {/* Add Entry Button */}
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
-              size="lg"
-              className="rounded-full h-14 w-14 shadow-lg"
+            <button
               onClick={() => setIsEntryModalOpen(true)}
+              className="bg-white text-zinc-700 rounded-full h-14 w-14 shadow-lg flex items-center justify-center hover:opacity-90 transition"
             >
-              <FiPlus className="h-6 w-6" />
-            </Button>
+              <PlusIcon className="text-[32px]" />
+            </button>
           </TooltipTrigger>
           <TooltipContent side="top">Add New Entry</TooltipContent>
         </Tooltip>
