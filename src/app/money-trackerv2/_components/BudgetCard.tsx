@@ -147,7 +147,16 @@ export function BudgetCard({
     Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
   );
 
-  const avgDailySpending = totalExpenses / daysPassed;
+  const spendingEntries = entries.filter(
+    (e) => !e.excludeFromDepletion && !e.excludeFromDepletion
+  );
+
+  const totalSpendingForAvg = spendingEntries.reduce(
+    (sum, e) => sum + e.amount,
+    0
+  );
+
+  const avgDailySpending = totalSpendingForAvg / daysPassed;
 
   let depletionDate: string | null = null;
   if (avgDailySpending > 0 && currentBalance > 0) {
@@ -160,7 +169,6 @@ export function BudgetCard({
       weekday: 'short',
     });
   }
-
   const handleEntrySubmit = (e: React.FormEvent) => {
     onEntrySubmit(e);
     setIsEntryModalOpen(false);
