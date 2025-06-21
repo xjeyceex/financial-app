@@ -20,6 +20,7 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
   const [operation, setOperation] = useState<string | null>(null);
   const [waitingForOperand, setWaitingForOperand] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   const clearAll = useCallback(() => {
     setDisplayValue('0');
@@ -238,12 +239,15 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
         setDisplayValue(state.displayValue || '0');
         setHistory(state.history || []);
       }
+      setHasLoaded(true); // ✅ only mark after load completes
     });
   }, []);
 
   useEffect(() => {
-    saveCalculatorState({ displayValue, history });
-  }, [displayValue, history]);
+    if (hasLoaded) {
+      saveCalculatorState({ displayValue, history });
+    }
+  }, [displayValue, history, hasLoaded]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

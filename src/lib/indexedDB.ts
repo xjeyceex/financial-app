@@ -1,18 +1,19 @@
-// lib/indexedDB.ts
 import { openDB } from 'idb';
 import { BudgetStorage } from './types';
 
 const DB_NAME = 'BudgetApp';
+const DB_VERSION = 2;
 const STORE_NAME = 'budgets';
+const CALC_STORE = 'calculator';
 
 export const getDb = async () => {
-  return openDB(DB_NAME, 1, {
+  return openDB(DB_NAME, DB_VERSION, {
     upgrade(db) {
       if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME); // for budgets
+        db.createObjectStore(STORE_NAME);
       }
-      if (!db.objectStoreNames.contains('calculator')) {
-        db.createObjectStore('calculator'); // for calculator state
+      if (!db.objectStoreNames.contains(CALC_STORE)) {
+        db.createObjectStore(CALC_STORE);
       }
     },
   });
@@ -33,10 +34,10 @@ export const saveCalculatorState = async (state: {
   history: string[];
 }) => {
   const db = await getDb();
-  await db.put('calculator', state, 'state');
+  await db.put(CALC_STORE, state, 'state');
 };
 
 export const loadCalculatorState = async () => {
   const db = await getDb();
-  return db.get('calculator', 'state');
+  return db.get(CALC_STORE, 'state');
 };
