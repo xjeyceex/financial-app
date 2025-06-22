@@ -14,12 +14,12 @@ export function useBackButtonClose(
   const pushed = useRef(false);
   const ignoreNextPopRef = useRef(false);
   const modalStackRef = useRef<string[]>([]);
+  const listenerRef = useRef<PluginListenerHandle | null>(null);
 
   useEffect(() => {
     if (!open) return;
 
     const isCapacitor = typeof App !== 'undefined';
-    let listener: PluginListenerHandle | null = null;
 
     const handlePopState = () => {
       if (ignoreNextPopRef.current) {
@@ -36,58 +36,52 @@ export function useBackButtonClose(
       }
     };
 
-    const setupListener = async () => {
-      if (isCapacitor) {
-        listener = await App.addListener('backButton', () => {
-          const currentModal =
-            modalStackRef.current[modalStackRef.current.length - 1];
-          if (currentModal === id) {
-            onClose();
-            return false;
-          }
-          return true;
-        });
+    const handleBackButton = async (): Promise<boolean> => {
+      const currentModal =
+        modalStackRef.current[modalStackRef.current.length - 1];
+      if (currentModal === id) {
+        onClose();
+        return false;
       }
+      return true;
     };
 
-    if (!pushed.current && window?.history && !isCapacitor) {
-      modalStackRef.current.push(id);
-      const currentState = window.history.state as ModalState | null;
-      if (currentState?.modal !== id) {
-        window.history.pushState({ modal: id }, '');
-      }
-      pushed.current = true;
-    } else if (isCapacitor) {
-      modalStackRef.current.push(id);
-      setupListener();
-    }
-
     if (!isCapacitor) {
+      if (!pushed.current && window?.history) {
+        modalStackRef.current.push(id);
+        const currentState = window.history.state as ModalState | null;
+        if (currentState?.modal !== id) {
+          window.history.pushState({ modal: id }, '');
+        }
+        pushed.current = true;
+      }
       window.addEventListener('popstate', handlePopState);
+    } else if (!listenerRef.current) {
+      modalStackRef.current.push(id);
+      App.addListener('backButton', handleBackButton)
+        .then((listener) => {
+          listenerRef.current = listener;
+        })
+        .catch(console.error);
     }
 
     return () => {
-      if (listener) {
-        listener.remove();
-      }
       if (!isCapacitor) {
         window.removeEventListener('popstate', handlePopState);
-      }
-
-      if (modalStackRef.current.includes(id)) {
-        if (!isCapacitor && pushed.current) {
+        if (pushed.current && window.history.state?.modal === id) {
           try {
-            const currentState = window.history.state as ModalState | null;
-            if (currentState?.modal === id) {
-              window.history.go(-1);
-            }
-          } catch {
-            console.warn('History manipulation error');
+            window.history.go(-1);
+          } catch (e) {
+            console.warn('History navigation error:', e);
           }
         }
-        modalStackRef.current = modalStackRef.current.filter((m) => m !== id);
-        pushed.current = false;
+      } else if (listenerRef.current) {
+        listenerRef.current.remove().catch(console.warn);
+        listenerRef.current = null;
       }
+
+      modalStackRef.current = modalStackRef.current.filter((m) => m !== id);
+      pushed.current = false;
     };
   }, [open, onClose, id]);
 

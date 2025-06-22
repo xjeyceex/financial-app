@@ -654,22 +654,26 @@ export default function Home() {
     if (typeof App !== 'undefined') {
       let listener: PluginListenerHandle;
 
-      App.addListener('backButton', ({ canGoBack }) => {
+      const handleGlobalBackButton = async ({
+        canGoBack,
+      }: {
+        canGoBack: boolean;
+      }) => {
         if (!canGoBack) {
           if (window.confirm('Do you want to exit the app?')) {
-            App.exitApp();
+            await App.exitApp();
           }
         } else {
           window.history.back();
         }
-      }).then((l) => {
+      };
+
+      App.addListener('backButton', handleGlobalBackButton).then((l) => {
         listener = l;
       });
 
       return () => {
-        if (listener) {
-          listener.remove();
-        }
+        if (listener) listener.remove();
       };
     }
   }, []);
