@@ -10,8 +10,9 @@ import {
   FiTrendingDown,
   FiClock,
   FiEyeOff,
+  FiFileText,
 } from 'react-icons/fi';
-import { Budget } from '../lib/typesv2';
+import { Budget, Entry } from '../lib/typesv2';
 import { formatCurrency } from '../lib/functions';
 import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -115,6 +116,8 @@ export function BudgetCard({
   const { currentPeriod, pastPeriods = [] } = budget;
   const carriedOver = currentPeriod.carriedOver ?? { savings: 0, debt: 0 };
   const netCarryover = carriedOver.savings - carriedOver.debt;
+  const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   const currentBaseAmount = currentPeriod.amount || 0;
   const entries = currentPeriod.entries || [];
@@ -433,13 +436,16 @@ export function BudgetCard({
                 </Badge>
               </div>
             </CardHeader>
-            <CardContent className="px-4">
+            <CardContent className="p-0">
               {entries.length === 0 ? (
-                <div className="text-center py-6 text-sm text-muted-foreground">
-                  No entries yet. Tap the + button to add your first expense.
+                <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
+                  <FiFileText className="w-8 h-8 text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    No entries yet. Tap the + button to add your first expense.
+                  </p>
                 </div>
               ) : (
-                <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-2">
+                <div className="space-y-2 max-h-[60vh] overflow-y-auto p-2">
                   {[...entries]
                     .sort(
                       (a, b) =>
@@ -448,11 +454,15 @@ export function BudgetCard({
                     .map((entry, index) => (
                       <div
                         key={entry.id}
-                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 transition-colors group"
+                        onClick={() => {
+                          setSelectedEntry(entry);
+                          setIsDetailModalOpen(true);
+                        }}
+                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 transition-colors cursor-pointer active:bg-accent/30"
                       >
-                        <div className="flex-1 min-w-0">
+                        {/* Left Content - Entry Info */}
+                        <div className="flex-1 min-w-0 mr-2">
                           <div className="flex items-center gap-2">
-                            {/* Number instead of dot */}
                             <span className="text-xs font-semibold text-muted-foreground w-5 text-right">
                               {index + 1}.
                             </span>
@@ -461,7 +471,7 @@ export function BudgetCard({
                             </p>
                           </div>
 
-                          <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                          <div className="text-xs text-muted-foreground mt-1 ml-7 space-y-1">
                             <div className="flex items-center gap-2 flex-wrap">
                               <span>
                                 {new Date(entry.date).toLocaleDateString(
@@ -481,34 +491,47 @@ export function BudgetCard({
                               </span>
                             </div>
 
-                            {/* Exclusion Icon Line */}
                             {entry.excludeFromDepletion && (
-                              <div className="flex items-center gap-1 text-orange-500 pt-0.5">
-                                <FiEyeOff className="w-3.5 h-3.5 " />
+                              <div className="flex items-center gap-1 text-orange-500">
+                                <FiEyeOff className="w-3.5 h-3.5" />
                                 <span className="text-xs">Recurring Bill</span>
                               </div>
                             )}
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-1">
-                          <span className="font-medium text-sm text-destructive">
+                        {/* Right Content - Amount & Actions */}
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`font-medium text-sm ${
+                              entry.amount < 0
+                                ? 'text-destructive'
+                                : 'text-emerald-600'
+                            }`}
+                          >
                             {formatCurrency(entry.amount)}
                           </span>
-                          <div className="flex opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+
+                          <div className="flex space-x-1">
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => onEntryEdit(entry)}
-                              className="h-7 w-7 text-muted-foreground hover:text-blue-600"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onEntryEdit(entry);
+                              }}
+                              className="text-muted-foreground hover:text-blue-600 h-7 w-7"
                             >
                               <FiEdit className="h-3.5 w-3.5" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => onEntryDelete(entry.id)}
-                              className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onEntryDelete(entry.id);
+                              }}
+                              className="text-muted-foreground hover:text-destructive h-7 w-7"
                             >
                               <FiTrash className="h-3.5 w-3.5" />
                             </Button>
@@ -686,6 +709,95 @@ export function BudgetCard({
         open={isCalculatorOpen}
         onOpenChange={setIsCalculatorOpen}
       />{' '}
+      {selectedEntry && (
+        <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
+          <DialogContent className="w-full max-w-[95vw] sm:max-w-md rounded-lg">
+            <DialogHeader className="text-left">
+              <DialogTitle className="text-xl font-bold">
+                Entry Details
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4 text-sm">
+              {/* Description */}
+              <div className="flex flex-col gap-1 p-3 bg-muted/50 rounded-lg">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Description
+                </span>
+                <p className="text-base font-medium">
+                  {selectedEntry.description}
+                </p>
+              </div>
+
+              {/* Amount */}
+              <div className="flex flex-col gap-1 p-3 bg-muted/50 rounded-lg">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Amount
+                </span>
+                <p
+                  className={`text-lg font-bold ${
+                    selectedEntry.amount < 0
+                      ? 'text-destructive'
+                      : 'text-emerald-600'
+                  }`}
+                >
+                  {formatCurrency(selectedEntry.amount)}
+                </p>
+              </div>
+
+              {/* Date */}
+              <div className="flex flex-col gap-1 p-3 bg-muted/50 rounded-lg">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Date & Time
+                </span>
+                <p className="text-base">
+                  {new Date(selectedEntry.date).toLocaleString(undefined, {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </p>
+              </div>
+
+              {/* Recurring Indicator */}
+              {selectedEntry.excludeFromDepletion && (
+                <div className="flex items-center gap-2 p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                  <FiEyeOff className="w-4 h-4 text-orange-500" />
+                  <span className="text-sm font-medium text-orange-600 dark:text-orange-300">
+                    Recurring Bill (excluded from depletion)
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Action Buttons - Stacked on mobile, inline on desktop */}
+            <div className="flex flex-col sm:flex-row gap-2 pt-4">
+              <Button
+                variant="outline"
+                className="flex-1 sm:flex-none"
+                onClick={() => {
+                  setIsDetailModalOpen(false);
+                  onEntryEdit(selectedEntry);
+                }}
+              >
+                Edit Entry
+              </Button>
+              <Button
+                variant="destructive"
+                className="flex-1 sm:flex-none"
+                onClick={() => {
+                  setIsDetailModalOpen(false);
+                  onEntryDelete(selectedEntry.id);
+                }}
+              >
+                Delete Entry
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
 }
