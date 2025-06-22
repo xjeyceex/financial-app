@@ -38,6 +38,7 @@ import {
 } from '../lib/functionsv2';
 import { BudgetCard } from '../components/BudgetCard';
 import { Switch } from '@/components/ui/switch';
+import { useBackButtonClose } from '@/lib/hooks/useBackButtonClose';
 
 export default function Home() {
   const [budgets, setBudgets] = useState<Budget[]>([]);
@@ -55,9 +56,13 @@ export default function Home() {
     date: string;
     excludeFromDepletion: boolean;
   } | null>(null);
+  const [showPastPeriods, setShowPastPeriods] = useState(false);
+  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+
   const [editingBudgetAmount, setEditingBudgetAmount] = useState(false);
   const [tempBudgetAmount, setTempBudgetAmount] = useState('');
   const [entryExclude, setEntryExclude] = useState(false);
+  const [isEntryModalOpen, setIsEntryModalOpen] = useState(false);
 
   const [entryDate, setEntryDate] = useState(() => {
     const now = new Date();
@@ -642,6 +647,48 @@ export default function Home() {
     runCleanup().catch((err) => console.error('Budget cleanup failed:', err));
   }, [budgets, refreshBudgets]);
 
+  const { ignoreNextPop } = useBackButtonClose(
+    isEntryModalOpen || isCalculatorOpen || showPastPeriods,
+    () => {
+      // Close whichever modal is open
+      if (isEntryModalOpen) {
+        setIsEntryModalOpen(false);
+        setEntryDesc('');
+        setEntryAmount('');
+        setEntryDate(new Date().toISOString().slice(0, 16));
+        setEntryExclude(false);
+      }
+      if (isCalculatorOpen) {
+        setIsCalculatorOpen(false);
+      }
+      if (showPastPeriods) {
+        setShowPastPeriods(false);
+      }
+    },
+    'modals' // Changed from 'entry' to more generic identifier
+  );
+
+  // Create wrapped setters that call ignoreNextPop
+  const wrappedSetEntryDesc = (value: string) => {
+    ignoreNextPop();
+    setEntryDesc(value);
+  };
+
+  const wrappedSetEntryAmount = (value: string) => {
+    ignoreNextPop();
+    setEntryAmount(value);
+  };
+
+  const wrappedSetEntryDate = (value: string) => {
+    ignoreNextPop();
+    setEntryDate(value);
+  };
+
+  const wrappedSetEntryExclude = (value: boolean) => {
+    ignoreNextPop();
+    setEntryExclude(value);
+  };
+
   return (
     <main className="max-w-5xl mx-auto space-y-6 mt-16">
       <div className="flex items-center justify-between gap-2">
@@ -713,6 +760,8 @@ export default function Home() {
           <BudgetCard
             budget={selectedBudget}
             onAmountClick={handleBudgetAmountClick}
+            isEntryModalOpen={isEntryModalOpen}
+            setIsEntryModalOpen={setIsEntryModalOpen}
             onAmountChange={handleBudgetAmountChange}
             onSaveAmount={saveBudgetAmount}
             onCancelAmountEdit={cancelBudgetAmountEdit}
@@ -721,17 +770,21 @@ export default function Home() {
             onEntrySubmit={handleEntrySubmit}
             onEditPastAmount={onEditPastAmount}
             entryDesc={entryDesc}
+            setIsCalculatorOpen={setIsCalculatorOpen}
+            isCalculatorOpen={isCalculatorOpen}
+            showPastPeriods={showPastPeriods}
+            setShowPastPeriods={setShowPastPeriods}
             payDebt={handlePayDebt}
-            setEntryDesc={setEntryDesc}
+            setEntryDesc={wrappedSetEntryDesc} // Use wrapped setter
             entryAmount={entryAmount}
-            setEntryAmount={setEntryAmount}
+            setEntryAmount={wrappedSetEntryAmount} // Use wrapped setter
             entryDate={entryDate}
-            setEntryDate={setEntryDate}
+            setEntryDate={wrappedSetEntryDate} // Use wrapped setter
             isValidMathExpression={isValidMathExpression}
             calculateAmount={calculateAmount}
             onEntryEdit={handleEntryEdit}
             entryExclude={entryExclude}
-            setEntryExclude={setEntryExclude}
+            setEntryExclude={wrappedSetEntryExclude} // Use wrapped setter
             onEntryDelete={handleEntryDelete}
             onEditBudgetClick={() => {
               setDialogMode('edit');
@@ -805,7 +858,9 @@ export default function Home() {
                       {calculateAmount(editingEntry.amount).toLocaleString()}
                     </p>
                   ) : (
-                    <p className="text-sm text-red-600">Invalid expression</p>
+                    <p className="text-sm text-[#FF9EB7]/90">
+                      Invalid expression
+                    </p>
                   ))}
               </div>
 

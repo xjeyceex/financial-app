@@ -21,6 +21,7 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
   const [waitingForOperand, setWaitingForOperand] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const [hasLoaded, setHasLoaded] = useState(false);
+  const [fontSize, setFontSize] = useState(64); // Initial font size
 
   const clearAll = useCallback(() => {
     setDisplayValue('0');
@@ -28,6 +29,7 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
     setOperation(null);
     setWaitingForOperand(false);
     setHistory([]);
+    setFontSize(64); // Reset font size when clearing
   }, []);
 
   const backspace = useCallback(() => {
@@ -36,20 +38,39 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
       (displayValue.length === 2 && displayValue.startsWith('-'))
     ) {
       setDisplayValue('0');
+      setFontSize(64); // Reset font size when back to single digit
     } else {
       setDisplayValue(displayValue.slice(0, -1));
+      // Adjust font size based on new length
+      if (displayValue.length - 1 <= 8) {
+        setFontSize(64);
+      } else if (displayValue.length - 1 <= 12) {
+        setFontSize(48);
+      } else {
+        setFontSize(36);
+      }
     }
   }, [displayValue]);
 
   const inputDigit = useCallback(
     (digit: number) => {
+      let newValue;
       if (waitingForOperand) {
-        setDisplayValue(String(digit));
+        newValue = String(digit);
         setWaitingForOperand(false);
       } else {
-        setDisplayValue(
-          displayValue === '0' ? String(digit) : displayValue + digit
-        );
+        newValue = displayValue === '0' ? String(digit) : displayValue + digit;
+      }
+
+      setDisplayValue(newValue);
+
+      // Adjust font size based on length
+      if (newValue.length <= 8) {
+        setFontSize(64);
+      } else if (newValue.length <= 12) {
+        setFontSize(48);
+      } else {
+        setFontSize(36);
       }
     },
     [displayValue, waitingForOperand]
@@ -59,8 +80,18 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
     if (waitingForOperand) {
       setDisplayValue('0.');
       setWaitingForOperand(false);
+      setFontSize(64);
     } else if (!displayValue.includes('.')) {
-      setDisplayValue(displayValue + '.');
+      const newValue = displayValue + '.';
+      setDisplayValue(newValue);
+
+      // Adjust font size if needed (dot doesn't usually affect length much)
+      if (newValue.length > 8) {
+        setFontSize(48);
+      }
+      if (newValue.length > 12) {
+        setFontSize(36);
+      }
     }
   }, [displayValue, waitingForOperand]);
 
@@ -171,7 +202,7 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
     {
       label: <FiDivide size={20} />,
       action: () => handleOperation('÷'),
-      className: 'bg-[#FF9500] text-white hover:bg-[#FF9500]/90',
+      className: 'bg-[#FF9EB7] text-white hover:bg-[#FF9EB7]/90', // Light pink
     },
     {
       label: '7',
@@ -191,7 +222,7 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
     {
       label: <FiX size={20} />,
       action: () => handleOperation('×'),
-      className: 'bg-[#FF9500] text-white hover:bg-[#FF9500]/90',
+      className: 'bg-[#FF9EB7] text-white hover:bg-[#FF9EB7]/90', // Light pink
     },
     {
       label: '4',
@@ -211,7 +242,7 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
     {
       label: <FiMinus size={20} />,
       action: () => handleOperation('-'),
-      className: 'bg-[#FF9500] text-white hover:bg-[#FF9500]/90',
+      className: 'bg-[#FF9EB7] text-white hover:bg-[#FF9EB7]/90', // Light pink
     },
     {
       label: '1',
@@ -231,13 +262,13 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
     {
       label: <FiPlus size={20} />,
       action: () => handleOperation('+'),
-      className: 'bg-[#FF9500] text-white hover:bg-[#FF9500]/90',
+      className: 'bg-[#FF9EB7] text-white hover:bg-[#FF9EB7]/90', // Light pink
     },
     {
       label: '0',
       action: () => inputDigit(0),
       className:
-        'bg-[#505050] text-white hover:bg-[#505050]/90 col-span-2 justify-start pl-6',
+        'bg-[#505050] text-white hover:bg-[#505050]/90 justify-start pl-6',
       span: true,
     },
     {
@@ -248,7 +279,7 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
     {
       label: '=',
       action: performOperation,
-      className: 'bg-[#FF9500] text-white hover:bg-[#FF9500]/90',
+      className: 'bg-[#FF9EB7] text-white hover:bg-[#FF9EB7]/90', // Light pink
     },
   ];
 
@@ -282,18 +313,18 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
               {history[history.length - 1]}
             </div>
           )}
-          {/* Display container */}
-          <div className="relative px-6 py-6">
+          {/* Fixed display container */}
+          <div className="relative px-6 py-6 w-full bg-red">
             <div className="w-full min-h-[72px] overflow-hidden">
-              <div className="w-full max-w-full overflow-hidden text-right">
+              <div className="absolute inset-y-0 right-6 left-0 flex justify-end items-center">
                 <div
-                  className="text-white font-thin font-mono leading-none tracking-tight text-right inline-block text-[64px]"
+                  className="text-white font-thin font-mono leading-none tracking-tight whitespace-nowrap overflow-hidden"
                   style={{
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
+                    fontSize: `${fontSize}px`,
+                    lineHeight: 1, // ✅ prevent cutoff
+                    transition: 'font-size 0.2s ease',
                     maxWidth: '100%',
-                    direction: 'rtl',
+                    direction: 'ltr',
                   }}
                 >
                   {displayValue}
@@ -301,7 +332,9 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-4 gap-2 bg-black px-2">
+
+          {/* Button grid */}
+          <div className="grid grid-cols-4 gap-2 bg-black px-2 w-full">
             {buttons.map((button, index) => (
               <Button
                 key={
@@ -311,11 +344,12 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
                 }
                 variant="ghost"
                 className={`
-                  h-[70px] w-[70px] m-1 rounded-full text-2xl font-light flex items-center justify-center
-                  ${'span' in button && button.span ? 'col-span-2 w-[150px]' : ''}
-                  ${button.className || ''}
-                  transition-colors duration-150
-                `}
+              h-[70px] rounded-full text-2xl font-light flex items-center justify-center
+              ${'span' in button && button.span ? 'col-span-2 w-full' : 'w-full'}
+              ${button.className || ''}
+              transition-colors duration-150
+              min-w-0
+            `}
                 onClick={button.action}
               >
                 {button.label}

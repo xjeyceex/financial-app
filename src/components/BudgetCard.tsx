@@ -71,6 +71,12 @@ interface BudgetCardProps {
   onEditBudgetClick: () => void;
   entryExclude: boolean;
   setEntryExclude: (value: boolean) => void;
+  isEntryModalOpen: boolean;
+  setIsEntryModalOpen: (value: boolean) => void;
+  isCalculatorOpen: boolean;
+  setIsCalculatorOpen: (value: boolean) => void;
+  showPastPeriods: boolean;
+  setShowPastPeriods: (value: boolean) => void;
 }
 
 export function BudgetCard({
@@ -84,6 +90,12 @@ export function BudgetCard({
   onEntrySubmit,
   entryDesc,
   onEditPastAmount,
+  isCalculatorOpen,
+  setIsCalculatorOpen,
+  showPastPeriods,
+  setShowPastPeriods,
+  isEntryModalOpen,
+  setIsEntryModalOpen,
   setEntryDesc,
   payDebt,
   entryAmount,
@@ -97,10 +109,7 @@ export function BudgetCard({
   entryExclude,
   setEntryExclude,
 }: BudgetCardProps) {
-  const [isEntryModalOpen, setIsEntryModalOpen] = useState(false);
   const [debtPaymentAmount, setDebtPaymentAmount] = useState(0);
-  const [showPastPeriods, setShowPastPeriods] = useState(false);
-  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
 
   // Calculate carryover from past periods
   const { currentPeriod, pastPeriods = [] } = budget;
@@ -431,74 +440,82 @@ export function BudgetCard({
                 </div>
               ) : (
                 <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-2">
-                  {entries.map((entry) => (
-                    <div
-                      key={entry.id}
-                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 transition-colors group"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />
-                          <p className="font-medium text-sm truncate">
-                            {entry.description}
-                          </p>
-                        </div>
-
-                        <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span>
-                              {new Date(entry.date).toLocaleDateString(
-                                undefined,
-                                {
-                                  month: 'short',
-                                  day: 'numeric',
-                                }
-                              )}
+                  {[...entries]
+                    .sort(
+                      (a, b) =>
+                        new Date(b.date).getTime() - new Date(a.date).getTime()
+                    )
+                    .map((entry, index) => (
+                      <div
+                        key={entry.id}
+                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 transition-colors group"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            {/* Number instead of dot */}
+                            <span className="text-xs font-semibold text-muted-foreground w-5 text-right">
+                              {index + 1}.
                             </span>
-                            <span>•</span>
-                            <span>
-                              {new Date(entry.date).toLocaleTimeString([], {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </span>
+                            <p className="font-medium text-sm truncate">
+                              {entry.description}
+                            </p>
                           </div>
 
-                          {/* Exclusion Icon Line */}
-                          {entry.excludeFromDepletion && (
-                            <div className="flex items-center gap-1 text-orange-500 pt-0.5">
-                              <FiEyeOff className="w-3.5 h-3.5 " />
-                              <span className="text-xs">Recurring Bill</span>
+                          <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span>
+                                {new Date(entry.date).toLocaleDateString(
+                                  undefined,
+                                  {
+                                    month: 'short',
+                                    day: 'numeric',
+                                  }
+                                )}
+                              </span>
+                              <span>•</span>
+                              <span>
+                                {new Date(entry.date).toLocaleTimeString([], {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                              </span>
                             </div>
-                          )}
-                        </div>
-                      </div>
 
-                      <div className="flex items-center gap-1">
-                        <span className="font-medium text-sm text-destructive">
-                          {formatCurrency(entry.amount)}
-                        </span>
-                        <div className="flex opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => onEntryEdit(entry)}
-                            className="h-7 w-7 text-muted-foreground hover:text-blue-600"
-                          >
-                            <FiEdit className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => onEntryDelete(entry.id)}
-                            className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                          >
-                            <FiTrash className="h-3.5 w-3.5" />
-                          </Button>
+                            {/* Exclusion Icon Line */}
+                            {entry.excludeFromDepletion && (
+                              <div className="flex items-center gap-1 text-orange-500 pt-0.5">
+                                <FiEyeOff className="w-3.5 h-3.5 " />
+                                <span className="text-xs">Recurring Bill</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          <span className="font-medium text-sm text-destructive">
+                            {formatCurrency(entry.amount)}
+                          </span>
+                          <div className="flex opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => onEntryEdit(entry)}
+                              className="h-7 w-7 text-muted-foreground hover:text-blue-600"
+                            >
+                              <FiEdit className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => onEntryDelete(entry.id)}
+                              className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                            >
+                              <FiTrash className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               )}
             </CardContent>
