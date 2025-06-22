@@ -13,6 +13,8 @@ import {
   SelectItem,
   SelectValue,
 } from '@/components/ui/select';
+import { App } from '@capacitor/app';
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,6 +41,7 @@ import {
 import { BudgetCard } from '../components/BudgetCard';
 import { Switch } from '@/components/ui/switch';
 import { useBackButtonClose } from '@/lib/hooks/useBackButtonClose';
+import { PluginListenerHandle } from '@capacitor/core';
 
 export default function Home() {
   const [budgets, setBudgets] = useState<Budget[]>([]);
@@ -646,6 +649,30 @@ export default function Home() {
 
     runCleanup().catch((err) => console.error('Budget cleanup failed:', err));
   }, [budgets, refreshBudgets]);
+
+  useEffect(() => {
+    if (typeof App !== 'undefined') {
+      let listener: PluginListenerHandle;
+
+      App.addListener('backButton', ({ canGoBack }) => {
+        if (!canGoBack) {
+          if (window.confirm('Do you want to exit the app?')) {
+            App.exitApp();
+          }
+        } else {
+          window.history.back();
+        }
+      }).then((l) => {
+        listener = l;
+      });
+
+      return () => {
+        if (listener) {
+          listener.remove();
+        }
+      };
+    }
+  }, []);
 
   const { ignoreNextPop } = useBackButtonClose(
     isEntryModalOpen || isCalculatorOpen || showPastPeriods,

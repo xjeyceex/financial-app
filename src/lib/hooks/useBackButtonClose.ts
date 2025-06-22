@@ -1,4 +1,6 @@
 import { useEffect, useRef } from 'react';
+import { App } from '@capacitor/app';
+import { PluginListenerHandle } from '@capacitor/core';
 
 type ModalState = {
   modal?: string;
@@ -16,6 +18,9 @@ export function useBackButtonClose(
   useEffect(() => {
     if (!open) return;
 
+    const isCapacitor = typeof App !== 'undefined';
+    let listener: PluginListenerHandle | null = null;
+
     const handlePopState = () => {
       if (ignoreNextPopRef.current) {
         ignoreNextPopRef.current = false;
@@ -31,34 +36,55 @@ export function useBackButtonClose(
       }
     };
 
-    if (!pushed.current && window?.history) {
-      modalStackRef.current.push(id);
+    const setupListener = async () => {
+      if (isCapacitor) {
+        listener = await App.addListener('backButton', () => {
+          const currentModal =
+            modalStackRef.current[modalStackRef.current.length - 1];
+          if (currentModal === id) {
+            onClose();
+            return false;
+          }
+          return true;
+        });
+      }
+    };
 
-      // Proper type-safe comparison
+    if (!pushed.current && window?.history && !isCapacitor) {
+      modalStackRef.current.push(id);
       const currentState = window.history.state as ModalState | null;
       if (currentState?.modal !== id) {
         window.history.pushState({ modal: id }, '');
       }
       pushed.current = true;
+    } else if (isCapacitor) {
+      modalStackRef.current.push(id);
+      setupListener();
     }
 
-    window.addEventListener('popstate', handlePopState);
+    if (!isCapacitor) {
+      window.addEventListener('popstate', handlePopState);
+    }
 
     return () => {
-      window.removeEventListener('popstate', handlePopState);
+      if (listener) {
+        listener.remove();
+      }
+      if (!isCapacitor) {
+        window.removeEventListener('popstate', handlePopState);
+      }
 
-      if (pushed.current && modalStackRef.current.includes(id)) {
-        if (modalStackRef.current[modalStackRef.current.length - 1] === id) {
+      if (modalStackRef.current.includes(id)) {
+        if (!isCapacitor && pushed.current) {
           try {
             const currentState = window.history.state as ModalState | null;
             if (currentState?.modal === id) {
               window.history.go(-1);
             }
-          } catch (e) {
-            console.warn('History manipulation error:', e);
+          } catch {
+            console.warn('History manipulation error');
           }
         }
-
         modalStackRef.current = modalStackRef.current.filter((m) => m !== id);
         pushed.current = false;
       }
