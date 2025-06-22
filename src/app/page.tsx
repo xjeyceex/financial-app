@@ -42,6 +42,8 @@ import { BudgetCard } from '../components/BudgetCard';
 import { Switch } from '@/components/ui/switch';
 import { useBackButtonClose } from '@/lib/hooks/useBackButtonClose';
 import { PluginListenerHandle } from '@capacitor/core';
+import { Badge } from '@/components/ui/badge';
+import { formatCurrency } from '@/lib/functions';
 
 export default function Home() {
   const [budgets, setBudgets] = useState<Budget[]>([]);
@@ -872,27 +874,33 @@ export default function Home() {
 
               {/* Amount */}
               <div className="space-y-2">
-                <Label>Amount (e.g., 85+15+30)</Label>
-                <Input
-                  value={editingEntry.amount}
-                  onChange={(e) =>
-                    setEditingEntry({
-                      ...editingEntry,
-                      amount: e.target.value,
-                    })
-                  }
-                />
-                {editingEntry.amount.trim() !== '' &&
-                  (isValidMathExpression(editingEntry.amount) ? (
-                    <p className="text-sm text-green-600">
-                      Calculated amount: ₱
-                      {calculateAmount(editingEntry.amount).toLocaleString()}
-                    </p>
-                  ) : (
-                    <p className="text-sm text-[#FF9EB7]/90">
-                      Invalid expression
-                    </p>
-                  ))}
+                <Label>Amount</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="text"
+                    inputMode="decimal"
+                    pattern="[0-9+\-/*xX]*"
+                    value={editingEntry.amount}
+                    onChange={(e) => {
+                      let input = e.target.value;
+                      input = input.replace(/[^0-9+\-/*xX]/g, '');
+                      input = input.replace(/x/gi, '*');
+                      input = input
+                        .replace(/([+\-*/]){2,}/g, '$1')
+                        .replace(/^([+*/]+)/, '');
+                      setEditingEntry({ ...editingEntry, amount: input });
+                    }}
+                    className="flex-1"
+                  />
+                  {editingEntry.amount.trim() !== '' &&
+                    (isValidMathExpression(editingEntry.amount) ? (
+                      <Badge variant="secondary" className="whitespace-nowrap">
+                        = {formatCurrency(calculateAmount(editingEntry.amount))}
+                      </Badge>
+                    ) : (
+                      <Badge variant="destructive">Invalid</Badge>
+                    ))}
+                </div>
               </div>
 
               {/* Date */}

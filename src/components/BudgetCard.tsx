@@ -575,11 +575,29 @@ export function BudgetCard({
               <div className="flex items-center gap-2">
                 <Input
                   type="text"
+                  inputMode="decimal"
+                  pattern="[0-9+\-/*xX]*"
                   placeholder="Amount (e.g., 85+15+30)"
                   value={entryAmount}
-                  onChange={(e) => setEntryAmount(e.target.value)}
+                  onChange={(e) => {
+                    let input = e.target.value;
+
+                    // Allow only digits and math operators
+                    input = input.replace(/[^0-9+\-/*xX]/g, '');
+
+                    // Normalize 'x' to '*'
+                    input = input.replace(/x/gi, '*');
+
+                    // Prevent invalid operator patterns
+                    input = input
+                      .replace(/([+\-*/]){2,}/g, '$1') // collapse multiple ops
+                      .replace(/^([+*/]+)/, ''); // disallow leading +, *, /
+
+                    setEntryAmount(input);
+                  }}
                   className="flex-1"
                 />
+
                 {entryAmount.trim() !== '' &&
                   (isValidMathExpression(entryAmount) ? (
                     <Badge variant="secondary" className="whitespace-nowrap">
