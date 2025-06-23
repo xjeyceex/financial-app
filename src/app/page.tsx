@@ -740,67 +740,72 @@ export default function Home() {
   return (
     <main className="max-w-5xl mx-auto space-y-6 mt-16">
       <div className="flex items-center justify-between gap-2">
-        <div className="flex-1">
-          <Select
-            value={selectedBudget?.id}
-            onValueChange={(id) => refreshBudgets(id)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select budget" />
-            </SelectTrigger>
-            <SelectContent>
-              {budgets.map((b) => (
-                <SelectItem key={b.id} value={b.id}>
-                  {b.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <FiMoreHorizontal className="w-4 h-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem
-              onClick={() => {
-                setDialogMode('create');
-                setFormName('');
-                setDialogOpen(true);
-              }}
+        {budgets.length > 0 && (
+          <div className="flex-1">
+            <Select
+              value={selectedBudget?.id}
+              onValueChange={(id) => refreshBudgets(id)}
             >
-              <FiPlus className="mr-2 h-4 w-4" /> Create
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              disabled={!selectedBudget}
-              onClick={() => {
-                if (!selectedBudget) return;
-                setDialogMode('edit');
-                setFormName(selectedBudget.name);
-                setDialogOpen(true);
-              }}
-            >
-              <FiEdit className="mr-2 h-4 w-4" /> Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              disabled={!selectedBudget}
-              onClick={async () => {
-                if (!selectedBudget) return;
-                const confirmDelete = confirm(
-                  `Delete "${selectedBudget.name}"?`
-                );
-                if (!confirmDelete) return;
-                const db = await getDb();
-                await db.delete('budgets', selectedBudget.id);
-                refreshBudgets();
-              }}
-            >
-              <FiTrash className="mr-2 h-4 w-4 text-red-500" /> Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <SelectTrigger>
+                <SelectValue placeholder="Select budget" />
+              </SelectTrigger>
+              <SelectContent>
+                {budgets.map((b) => (
+                  <SelectItem key={b.id} value={b.id}>
+                    {b.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {budgets.length > 0 && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <FiMoreHorizontal className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem
+                onClick={() => {
+                  setDialogMode('create');
+                  setFormName('');
+                  setDialogOpen(true);
+                }}
+              >
+                <FiPlus className="mr-2 h-4 w-4" /> Create
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={!selectedBudget}
+                onClick={() => {
+                  if (!selectedBudget) return;
+                  setDialogMode('edit');
+                  setFormName(selectedBudget.name);
+                  setDialogOpen(true);
+                }}
+              >
+                <FiEdit className="mr-2 h-4 w-4" /> Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={!selectedBudget}
+                onClick={async () => {
+                  if (!selectedBudget) return;
+                  const confirmDelete = confirm(
+                    `Delete "${selectedBudget.name}"?`
+                  );
+                  if (!confirmDelete) return;
+                  const db = await getDb();
+                  await db.delete('budgets', selectedBudget.id);
+                  refreshBudgets();
+                }}
+              >
+                <FiTrash className="mr-2 h-4 w-4 text-red-500" /> Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
 
       <div>
@@ -844,7 +849,7 @@ export default function Home() {
           />
         ) : (
           <div className="p-4 border rounded bg-gray-50 dark:bg-zinc-900 text-center">
-            <p>No budget selected</p>
+            <p>Start Budgeting</p>
             <Button
               onClick={() => {
                 setDialogMode('create');
