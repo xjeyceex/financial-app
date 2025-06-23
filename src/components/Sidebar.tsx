@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect, useCallback } from 'react';
-import { HiMenu, HiX, HiCurrencyDollar, HiMoon, HiSun } from 'react-icons/hi';
+import { HiMenu, HiX, HiMoon, HiSun } from 'react-icons/hi';
 import clsx from 'clsx';
 import { useTheme } from 'next-themes';
 import { IconType } from 'react-icons';
@@ -15,13 +15,7 @@ type NavItem = {
   disabled?: boolean;
 };
 
-const navItems: NavItem[] = [
-  {
-    name: 'Money Tracker',
-    href: '/money-tracker',
-    icon: HiCurrencyDollar,
-  },
-];
+const navItems: NavItem[] = [];
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -101,7 +95,7 @@ export default function Sidebar() {
             )}
           </button>
 
-          <button
+          {/* <button
             onClick={toggleSidebar}
             className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-zinc-800"
             aria-label="Toggle sidebar"
@@ -111,12 +105,12 @@ export default function Sidebar() {
             ) : (
               <HiMenu className="w-6 h-6 text-gray-600 dark:text-gray-300" />
             )}
-          </button>
+          </button> */}
         </div>
       </header>
 
       {/* Sidebar */}
-      <aside
+      {/* <aside
         className={clsx(
           'fixed top-16 h-[calc(100vh-4rem)] w-72 bg-white dark:bg-zinc-900 shadow-lg p-6 z-40',
           'transition-transform duration-300 ease-in-out border-l border-gray-100 dark:border-zinc-700',
@@ -134,7 +128,7 @@ export default function Sidebar() {
         <div className="pt-4 mt-4 border-t border-gray-100 dark:border-zinc-700 text-sm text-gray-500 dark:text-gray-400">
           © {new Date().getFullYear()} PesoWise
         </div>
-      </aside>
+      </aside> */}
 
       {/* Overlay - only on mobile */}
       {sidebarOpen && isMobile && (

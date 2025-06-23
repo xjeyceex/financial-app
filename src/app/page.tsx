@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { getDb, getAllBudgets, saveBudget } from '../lib/db';
+import { getDb, getAllBudgets, saveBudget } from '../lib/indexedDB';
 import { Budget, Entry } from '../lib/typesv2';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -43,7 +43,7 @@ import { Switch } from '@/components/ui/switch';
 import { useBackButtonClose } from '@/lib/hooks/useBackButtonClose';
 import { PluginListenerHandle } from '@capacitor/core';
 import { Badge } from '@/components/ui/badge';
-import { formatCurrency } from '@/lib/functions';
+import { formatCurrency } from '@/lib/functionsv2';
 
 export default function Home() {
   const [budgets, setBudgets] = useState<Budget[]>([]);

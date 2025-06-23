@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Entry } from '../types';
+import { Entry } from '../typesv2';
 
 function getFixedPeriodRange(): { start: Date; end: Date } {
   const now = new Date();

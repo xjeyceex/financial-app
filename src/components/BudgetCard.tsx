@@ -7,13 +7,12 @@ import {
   FiTrash,
   FiX,
   FiCheck,
-  FiTrendingDown,
   FiClock,
   FiEyeOff,
   FiFileText,
 } from 'react-icons/fi';
 import { Budget, Entry } from '../lib/typesv2';
-import { formatCurrency } from '../lib/functions';
+import { formatCurrency } from '../lib/functionsv2';
 import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -240,7 +239,7 @@ export function BudgetCard({
                       variant="outline"
                       size="icon"
                       type="submit"
-                      className="w-8 h-8 text-green-600 hover:text-green-800 transition"
+                      className="w-8 h-8 text-green-400 hover:text-green-600 transition"
                       title="Save"
                     >
                       <FiCheck className="w-4 h-4" />
@@ -250,7 +249,7 @@ export function BudgetCard({
                       size="icon"
                       type="button"
                       onClick={onCancelAmountEdit}
-                      className="w-8 h-8 text-gray-500 hover:text-red-600 transition"
+                      className="w-8 h-8 text-gray-500 hover:text-red-400 transition"
                       title="Cancel"
                     >
                       <FiX className="w-4 h-4" />
@@ -335,10 +334,9 @@ export function BudgetCard({
                         className="flex-1 min-w-[200px]"
                       >
                         <StatsCard
-                          icon={<FiTrendingDown className="w-4 h-4" />}
+                          icon={''}
                           label={entry.description || 'Unnamed'}
                           value={formatCurrency(entry.amount)}
-                          isPositive={false}
                         />
                       </div>
                     ))}
@@ -783,12 +781,14 @@ export function BudgetCard({
                 </span>
                 <p
                   className={`text-lg font-bold ${
-                    selectedEntry.amount < 0
-                      ? 'text-destructive'
-                      : 'text-emerald-600'
+                    selectedEntry.amount > 0
+                      ? 'text-red-400'
+                      : 'text-emerald-400'
                   }`}
                 >
-                  {formatCurrency(selectedEntry.amount)}
+                  {selectedEntry.amount > 0
+                    ? `-${formatCurrency(selectedEntry.amount)}`
+                    : formatCurrency(Math.abs(selectedEntry.amount))}
                 </p>
               </div>
 

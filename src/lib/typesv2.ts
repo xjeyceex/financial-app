@@ -28,5 +28,7 @@ export type Entry = {
   description?: string;
   amount: number;
   date: string;
-  excludeFromDepletion?: boolean; // ✅ Add this line
+  excludeFromDepletion?: boolean;
+  item?: string;
+  budgetId: string;
 };
