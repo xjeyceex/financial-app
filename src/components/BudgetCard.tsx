@@ -665,7 +665,9 @@ export function BudgetCard({
 
             {/* Description */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Description</label>
+              <label className="text-sm font-medium">
+                Description (optional)
+              </label>
               <Input
                 type="text"
                 placeholder="Add a short description"
