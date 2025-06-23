@@ -46,7 +46,6 @@ import { CalculatorModal } from '@/components/Calculator';
 interface BudgetCardProps {
   budget: Budget;
   onAmountClick: () => void;
-  onAmountChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onSaveAmount: () => void;
   onCancelAmountEdit: () => void;
   editingBudgetAmount: boolean;
@@ -78,12 +77,14 @@ interface BudgetCardProps {
   setIsCalculatorOpen: (value: boolean) => void;
   showPastPeriods: boolean;
   setShowPastPeriods: (value: boolean) => void;
+  entryType: 'income' | 'expense';
+  setEntryType: (value: 'income' | 'expense') => void;
+  setTempBudgetAmount: (value: string) => void;
 }
 
 export function BudgetCard({
   budget,
   onAmountClick,
-  onAmountChange,
   onSaveAmount,
   onCancelAmountEdit,
   editingBudgetAmount,
@@ -109,6 +110,9 @@ export function BudgetCard({
   onEntryDelete,
   entryExclude,
   setEntryExclude,
+  entryType,
+  setEntryType,
+  setTempBudgetAmount,
 }: BudgetCardProps) {
   const [debtPaymentAmount, setDebtPaymentAmount] = useState(0);
 
@@ -213,13 +217,25 @@ export function BudgetCard({
                     }}
                     className="flex items-center gap-2"
                   >
-                    <input
-                      type="number"
-                      value={tempBudgetAmount === '' ? '' : tempBudgetAmount}
-                      onChange={onAmountChange}
+                    <Input
+                      type="text"
+                      inputMode="decimal"
+                      pattern="[0-9+\-/*xX]*"
+                      placeholder="e.g. 100+500-25"
+                      value={tempBudgetAmount}
+                      onChange={(e) => {
+                        let input = e.target.value;
+                        input = input.replace(/[^0-9+\-/*xX]/g, '');
+                        input = input.replace(/x/gi, '*');
+                        input = input
+                          .replace(/([+\-*/]){2,}/g, '$1')
+                          .replace(/^([+*/]+)/, '');
+                        setTempBudgetAmount(input);
+                      }}
                       autoFocus
-                      className="text-lg font-semibold w-24 text-center px-2 py-1 rounded border border-gray-300 dark:border-gray-600"
+                      className="text-lg font-semibold text-center px-2 py-1 w-36"
                     />
+
                     <Button
                       variant="outline"
                       size="icon"
@@ -311,19 +327,21 @@ export function BudgetCard({
                   Recent Top Expenses
                 </h4>
                 <div className="flex flex-wrap gap-4">
-                  {topExpenses.map((entry, index) => (
-                    <div
-                      key={entry.id || index}
-                      className="flex-1 min-w-[200px]"
-                    >
-                      <StatsCard
-                        icon={<FiTrendingDown className="w-4 h-4" />}
-                        label={entry.description || 'Unnamed'}
-                        value={formatCurrency(entry.amount)}
-                        isPositive={false}
-                      />
-                    </div>
-                  ))}
+                  {topExpenses
+                    .filter((entry) => entry.description !== 'Debt Payment')
+                    .map((entry, index) => (
+                      <div
+                        key={entry.id || index}
+                        className="flex-1 min-w-[200px]"
+                      >
+                        <StatsCard
+                          icon={<FiTrendingDown className="w-4 h-4" />}
+                          label={entry.description || 'Unnamed'}
+                          value={formatCurrency(entry.amount)}
+                          isPositive={false}
+                        />
+                      </div>
+                    ))}
                 </div>
               </div>
             )}
@@ -333,7 +351,6 @@ export function BudgetCard({
                 icon={<FiClock className="w-4 h-4 text-yellow-600" />}
                 label="Est. Depletion Date"
                 value={depletionDate}
-                isPositive={false}
               />
             )}
           </div>
@@ -505,25 +522,29 @@ export function BudgetCard({
                           <span
                             className={`font-medium text-sm ${
                               entry.amount < 0
-                                ? 'text-destructive'
-                                : 'text-emerald-600'
+                                ? 'text-emerald-600' // income
+                                : 'text-destructive' // expense
                             }`}
                           >
-                            {formatCurrency(entry.amount)}
+                            {entry.amount < 0
+                              ? `+${formatCurrency(Math.abs(entry.amount))}`
+                              : `-${formatCurrency(entry.amount)}`}
                           </span>
 
                           <div className="flex space-x-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onEntryEdit(entry);
-                              }}
-                              className="text-muted-foreground hover:text-blue-600 h-7 w-7"
-                            >
-                              <FiEdit className="h-3.5 w-3.5" />
-                            </Button>
+                            {entry.description !== 'Debt Payment' && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onEntryEdit(entry);
+                                }}
+                                className="text-muted-foreground hover:text-blue-600 h-7 w-7"
+                              >
+                                <FiEdit className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
                             <Button
                               variant="ghost"
                               size="icon"
@@ -582,17 +603,7 @@ export function BudgetCard({
           </DialogHeader>
 
           <form onSubmit={handleEntrySubmit} className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Description</label>
-              <Input
-                type="text"
-                placeholder="What was this expense for?"
-                value={entryDesc}
-                onChange={(e) => setEntryDesc(e.target.value)}
-                autoFocus
-              />
-            </div>
-
+            {/* Amount */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Amount</label>
               <div className="flex items-center gap-2">
@@ -604,23 +615,16 @@ export function BudgetCard({
                   value={entryAmount}
                   onChange={(e) => {
                     let input = e.target.value;
-
-                    // Allow only digits and math operators
                     input = input.replace(/[^0-9+\-/*xX]/g, '');
-
-                    // Normalize 'x' to '*'
                     input = input.replace(/x/gi, '*');
-
-                    // Prevent invalid operator patterns
                     input = input
-                      .replace(/([+\-*/]){2,}/g, '$1') // collapse multiple ops
-                      .replace(/^([+*/]+)/, ''); // disallow leading +, *, /
-
+                      .replace(/([+\-*/]){2,}/g, '$1')
+                      .replace(/^([+*/]+)/, '');
                     setEntryAmount(input);
                   }}
                   className="flex-1"
+                  autoFocus
                 />
-
                 {entryAmount.trim() !== '' &&
                   (isValidMathExpression(entryAmount) ? (
                     <Badge variant="secondary" className="whitespace-nowrap">
@@ -632,6 +636,46 @@ export function BudgetCard({
               </div>
             </div>
 
+            {/* Entry Type */}
+            <div className="space-y-2">
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="radio"
+                    name="entryType"
+                    value="expense"
+                    checked={entryType === 'expense'}
+                    onChange={() => setEntryType('expense')}
+                    className="accent-red-500"
+                  />
+                  Expense
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="radio"
+                    name="entryType"
+                    value="income"
+                    checked={entryType === 'income'}
+                    onChange={() => setEntryType('income')}
+                    className="accent-green-500"
+                  />
+                  Income
+                </label>
+              </div>
+            </div>
+
+            {/* Description */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Description</label>
+              <Input
+                type="text"
+                placeholder="What was this expense for?"
+                value={entryDesc}
+                onChange={(e) => setEntryDesc(e.target.value)}
+              />
+            </div>
+
+            {/* Date */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Date</label>
               <Input
@@ -641,6 +685,7 @@ export function BudgetCard({
               />
             </div>
 
+            {/* Exclude from Depletion */}
             <div className="flex items-center gap-2">
               <Switch
                 id="exclude-entry"
@@ -652,6 +697,7 @@ export function BudgetCard({
               </label>
             </div>
 
+            {/* Actions */}
             <div className="flex justify-end gap-2 pt-2">
               <Button
                 type="button"
@@ -662,6 +708,7 @@ export function BudgetCard({
                   setEntryAmount('');
                   setEntryDate(new Date().toISOString().slice(0, 16));
                   setEntryExclude(false);
+                  setEntryType('expense'); // reset to default
                 }}
               >
                 Cancel

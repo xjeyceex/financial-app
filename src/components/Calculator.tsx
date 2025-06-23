@@ -65,12 +65,12 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
       setDisplayValue(newValue);
 
       // Adjust font size based on length
-      if (newValue.length <= 8) {
-        setFontSize(64);
-      } else if (newValue.length <= 12) {
-        setFontSize(48);
+      if (newValue.length <= 6) {
+        setFontSize(56); // was 64
+      } else if (newValue.length <= 10) {
+        setFontSize(42); // was 48
       } else {
-        setFontSize(36);
+        setFontSize(32); // was 36
       }
     },
     [displayValue, waitingForOperand]
@@ -301,27 +301,29 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[340px] p-4 rounded-[40px] bg-black text-white border-none shadow-lg">
-        <DialogHeader className="px-4 pt-4">
+      <DialogContent className="w-[280px] p-3 rounded-[30px] bg-black text-white border-none shadow-lg">
+        <DialogHeader className="px-3 pt-3">
           <div className="flex justify-between items-center w-full">
-            <DialogTitle className="text-white">Calculator</DialogTitle>
+            <DialogTitle className="text-white text-lg">Calculator</DialogTitle>
           </div>
         </DialogHeader>
+
         <div className="flex flex-col">
           {history.length > 0 && (
-            <div className="px-4 text-sm text-gray-500 text-right h-6 truncate">
+            <div className="px-4 text-xs text-gray-500 text-right h-5 truncate">
               {history[history.length - 1]}
             </div>
           )}
-          {/* Fixed display container */}
-          <div className="relative px-6 py-6 w-full bg-red">
-            <div className="w-full min-h-[72px] overflow-hidden">
-              <div className="absolute inset-y-0 right-6 left-0 flex justify-end items-center">
+
+          {/* Display area */}
+          <div className="relative px-4 py-4 w-full">
+            <div className="w-full min-h-[56px] overflow-hidden">
+              <div className="absolute inset-y-0 right-4 left-0 flex justify-end items-center">
                 <div
-                  className="text-white font-thin font-mono leading-none tracking-tight whitespace-nowrap overflow-hidden"
+                  className="text-white font-thin font-mono leading-none tracking-tight whitespace-nowrap pr-2"
                   style={{
                     fontSize: `${fontSize}px`,
-                    lineHeight: 1, // ✅ prevent cutoff
+                    lineHeight: 1,
                     transition: 'font-size 0.2s ease',
                     maxWidth: '100%',
                     direction: 'ltr',
@@ -333,8 +335,8 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
             </div>
           </div>
 
-          {/* Button grid */}
-          <div className="grid grid-cols-4 gap-2 bg-black px-2 w-full">
+          {/* Buttons */}
+          <div className="grid grid-cols-4 gap-1.5 bg-black px-2 w-full">
             {buttons.map((button, index) => (
               <Button
                 key={
@@ -344,12 +346,12 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
                 }
                 variant="ghost"
                 className={`
-              h-[70px] rounded-full text-2xl font-light flex items-center justify-center
-              ${'span' in button && button.span ? 'col-span-2 w-full' : 'w-full'}
-              ${button.className || ''}
-              transition-colors duration-150
-              min-w-0
-            `}
+                h-[54px] rounded-full text-lg font-light flex items-center justify-center
+                ${'span' in button && button.span ? 'col-span-2 w-full' : 'w-full'}
+                ${button.className || ''}
+                transition-colors duration-150
+                min-w-0
+              `}
                 onClick={button.action}
               >
                 {button.label}

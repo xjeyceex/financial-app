@@ -63,6 +63,7 @@ export default function Home() {
   } | null>(null);
   const [showPastPeriods, setShowPastPeriods] = useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+  const [entryType, setEntryType] = useState<'expense' | 'income'>('expense');
 
   const [editingBudgetAmount, setEditingBudgetAmount] = useState(false);
   const [tempBudgetAmount, setTempBudgetAmount] = useState('');
@@ -230,14 +231,10 @@ export default function Home() {
     setEditingBudgetAmount(true);
   };
 
-  const handleBudgetAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTempBudgetAmount(e.target.value);
-  };
-
   const saveBudgetAmount = async () => {
     if (!selectedBudget || !tempBudgetAmount) return;
 
-    const amount = parseFloat(tempBudgetAmount);
+    const amount = calculateAmount(tempBudgetAmount); // ✅ evaluate full expression
     if (isNaN(amount)) return;
 
     const db = await getDb();
@@ -305,10 +302,13 @@ export default function Home() {
     setEditingEntry({
       id: entry.id,
       description: entry.description ?? 'Unspecified',
-      amount: entry.amount.toString(),
-      date: formatDateForDatetimeLocal(entry.date), // ✅ Local time
+      amount: Math.abs(entry.amount).toString(), // strip minus sign for editing
+      date: formatDateForDatetimeLocal(entry.date),
       excludeFromDepletion: entry.excludeFromDepletion ?? false,
     });
+
+    // Set the type explicitly based on amount
+    setEntryType(entry.amount < 0 ? 'income' : 'expense');
 
     setEntryDialogOpen(true);
   };
@@ -378,12 +378,17 @@ export default function Home() {
     const calculatedAmount = calculateAmount(entryAmount);
     if (isNaN(calculatedAmount)) return;
 
+    const signedAmount =
+      entryType === 'income'
+        ? -Math.abs(calculatedAmount)
+        : Math.abs(calculatedAmount);
+
     const newEntry = {
       id: uuidv4(),
       description: entryDesc.trim() || 'Unspecified',
-      amount: calculatedAmount,
+      amount: signedAmount,
       date: new Date(entryDate).toISOString(),
-      excludeFromDepletion: entryExclude, // ✅ Add this line
+      excludeFromDepletion: entryExclude,
     };
 
     const entryDateObj = new Date(newEntry.date);
@@ -461,7 +466,8 @@ export default function Home() {
     setEntryDesc('');
     setEntryAmount('');
     setEntryDate(getLocalDateTime());
-    setEntryExclude(false); // ✅ reset exclude state
+    setEntryExclude(false);
+    setEntryType('expense');
     refreshBudgets();
   };
 
@@ -513,7 +519,10 @@ export default function Home() {
     if (!selectedBudget || !editingEntry) return;
     if (!isValidMathExpression(editingEntry.amount)) return;
 
-    const calculatedAmount = calculateAmount(editingEntry.amount);
+    const rawAmount = calculateAmount(editingEntry.amount);
+    const calculatedAmount =
+      entryType === 'expense' ? rawAmount : -Math.abs(rawAmount);
+
     const db = await getDb();
     const updatedBudget = { ...selectedBudget };
 
@@ -528,7 +537,7 @@ export default function Home() {
           ...entry,
           description: editingEntry.description.trim() || 'Unspecified',
           amount: calculatedAmount,
-          date: editingEntry.date, // ✅ Add date update
+          date: editingEntry.date,
           excludeFromDepletion: editingEntry.excludeFromDepletion ?? false,
         };
       }
@@ -550,7 +559,7 @@ export default function Home() {
                 ...entry,
                 description: editingEntry.description.trim() || 'Unspecified',
                 amount: calculatedAmount,
-                date: editingEntry.date, // ✅ Add date update here too
+                date: editingEntry.date,
                 excludeFromDepletion:
                   editingEntry.excludeFromDepletion ?? false,
               };
@@ -569,6 +578,7 @@ export default function Home() {
     await db.put('budgets', updatedBudget);
     setEntryDialogOpen(false);
     setEditingEntry(null);
+    setEntryType('expense');
     setEntryExclude(false);
     refreshBudgets();
   };
@@ -795,7 +805,7 @@ export default function Home() {
             onAmountClick={handleBudgetAmountClick}
             isEntryModalOpen={isEntryModalOpen}
             setIsEntryModalOpen={setIsEntryModalOpen}
-            onAmountChange={handleBudgetAmountChange}
+            setTempBudgetAmount={setTempBudgetAmount}
             onSaveAmount={saveBudgetAmount}
             onCancelAmountEdit={cancelBudgetAmountEdit}
             editingBudgetAmount={editingBudgetAmount}
@@ -819,6 +829,8 @@ export default function Home() {
             entryExclude={entryExclude}
             setEntryExclude={wrappedSetEntryExclude} // Use wrapped setter
             onEntryDelete={handleEntryDelete}
+            entryType={entryType}
+            setEntryType={setEntryType}
             onEditBudgetClick={() => {
               setDialogMode('edit');
               setFormName(selectedBudget.name);
@@ -903,6 +915,35 @@ export default function Home() {
                 </div>
               </div>
 
+              {/* Entry Type */}
+              <div className="space-y-2">
+                <Label>Entry Type</Label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="radio"
+                      name="entryTypeEdit"
+                      value="expense"
+                      checked={entryType === 'expense'}
+                      onChange={() => setEntryType('expense')}
+                      className="accent-red-500"
+                    />
+                    Expense
+                  </label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="radio"
+                      name="entryTypeEdit"
+                      value="income"
+                      checked={entryType === 'income'}
+                      onChange={() => setEntryType('income')}
+                      className="accent-green-500"
+                    />
+                    Income
+                  </label>
+                </div>
+              </div>
+
               {/* Date */}
               <div className="space-y-2">
                 <Label>Date</Label>
@@ -910,10 +951,7 @@ export default function Home() {
                   type="datetime-local"
                   value={editingEntry.date}
                   onChange={(e) =>
-                    setEditingEntry({
-                      ...editingEntry,
-                      date: e.target.value,
-                    })
+                    setEditingEntry({ ...editingEntry, date: e.target.value })
                   }
                 />
               </div>
