@@ -21,7 +21,24 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
   const [waitingForOperand, setWaitingForOperand] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const [hasLoaded, setHasLoaded] = useState(false);
-  const [fontSize, setFontSize] = useState(64); // Initial font size
+  const [fontSize, setFontSize] = useState(48); // Reduced initial font size
+
+  // Format number with commas
+  const formatNumber = useCallback((numStr: string) => {
+    if (numStr === '0') return '0';
+    if (numStr === 'Error') return 'Error';
+
+    const parts = numStr.split('.');
+    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    const decimalPart = parts[1] ? `.${parts[1]}` : '';
+
+    return integerPart + decimalPart;
+  }, []);
+
+  // Parse number by removing commas
+  const parseNumber = useCallback((numStr: string) => {
+    return numStr.replace(/,/g, '');
+  }, []);
 
   const clearAll = useCallback(() => {
     setDisplayValue('0');
@@ -29,75 +46,87 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
     setOperation(null);
     setWaitingForOperand(false);
     setHistory([]);
-    setFontSize(64); // Reset font size when clearing
+    setFontSize(48);
   }, []);
 
   const backspace = useCallback(() => {
+    const currentValue = parseNumber(displayValue);
+    let newValue;
+
     if (
-      displayValue.length <= 1 ||
-      (displayValue.length === 2 && displayValue.startsWith('-'))
+      currentValue.length <= 1 ||
+      (currentValue.length === 2 && currentValue.startsWith('-'))
     ) {
-      setDisplayValue('0');
-      setFontSize(64); // Reset font size when back to single digit
+      newValue = '0';
+      setFontSize(48);
     } else {
-      setDisplayValue(displayValue.slice(0, -1));
+      newValue = currentValue.slice(0, -1);
       // Adjust font size based on new length
-      if (displayValue.length - 1 <= 8) {
-        setFontSize(64);
-      } else if (displayValue.length - 1 <= 12) {
+      if (newValue.length <= 8) {
         setFontSize(48);
-      } else {
+      } else if (newValue.length <= 12) {
         setFontSize(36);
+      } else {
+        setFontSize(28);
       }
     }
-  }, [displayValue]);
+
+    setDisplayValue(formatNumber(newValue));
+  }, [displayValue, formatNumber, parseNumber]);
 
   const inputDigit = useCallback(
     (digit: number) => {
+      const currentValue = parseNumber(displayValue);
       let newValue;
+
       if (waitingForOperand) {
         newValue = String(digit);
         setWaitingForOperand(false);
       } else {
-        newValue = displayValue === '0' ? String(digit) : displayValue + digit;
+        newValue = currentValue === '0' ? String(digit) : currentValue + digit;
       }
 
-      setDisplayValue(newValue);
+      // Count digits ignoring decimal point and negative sign
+      const digitCount = newValue.replace(/[^0-9]/g, '').length;
 
-      // Adjust font size based on length
-      if (newValue.length <= 6) {
-        setFontSize(56); // was 64
-      } else if (newValue.length <= 10) {
-        setFontSize(42); // was 48
-      } else {
-        setFontSize(32); // was 36
-      }
+      // Adjust font size based on pure digit count (before commas are added)
+      setFontSize(
+        digitCount <= 6
+          ? 48 // Full size for up to 6 digits (e.g., 500,000)
+          : digitCount <= 8
+            ? 36 // Medium size for 7-8 digits (e.g., 5,000,000)
+            : 28 // Smaller size for 9+ digits (e.g., 500,000,000)
+      );
+
+      setDisplayValue(formatNumber(newValue));
     },
-    [displayValue, waitingForOperand]
+    [displayValue, waitingForOperand, formatNumber, parseNumber]
   );
 
   const inputDot = useCallback(() => {
+    const currentValue = parseNumber(displayValue);
+
     if (waitingForOperand) {
       setDisplayValue('0.');
       setWaitingForOperand(false);
-      setFontSize(64);
-    } else if (!displayValue.includes('.')) {
-      const newValue = displayValue + '.';
-      setDisplayValue(newValue);
+      setFontSize(48);
+    } else if (!currentValue.includes('.')) {
+      const newValue = currentValue + '.';
+      setDisplayValue(formatNumber(newValue));
 
-      // Adjust font size if needed (dot doesn't usually affect length much)
+      // Adjust font size if needed
       if (newValue.length > 8) {
-        setFontSize(48);
-      }
-      if (newValue.length > 12) {
         setFontSize(36);
       }
+      if (newValue.length > 12) {
+        setFontSize(28);
+      }
     }
-  }, [displayValue, waitingForOperand]);
+  }, [displayValue, waitingForOperand, formatNumber, parseNumber]);
 
   const performCalculation = useCallback((): number => {
-    const prev = parseFloat(storedValue!);
-    const current = parseFloat(displayValue);
+    const prev = parseFloat(parseNumber(storedValue!));
+    const current = parseFloat(parseNumber(displayValue));
 
     switch (operation) {
       case '+':
@@ -111,7 +140,7 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
       default:
         return current;
     }
-  }, [displayValue, storedValue, operation]);
+  }, [displayValue, storedValue, operation, parseNumber]);
 
   const handleOperation = useCallback(
     (nextOperation: string) => {
@@ -121,11 +150,12 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
       }
 
       if (storedValue === null) {
-        setStoredValue(displayValue);
+        setStoredValue(parseNumber(displayValue));
       } else if (operation) {
         const result = performCalculation();
-        setDisplayValue(String(result));
-        setStoredValue(String(result));
+        const resultStr = Number.isNaN(result) ? 'Error' : String(result);
+        setDisplayValue(formatNumber(resultStr));
+        setStoredValue(resultStr);
       }
 
       setWaitingForOperand(true);
@@ -137,6 +167,8 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
       storedValue,
       performCalculation,
       waitingForOperand,
+      formatNumber,
+      parseNumber,
     ]
   );
 
@@ -144,25 +176,44 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
     if (!operation || storedValue === null) return;
 
     const result = performCalculation();
+    const resultStr = Number.isNaN(result) ? 'Error' : String(result);
+
     setHistory((prev) => [
       ...prev.slice(-3),
-      `${storedValue} ${operation} ${displayValue} = ${result}`,
+      `${formatNumber(storedValue)} ${operation} ${formatNumber(parseNumber(displayValue))} = ${formatNumber(resultStr)}`,
     ]);
-    setDisplayValue(String(result));
+
+    setDisplayValue(formatNumber(resultStr));
     setStoredValue(null);
     setOperation(null);
     setWaitingForOperand(true);
-  }, [displayValue, operation, storedValue, performCalculation]);
+  }, [
+    displayValue,
+    operation,
+    storedValue,
+    performCalculation,
+    formatNumber,
+    parseNumber,
+  ]);
 
-  const toggleSign = () => {
-    setDisplayValue(String(parseFloat(displayValue) * -1));
-  };
+  const toggleSign = useCallback(() => {
+    const currentValue = parseNumber(displayValue);
+    setDisplayValue(formatNumber(String(parseFloat(currentValue) * -1)));
+  }, [displayValue, formatNumber, parseNumber]);
+
+  const getOperationButtonClass = (op: string) =>
+    `h-[54px] rounded-full text-lg font-light flex items-center justify-center w-full transition-all duration-200 active:scale-95
+  ${
+    operation === op
+      ? 'bg-[#FF9EB7] text-white shadow-[0_0_6px_2px] shadow-pink-200'
+      : 'bg-[#FF9EB7] text-white hover:bg-[#FF9EB7]/90'
+  }`;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const { key } = e;
       if (/\d/.test(key)) inputDigit(parseInt(key));
-      else if (key === '.') inputDot();
+      else if (key === '.' || key === ',') inputDot();
       else if (key === '+') handleOperation('+');
       else if (key === '-') handleOperation('-');
       else if (key === '*') handleOperation('×');
@@ -202,7 +253,7 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
     {
       label: <FiDivide size={20} />,
       action: () => handleOperation('÷'),
-      className: 'bg-[#FF9EB7] text-white hover:bg-[#FF9EB7]/90', // Light pink
+      className: getOperationButtonClass('÷'),
     },
     {
       label: '7',
@@ -222,7 +273,7 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
     {
       label: <FiX size={20} />,
       action: () => handleOperation('×'),
-      className: 'bg-[#FF9EB7] text-white hover:bg-[#FF9EB7]/90', // Light pink
+      className: getOperationButtonClass('×'),
     },
     {
       label: '4',
@@ -242,7 +293,7 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
     {
       label: <FiMinus size={20} />,
       action: () => handleOperation('-'),
-      className: 'bg-[#FF9EB7] text-white hover:bg-[#FF9EB7]/90', // Light pink
+      className: getOperationButtonClass('-'),
     },
     {
       label: '1',
@@ -262,7 +313,7 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
     {
       label: <FiPlus size={20} />,
       action: () => handleOperation('+'),
-      className: 'bg-[#FF9EB7] text-white hover:bg-[#FF9EB7]/90', // Light pink
+      className: getOperationButtonClass('+'),
     },
     {
       label: '0',
@@ -279,7 +330,7 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
     {
       label: '=',
       action: performOperation,
-      className: 'bg-[#FF9EB7] text-white hover:bg-[#FF9EB7]/90', // Light pink
+      className: 'bg-[#FF9EB7] text-white hover:bg-[#FF9EB7]/90',
     },
   ];
 
@@ -315,18 +366,25 @@ export function CalculatorModal({ open, onOpenChange }: CalculatorModalProps) {
             </div>
           )}
 
-          {/* Display area */}
+          {/* Display area with iPhone-like disappearing effect */}
           <div className="relative px-4 py-4 w-full">
             <div className="w-full min-h-[56px] overflow-hidden">
               <div className="absolute inset-y-0 right-4 left-0 flex justify-end items-center">
                 <div
-                  className="text-white font-thin font-mono leading-none tracking-tight whitespace-nowrap pr-2"
+                  className="text-white font-thin font-mono leading-none tracking-tight whitespace-nowrap overflow-hidden"
                   style={{
                     fontSize: `${fontSize}px`,
                     lineHeight: 1,
                     transition: 'font-size 0.2s ease',
                     maxWidth: '100%',
-                    direction: 'ltr',
+                    direction: 'rtl',
+                    textAlign: 'left',
+                    maskImage:
+                      'linear-gradient(90deg, transparent 0%, black 15px)',
+                    WebkitMaskImage:
+                      'linear-gradient(90deg, transparent 0%, black 15px)',
+                    paddingLeft: '15px',
+                    letterSpacing: '-0.5px', // Tighter spacing for better fit
                   }}
                 >
                   {displayValue}
