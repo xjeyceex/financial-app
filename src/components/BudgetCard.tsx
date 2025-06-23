@@ -669,7 +669,7 @@ export function BudgetCard({
               <label className="text-sm font-medium">Description</label>
               <Input
                 type="text"
-                placeholder="What was this expense for?"
+                placeholder="Add a short description"
                 value={entryDesc}
                 onChange={(e) => setEntryDesc(e.target.value)}
               />
