@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { getDb, getAllBudgets, saveBudget } from '../lib/indexedDB';
-import { Budget, Entry } from '../lib/typesv2';
+import { Budget } from '../lib/typesv2';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import {
@@ -298,18 +298,21 @@ export default function Home() {
     refreshBudgets(newBudgetId);
   };
 
-  const handleEntryEdit = (entry: Entry) => {
+  const handleEntryEdit = (entry: {
+    id: string;
+    description?: string;
+    amount: number;
+    date: string;
+  }) => {
     setEditingEntry({
       id: entry.id,
       description: entry.description ?? 'Unspecified',
-      amount: Math.abs(entry.amount).toString(), // strip minus sign for editing
+      amount: Math.abs(entry.amount).toString(),
       date: formatDateForDatetimeLocal(entry.date),
-      excludeFromDepletion: entry.excludeFromDepletion ?? false,
+      excludeFromDepletion: false, // default if not passed
     });
 
-    // Set the type explicitly based on amount
     setEntryType(entry.amount < 0 ? 'income' : 'expense');
-
     setEntryDialogOpen(true);
   };
 
@@ -351,6 +354,7 @@ export default function Home() {
 
     const newEntry = {
       id: uuidv4(),
+      budgetId: selectedBudget.id, // ✅ Add this line
       description: isDebt ? 'Debt Payment' : 'Used Savings',
       amount: payment, // ✅ always positive
       date: new Date().toISOString(),
@@ -387,6 +391,7 @@ export default function Home() {
       id: uuidv4(),
       description: entryDesc.trim() || 'Unspecified',
       amount: signedAmount,
+      budgetId: selectedBudget.id, // ✅ Add this line
       date: new Date(entryDate).toISOString(),
       excludeFromDepletion: entryExclude,
     };

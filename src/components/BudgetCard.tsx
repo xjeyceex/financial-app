@@ -349,6 +349,7 @@ export function BudgetCard({
                 icon={<FiClock className="w-4 h-4 text-yellow-600" />}
                 label="Est. Depletion Date"
                 value={depletionDate}
+                isPositive={false}
               />
             )}
           </div>

@@ -1,24 +1,22 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { useState, useEffect, useCallback } from 'react';
-import { HiMenu, HiX, HiMoon, HiSun } from 'react-icons/hi';
-import clsx from 'clsx';
+import { HiMoon, HiSun } from 'react-icons/hi';
 import { useTheme } from 'next-themes';
-import { IconType } from 'react-icons';
+// import { IconType } from 'react-icons';
 
-type NavItem = {
-  name: string;
-  href: string;
-  icon: IconType;
-  disabled?: boolean;
-};
+// type NavItem = {
+//   name: string;
+//   href: string;
+//   icon: IconType;
+//   disabled?: boolean;
+// };
 
-const navItems: NavItem[] = [];
+// const navItems: NavItem[] = [];
 
 export default function Sidebar() {
-  const pathname = usePathname();
+  // const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const { setTheme, resolvedTheme } = useTheme();
@@ -38,39 +36,39 @@ export default function Sidebar() {
     setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
   }, [resolvedTheme, setTheme]);
 
-  const toggleSidebar = useCallback(() => {
-    setSidebarOpen((prev) => !prev);
-  }, []);
+  // const toggleSidebar = useCallback(() => {
+  //   setSidebarOpen((prev) => !prev);
+  // }, []);
 
   if (!mounted) return null;
 
-  const renderLink = (item: NavItem) => {
-    const Icon = item.icon;
-    const isActive =
-      pathname === item.href || pathname.startsWith(item.href + '/');
+  // const renderLink = (item: NavItem) => {
+  //   const Icon = item.icon;
+  //   const isActive =
+  //     pathname === item.href || pathname.startsWith(item.href + '/');
 
-    const className = clsx(
-      'flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-medium',
-      'hover:bg-gray-50 dark:hover:bg-zinc-800 active:scale-[0.98]',
-      isActive
-        ? 'bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300'
-        : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white',
-      'border-l-4',
-      isActive ? 'border-blue-500 dark:border-blue-400' : 'border-transparent',
-      item.disabled && 'opacity-50 cursor-not-allowed pointer-events-none'
-    );
+  //   const className = clsx(
+  //     'flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-medium',
+  //     'hover:bg-gray-50 dark:hover:bg-zinc-800 active:scale-[0.98]',
+  //     isActive
+  //       ? 'bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300'
+  //       : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white',
+  //     'border-l-4',
+  //     isActive ? 'border-blue-500 dark:border-blue-400' : 'border-transparent',
+  //     item.disabled && 'opacity-50 cursor-not-allowed pointer-events-none'
+  //   );
 
-    return (
-      <Link
-        href={item.href}
-        onClick={() => isMobile && setSidebarOpen(false)}
-        className={className}
-      >
-        <Icon className="w-5 h-5 flex-shrink-0" />
-        <span className="truncate">{item.name}</span>
-      </Link>
-    );
-  };
+  //   return (
+  //     <Link
+  //       href={item.href}
+  //       onClick={() => isMobile && setSidebarOpen(false)}
+  //       className={className}
+  //     >
+  //       <Icon className="w-5 h-5 flex-shrink-0" />
+  //       <span className="truncate">{item.name}</span>
+  //     </Link>
+  //   );
+  // };
 
   return (
     <>

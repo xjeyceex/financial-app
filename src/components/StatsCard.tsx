@@ -3,18 +3,21 @@ export default function StatsCard({
   label,
   value,
   isPositive,
+  color,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
-  isPositive?: boolean;
+  isPositive?: boolean; // true = green, false = red, undefined = neutral
+  color?: string; // Optional manual override
 }) {
-  const colorClass =
-    isPositive !== undefined
-      ? isPositive
-        ? 'text-green-600 dark:text-green-400'
-        : 'text-red-600 dark:text-red-400'
-      : '';
+  const colorClass = color
+    ? color
+    : isPositive === true
+      ? 'text-green-600 dark:text-green-400'
+      : isPositive === false
+        ? 'text-red-600 dark:text-red-400'
+        : 'text-muted-foreground';
 
   return (
     <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
