@@ -887,20 +887,6 @@ export default function Home() {
 
           {editingEntry && (
             <div className="space-y-4">
-              {/* Description */}
-              <div className="space-y-2">
-                <Label>Description</Label>
-                <Input
-                  value={editingEntry.description}
-                  onChange={(e) =>
-                    setEditingEntry({
-                      ...editingEntry,
-                      description: e.target.value,
-                    })
-                  }
-                />
-              </div>
-
               {/* Amount */}
               <div className="space-y-2">
                 <Label>Amount</Label>
@@ -909,6 +895,7 @@ export default function Home() {
                     type="text"
                     inputMode="decimal"
                     pattern="[0-9+\-/*xX]*"
+                    autoFocus
                     value={editingEntry.amount}
                     onChange={(e) => {
                       let input = e.target.value;
@@ -959,6 +946,19 @@ export default function Home() {
                     Income
                   </label>
                 </div>
+              </div>
+              {/* Description */}
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <Input
+                  value={editingEntry.description}
+                  onChange={(e) =>
+                    setEditingEntry({
+                      ...editingEntry,
+                      description: e.target.value,
+                    })
+                  }
+                />
               </div>
 
               {/* Date */}
