@@ -728,7 +728,7 @@ export default function Home() {
       <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
         {budgets.length > 0 && (
           <>
-            <h1 className="text-2xl font-semibold whitespace-nowrap">
+            <h1 className="text-2xl font-semibold whitespace-nowrap bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
               Recurring Budget
             </h1>
             <div className="flex items-center gap-2 flex-1 justify-end">

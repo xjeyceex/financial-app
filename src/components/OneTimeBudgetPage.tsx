@@ -284,7 +284,9 @@ export function OneTimeBudgetPage() {
       <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
         {budgets.length > 0 ? (
           <>
-            <h1 className="text-2xl font-semibold">One-Time Budget</h1>
+            <h1 className="text-2xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
+              One-Time Budget
+            </h1>
             <div className="flex gap-2 items-center">
               <Select
                 value={selected?.id}
