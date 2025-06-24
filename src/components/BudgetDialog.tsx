@@ -16,7 +16,9 @@ type BudgetDialogProps = {
   onOpenChange: (open: boolean) => void;
   mode: 'create' | 'edit';
   name: string;
+  amount: string;
   onNameChange: (value: string) => void;
+  setAmount: (value: string) => void;
   onSave: () => void;
 };
 
@@ -25,6 +27,8 @@ export default function BudgetDialog({
   onOpenChange,
   mode,
   name,
+  amount,
+  setAmount,
   onNameChange,
   onSave,
 }: BudgetDialogProps) {
@@ -33,7 +37,7 @@ export default function BudgetDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {mode === 'create' ? 'Create Budget' : 'Edit Budget'}
+            {mode === 'create' ? 'Create Recurring Budget' : 'Edit Budget'}
           </DialogTitle>
         </DialogHeader>
 
@@ -44,6 +48,19 @@ export default function BudgetDialog({
               id="budget-name"
               value={name}
               onChange={(e) => onNameChange(e.target.value)}
+              placeholder="e.g. Groceries, Rent"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="budget-amount">Amount</Label>
+            <Input
+              id="budget-amount"
+              type="text"
+              inputMode="decimal"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="e.g. 5000"
             />
           </div>
         </div>

@@ -261,6 +261,9 @@ export default function Home() {
     const name = formName.trim();
     if (!name) return;
 
+    const amount = calculateAmount(tempBudgetAmount); // Evaluate input string
+    if (isNaN(amount)) return;
+
     const today = new Date();
     const isFirstPeriod = determinePayPeriod(today.toISOString()) === 'first';
 
@@ -282,7 +285,7 @@ export default function Home() {
         createdAt: today.toISOString(),
         currentPeriod: {
           id: uuidv4(),
-          amount: 0,
+          amount: amount, // ← save evaluated amount
           entries: [],
           startDate: start.toISOString(),
           endDate: end.toISOString(),
@@ -293,11 +296,16 @@ export default function Home() {
       await db.put('budgets', {
         ...selectedBudget,
         name,
+        currentPeriod: {
+          ...selectedBudget.currentPeriod,
+          amount: amount, // ← update amount too
+        },
       });
       newBudgetId = selectedBudget.id;
     }
 
     setDialogOpen(false);
+    setTempBudgetAmount(''); // optional: clear input after saving
     refreshBudgets(newBudgetId);
   };
 
@@ -864,6 +872,8 @@ export default function Home() {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         mode={dialogMode}
+        amount={tempBudgetAmount}
+        setAmount={setTempBudgetAmount}
         name={formName}
         onNameChange={setFormName}
         onSave={handleDialogSave}

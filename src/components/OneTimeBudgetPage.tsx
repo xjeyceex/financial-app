@@ -316,7 +316,7 @@ export function OneTimeBudgetPage() {
 
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={() => setOpenCreateBudget(true)}>
-                    <FaPlus className="mr-2 h-4 w-4" /> Create Budget
+                    <FaPlus className="mr-2 h-4 w-4" /> Create One-Time Budget
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setOpenEditBudget(true)}
