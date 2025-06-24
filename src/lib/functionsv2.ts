@@ -113,3 +113,20 @@ export const formatCurrency = (
     maximumFractionDigits: 2,
   }).format(amount);
 };
+
+export const calculateAmount = (input: string): number => {
+  const sanitized = input.replace(/\s+/g, '');
+  return new Function(`return ${sanitized}`)();
+};
+
+export const isValidMathExpression = (input: string): boolean => {
+  const sanitized = input.replace(/\s+/g, '');
+  if (!/^[0-9+\-*/.]+$/.test(sanitized)) return false;
+
+  try {
+    const result = new Function(`return ${sanitized}`)();
+    return typeof result === 'number' && isFinite(result);
+  } catch {
+    return false;
+  }
+};

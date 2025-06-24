@@ -32,3 +32,19 @@ export type Entry = {
   item?: string;
   budgetId: string;
 };
+
+export type OneTimeBudget = {
+  id: string;
+  name: string;
+  amount: number;
+  createdAt: string;
+};
+
+export type OneTimeEntry = {
+  id: string;
+  budgetId: string;
+  amount: number;
+  description?: string;
+  date: string;
+  excludeFromDepletion?: boolean;
+};
