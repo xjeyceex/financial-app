@@ -482,11 +482,24 @@ export function BudgetCard({
                             <span className="text-xs font-semibold text-muted-foreground w-5 text-right">
                               {index + 1}.
                             </span>
-                            <p className="font-medium text-sm truncate">
-                              {entry.description}
-                            </p>
+                           <p className="font-medium text-sm truncate">
+                            {(() => {
+                              const desc = entry.description ?? '';
+                              const match = desc.match(/^(.*?)\s?\((.*?)\)$/);
+                              if (match) {
+                                const label = match[1];
+                                const expr = match[2];
+                                return (
+                                  <>
+                                    {label}{' '}
+                                    <span className="text-xs text-muted-foreground">({expr})</span>
+                                  </>
+                                );
+                              }
+                              return desc;
+                            })()}
+                          </p>
                           </div>
-
                           <div className="text-xs text-muted-foreground mt-1 ml-7 space-y-1">
                             <div className="flex items-center gap-2 flex-wrap">
                               <span>

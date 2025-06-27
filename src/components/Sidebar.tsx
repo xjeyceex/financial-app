@@ -9,6 +9,9 @@ import clsx from 'clsx';
 import { usePathname } from 'next/navigation';
 import { FaClock, FaWallet } from 'react-icons/fa';
 
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { DownloadAppButton } from './DownloadApp';
+
 type NavItem = {
   name: string;
   href: string;
@@ -47,7 +50,6 @@ export default function Sidebar() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // ✅ Close sidebar on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -113,17 +115,26 @@ export default function Sidebar() {
         </Link>
 
         <div className="flex items-center gap-2">
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
-          >
-            {resolvedTheme === 'dark' ? (
-              <HiSun className="w-5 h-5 text-yellow-400" />
-            ) : (
-              <HiMoon className="w-5 h-5 text-gray-600" />
-            )}
-          </button>
+          {/* Theme Toggle with Tooltip */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
+              >
+                {resolvedTheme === 'dark' ? (
+                  <HiSun className="w-5 h-5 text-yellow-400" />
+                ) : (
+                  <HiMoon className="w-5 h-5 text-gray-600" />
+                )}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Toggle theme</TooltipContent>
+          </Tooltip>
 
+          {/* Download App Button */}
+          <DownloadAppButton href="https://drive.google.com/drive/u/0/folders/1LatStDgvxedKOSuBwWUfs1b54rwsIgTg"/>
+          {/* Sidebar Toggle */}
           <button
             onClick={toggleSidebar}
             className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-zinc-800"

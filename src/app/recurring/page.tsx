@@ -383,9 +383,12 @@ export default function Home() {
 
     const newEntry = {
       id: uuidv4(),
-      description: entryDesc.trim() || 'Unspecified',
+      description:
+        entryDesc.trim()
+          ? `${entryDesc.trim()} (${entryAmount.trim()})`
+          : entryAmount.trim() || 'Unspecified',
       amount: signedAmount,
-      budgetId: selectedBudget.id, // ✅ Add this line
+      budgetId: selectedBudget.id,
       date: new Date(entryDate).toISOString(),
       excludeFromDepletion: entryExclude,
     };
