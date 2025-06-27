@@ -4,9 +4,15 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PiggyBank, Repeat } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { saveLastVisited } from '@/lib/indexedDB';
 
 export default function Home() {
   const router = useRouter();
+
+  const handleNavigate = async (path: string) => {
+    await saveLastVisited(path);
+    router.push(path);
+  };
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center text-center px-4 pt-16">
@@ -35,7 +41,7 @@ export default function Home() {
           >
             <Card
               className="cursor-pointer hover:shadow-lg transition-all border-blue-200 dark:border-blue-900/50 bg-blue-50/50 dark:bg-blue-900/10"
-              onClick={() => router.push('/one-time')}
+              onClick={() => handleNavigate('/one-time')}
             >
               <CardHeader className="flex items-center gap-3">
                 <div className="p-2 rounded-full bg-blue-100 dark:bg-blue-900/30">
@@ -58,7 +64,7 @@ export default function Home() {
           >
             <Card
               className="cursor-pointer hover:shadow-lg transition-all border-purple-200 dark:border-purple-900/50 bg-purple-50/50 dark:bg-purple-900/10"
-              onClick={() => router.push('/recurring')}
+              onClick={() => handleNavigate('/recurring')}
             >
               <CardHeader className="flex items-center gap-3">
                 <div className="p-2 rounded-full bg-purple-100 dark:bg-purple-900/30">
