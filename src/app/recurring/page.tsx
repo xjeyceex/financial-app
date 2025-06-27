@@ -593,18 +593,17 @@ export default function Home() {
         const pastPeriods = budget.pastPeriods ?? [];
         const current = budget.currentPeriod;
 
-        // 🧹 Remove empty past periods and strip stale finalBalance
+        // 🧹 Remove past periods with no entries
         const cleanedPastPeriods = pastPeriods
-          .filter((p) => (p.amount ?? 0) !== 0 || (p.entries?.length ?? 0) > 0)
+          .filter((p) => (p.entries?.length ?? 0) > 0)
           .map((p) => {
             const amount = p.amount ?? 0;
-            const entriesTotal =
-              p.entries?.reduce((s, e) => s + e.amount, 0) ?? 0;
+            const entriesTotal = p.entries?.reduce((s, e) => s + e.amount, 0) ?? 0;
             const recalculatedFinal = amount - entriesTotal;
 
             return {
               ...p,
-              finalBalance: recalculatedFinal, // Optional: or omit this field
+              finalBalance: recalculatedFinal,
             };
           });
 
