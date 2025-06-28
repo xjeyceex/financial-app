@@ -1,45 +1,24 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { FiDownload } from 'react-icons/fi';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { motion } from 'framer-motion';
+import clsx from 'clsx';
 
 interface DownloadAppButtonProps {
   href: string;
+  faq?: boolean;
 }
 
 const API_KEY = 'gTVjhC2hMocWMuE6USgdzw==AhdFcUSkSZLqN0aY';
 const COUNTER_ID = 'pesowise-download';
 
-export const DownloadAppButton: React.FC<DownloadAppButtonProps> = ({ href }) => {
-  const [downloadCount, setDownloadCount] = useState<number | null>(null);
-  const [hovered, setHovered] = useState(false);
-
-  const fetchCounter = async () => {
-    try {
-      const res = await fetch(`https://api.api-ninjas.com/v1/counter?id=${COUNTER_ID}`, {
-        method: 'GET',
-        headers: {
-          'X-Api-Key': API_KEY,
-        },
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setDownloadCount(data.value);
-      } else {
-        console.error('Failed to fetch counter:', res.status, await res.text());
-      }
-    } catch (err) {
-      console.error('Fetch error:', err);
-    }
-  };
-
-  useEffect(() => {
-    fetchCounter();
-  }, []);
-
+export const DownloadAppButton: React.FC<DownloadAppButtonProps> = ({ href, faq }) => {
   const handleClick = async () => {
+    window.open(href, '_blank');
+
+    // Log the download in the background (non-blocking)
     try {
       const response = await fetch(
         `https://api.api-ninjas.com/v1/counter?id=${COUNTER_ID}&hit=true`,
@@ -50,41 +29,44 @@ export const DownloadAppButton: React.FC<DownloadAppButtonProps> = ({ href }) =>
           },
         }
       );
-
-      if (response.ok) {
-        const data = await response.json();
-        setDownloadCount(data.value);
-      } else {
+      if (!response.ok) {
         console.error('Failed to increment counter:', response.status, await response.text());
       }
     } catch (err) {
       console.error('Failed to log download:', err);
-    } finally {
-      window.open(href, '_blank');
     }
   };
 
-  return (
-    <div
-      className="relative inline-block"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      <Button
-        variant="link"
-        size="icon"
+  if (faq) {
+    return (
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
         onClick={handleClick}
-        className="text-primary hover:bg-primary/10 w-10 h-10"
+        className={clsx(
+          'inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white',
+          'bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg shadow-lg hover:shadow-xl transition-all'
+        )}
       >
         <FiDownload className="w-5 h-5" />
-      </Button>
+        Download PesoWise
+      </motion.button>
+    );
+  }
 
-      {/* Hover Box */}
-      {hovered && downloadCount !== null && (
-        <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-popover text-xs text-muted-foreground px-2 py-1 rounded-md shadow z-50 whitespace-nowrap">
-          {downloadCount.toLocaleString()} downloads
-        </div>
-      )}
-    </div>
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="link"
+          size="icon"
+          onClick={handleClick}
+          className="text-primary hover:bg-primary/10"
+        >
+          <FiDownload className="w-5 h-5" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>Download this app</TooltipContent>
+    </Tooltip>
   );
 };

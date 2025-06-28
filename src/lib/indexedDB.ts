@@ -2,7 +2,7 @@ import { openDB } from 'idb';
 import { Budget, OneTimeBudget, OneTimeEntry } from './typesv2';
 
 const DB_NAME = 'BudgetApp';
-const DB_VERSION = 4;
+const DB_VERSION = 1;
 
 const STORE_NAME = 'budgets';
 const CALC_STORE = 'calculator';

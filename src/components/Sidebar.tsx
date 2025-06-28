@@ -7,10 +7,11 @@ import { useTheme } from 'next-themes';
 import { IconType } from 'react-icons';
 import clsx from 'clsx';
 import { usePathname } from 'next/navigation';
-import { FaClock, FaWallet } from 'react-icons/fa';
+import { FaClock, FaWallet, FaQuestionCircle, FaBook } from 'react-icons/fa';
 
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { DownloadAppButton } from './DownloadApp';
+import { FiDownload } from 'react-icons/fi';
 
 type NavItem = {
   name: string;
@@ -30,7 +31,20 @@ const navItems: NavItem[] = [
     href: '/one-time',
     icon: FaWallet,
   },
+   {
+    name: 'Documentation',
+    href: '/docs',
+    icon: FaBook,
+  },
+  {
+    name: 'FAQ',
+    href: '/faq',
+    icon: FaQuestionCircle,
+  },
 ];
+
+const API_KEY = 'gTVjhC2hMocWMuE6USgdzw==AhdFcUSkSZLqN0aY';
+const COUNTER_ID = 'pesowise-download';
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -39,12 +53,11 @@ export default function Sidebar() {
   const { setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const sidebarRef = useRef<HTMLDivElement | null>(null);
+  const [downloadCount, setDownloadCount] = useState<number | null>(null);
 
   useEffect(() => {
     setMounted(true);
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -63,6 +76,24 @@ export default function Sidebar() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [sidebarOpen]);
+
+  useEffect(() => {
+    const fetchDownloadCount = async () => {
+      try {
+        const res = await fetch(`https://api.api-ninjas.com/v1/counter?id=${COUNTER_ID}`, {
+          method: 'GET',
+          headers: { 'X-Api-Key': API_KEY },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setDownloadCount(data.value);
+        }
+      } catch (err) {
+        console.error('Failed to fetch download count:', err);
+      }
+    };
+    fetchDownloadCount();
+  }, []);
 
   const toggleTheme = useCallback(() => {
     setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
@@ -108,12 +139,11 @@ export default function Sidebar() {
       {/* Top Navbar */}
       <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white dark:bg-zinc-900 shadow-sm border-b border-gray-200 dark:border-zinc-700 px-4 flex items-center justify-between">
         <Link
-          href="/"
+          href="/?home=true"
           className="text-xl font-semibold text-gray-800 dark:text-white"
         >
           PesoWise
         </Link>
-
         <div className="flex items-center gap-2">
           {/* Theme Toggle with Tooltip */}
           <Tooltip>
@@ -148,7 +178,6 @@ export default function Sidebar() {
           </button>
         </div>
       </header>
-
       {/* Sidebar */}
       <aside
         ref={sidebarRef}
@@ -166,6 +195,12 @@ export default function Sidebar() {
 
         <div className="pt-4 mt-4 border-t border-gray-100 dark:border-zinc-700 text-sm text-gray-500 dark:text-gray-400">
           © {new Date().getFullYear()} PesoWise
+          {downloadCount !== null && (
+            <p className="text-xs mt-2 text-muted-foreground flex items-center gap-1">
+              <FiDownload className="w-3.5 h-3.5" />
+              {downloadCount.toLocaleString()} downloads
+            </p>
+          )}
         </div>
       </aside>
 
